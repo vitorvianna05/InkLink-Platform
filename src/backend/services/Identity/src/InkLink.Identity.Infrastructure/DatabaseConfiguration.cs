@@ -1,3 +1,5 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -38,6 +40,27 @@ public static class DependencyInjection
     {
         services.AddSingleton<IValidateOptions<IdentityDatabaseOptions>, DatabaseOptionsValidator>();
         services.AddOptions<IdentityDatabaseOptions>().Bind(configuration.GetSection(IdentityDatabaseOptions.Section)).ValidateOnStart();
+        services.AddDbContext<IdentityDbContext>((provider, options) => Configure(options,
+            provider.GetRequiredService<IOptions<IdentityDatabaseOptions>>().Value.ConnectionString));
         return services;
+    }
+
+    public static void Configure(DbContextOptionsBuilder options, string connectionString) =>
+        options.UseNpgsql(connectionString, postgres => postgres.MigrationsHistoryTable("__ef_migrations_history", "identity"));
+}
+
+public sealed class IdentityDbContextFactory : IDesignTimeDbContextFactory<IdentityDbContext>
+{
+    public IdentityDbContext CreateDbContext(string[] args)
+    {
+        var configuration = new IdentityDatabaseOptions
+        {
+            ConnectionString = Environment.GetEnvironmentVariable("IdentityDatabase__ConnectionString") ?? string.Empty
+        };
+        var result = new DatabaseOptionsValidator().Validate(null, configuration);
+        if (result.Failed) throw new InvalidOperationException(string.Join(" ", result.Failures));
+        var options = new DbContextOptionsBuilder<IdentityDbContext>();
+        DependencyInjection.Configure(options, configuration.ConnectionString);
+        return new IdentityDbContext(options.Options);
     }
 }

@@ -1,0 +1,20 @@
+name: inklink-platform
+services:
+  identity-db:
+    image: postgres:17.7-alpine
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run Initialize-Local.ps1}
+      IDENTITY_OWNER_PASSWORD: ${IDENTITY_OWNER_PASSWORD:?Run Initialize-Local.ps1}
+      IDENTITY_APP_PASSWORD: ${IDENTITY_APP_PASSWORD:?Run Initialize-Local.ps1}
+    ports:
+      - "127.0.0.1:54329:5432"
+    volumes:
+      - identity-data:/var/lib/postgresql/data
+      - ./scripts/db/init-identity.sh:/docker-entrypoint-initdb.d/10-identity.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d inklink_identity"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+volumes:
+  identity-data:
