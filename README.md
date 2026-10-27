@@ -21,3 +21,7 @@ O backend será desenvolvido em .NET 10 com microsserviços. Os canais previstos
 Estrutura inicial de documentação preparada. Nenhuma implementação do protótipo foi copiada. As decisões P00 serão resolvidas antes de iniciar P01.
 
 Nome do repositório aprovado: `InkLink-Platform`. Repositório criado em https://github.com/vitorvianna05/InkLink-Platform.
+
+## Contribuição e commits
+
+Consulte [CONTRIBUTING.md](CONTRIBUTING.md) para ativar o hook e o template de commits semânticos com resumo. As instruções para agentes ficam em AGENTS.md.

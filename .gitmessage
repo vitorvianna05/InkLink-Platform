@@ -1,0 +1,8 @@
+# tipo(escopo): descrição curta
+# Tipos: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert.
+# Substitua os comentários por título, linha em branco e resumo real.
+
+# Resuma o que mudou e sua finalidade.
+# Tarefa SDD: Txx.xx (quando aplicável).
+# Validação: verificações relevantes ou justificativa quando não aplicável.
+# BREAKING CHANGE: impacto e migração, se o título contiver !.

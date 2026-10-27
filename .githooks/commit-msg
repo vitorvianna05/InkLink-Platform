@@ -1,0 +1,26 @@
+#!/bin/sh
+set -eu
+message_file="$1"
+clean_message=$(sed '/^[[:space:]]*#/d' "$message_file" | tr -d '\r')
+subject=$(printf '%s\n' "$clean_message" | sed -n '1p')
+if ! printf '%s\n' "$subject" | grep -Eq '^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-z0-9][a-z0-9./_-]*\))?!?: [^[:space:]].*$'; then
+  printf '%s\n' 'Commit rejeitado: use tipo(escopo opcional): descrição curta.' >&2
+  exit 1
+fi
+second_line=$(printf '%s\n' "$clean_message" | sed -n '2p')
+if printf '%s' "$second_line" | grep -q '[^[:space:]]'; then
+  printf '%s\n' 'Commit rejeitado: deixe uma linha em branco entre o título e o resumo.' >&2
+  exit 1
+fi
+if ! printf '%s\n' "$clean_message" | tail -n +3 | grep -q '[^[:space:]]'; then
+  printf '%s\n' 'Commit rejeitado: inclua um resumo das alterações no corpo da mensagem.' >&2
+  exit 1
+fi
+case "$subject" in
+  *'!: '*)
+    if ! printf '%s\n' "$clean_message" | tail -n +3 | grep -Eq '^BREAKING CHANGE: [^[:space:]].*'; then
+      printf '%s\n' 'Commit rejeitado: mudança incompatível exige BREAKING CHANGE: com o impacto no corpo.' >&2
+      exit 1
+    fi
+    ;;
+esac
