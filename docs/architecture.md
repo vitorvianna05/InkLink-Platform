@@ -39,10 +39,11 @@ Esses princípios não exigem uma interface para cada classe, um serviço por en
 
 ```mermaid
 flowchart TB
-    Web[Website React] --> Gateway[API Gateway]
+    Web[Website React] --> BFF[BFF web .NET 10]
+    BFF --> Gateway[API Gateway]
     IOS[App iOS React Native] --> Gateway
     Android[App Android React Native] --> Gateway
-    Auth[Provedor de identidade a definir] -. Autenticação .-> Web
+    Auth[Keycloak OIDC e OAuth 2.0] -. Autenticação .-> BFF
     Auth -. Autenticação .-> IOS
     Auth -. Autenticação .-> Android
     Auth -. Validação de identidade .-> Gateway
@@ -73,7 +74,7 @@ O Gateway concentra a entrada das APIs e o roteamento. Os serviços continuam re
 
 ### 4.1 Identidade e perfis
 
-Responsável pela identidade interna do usuário, funções e dados privados básicos de perfil. A autenticação poderá ser delegada a um provedor especializado, cuja escolha será registrada posteriormente.
+Responsável pela identidade interna do usuário, funções e dados privados básicos de perfil. A autenticação será delegada ao Keycloak conforme a [decisão 0003](decisions/0003-authentication.md). Identity mantém os perfis e vínculos próprios da aplicação, sem armazenar as credenciais administradas pelo provedor.
 
 - Mantém identificadores de usuários e vínculos com funções de cliente e artista.
 - Disponibiliza os contratos necessários para identificação e perfis.
@@ -196,7 +197,7 @@ Agenda/
     Contract/
 ```
 
-A estrutura é uma referência de responsabilidades. A quantidade de projetos e a nomenclatura física serão definidas na implementação. Casos simples podem usar uma organização menor, desde que respeitem dependências e isolamento.
+A estrutura é uma referência de responsabilidades. A organização física inicial e os nomes foram aprovados na [decisão 0001](decisions/0001-organization.md): serviços em `src/backend/services/`, camadas Api/Application/Domain/Infrastructure e testes próximos ao serviço. O primeiro incremento será GetMyProfile em Identity. Casos simples podem usar uma organização menor, desde que respeitem dependências e isolamento.
 
 ### 5.3 Padrões internos
 
@@ -211,6 +212,8 @@ A estrutura é uma referência de responsabilidades. A quantidade de projetos e 
 
 ### 6.1 Propriedade dos dados
 
+A [decisão 0002](decisions/0002-persistence.md) define PostgreSQL como persistência relacional inicial, com EF Core 10 e Npgsql 10 em Infrastructure. Cada serviço terá banco lógico, DbContext, credenciais e migrações próprios; Domain permanece independente dessas tecnologias. Migrações versionadas serão aplicadas em etapa controlada de publicação com identidade distinta da aplicação.
+
 Cada serviço controla seus registros, esquema, migrações e credenciais de persistência. Serviços não acessam tabelas, views, procedimentos ou conexões privadas de outros contextos.
 
 Um mesmo servidor físico de banco pode ser usado inicialmente, com separação lógica e de permissões. Essa opção não autoriza joins, chaves estrangeiras ou transações que atravessem bancos de serviços distintos.
@@ -221,7 +224,7 @@ As referências entre contextos usam identificadores e contratos. Projeções po
 
 Invariantes que precisam ser atômicas devem permanecer sob um único serviço e sua transação local. Em Agenda, a decisão de aceitar uma reserva e a proteção contra sobreposição são uma única operação consistente.
 
-Consultar horários e inserir depois sem proteção concorrente não atende ao requisito. A implementação utilizará a estratégia adequada ao banco escolhido, como restrições, bloqueio ou serialização por recurso, com testes de requisições concorrentes.
+Consultar horários e inserir depois sem proteção concorrente não atende ao requisito. A decisão 0002 estabelece proteção por restrição de exclusão de intervalos no PostgreSQL para o mesmo artista. Intervalos adjacentes são permitidos, com início incluído e término excluído. Modelagem temporal e estados que ocupam a agenda serão definidos no fluxo de Agenda; a validação concorrente usará PostgreSQL real.
 
 ### 6.3 Projeções e leitura
 
@@ -238,6 +241,8 @@ Arquivos de portfólio e flashes poderão ser mantidos em armazenamento próprio
 ## 7. Comunicação e contratos
 
 ### 7.1 APIs síncronas
+
+A [decisão 0005](decisions/0005-api-conventions.md) define JSON com camelCase, rotas por recursos em inglês, versão pública /api/v1, IDs internos UUIDv7 e erros Problem Details com code e traceId. Listagens adotam cursor, limite padrão de 20 e máximo de 100, salvo contrato específico justificado. Operações críticas adotam idempotência conforme seu contrato e APIs têm documentação OpenAPI por serviço.
 
 APIs serão usadas quando o solicitante precisa de resposta imediata ou de uma decisão do serviço responsável. Os contratos serão explícitos e documentados, incluindo validação, autorização, resultados, erros e compatibilidade.
 
@@ -343,7 +348,7 @@ A estrutura física poderá usar uma base React Native compartilhada entre iOS e
 ### 9.2 Integração com os serviços
 
 - Os três canais consomem as mesmas capacidades de negócio por contratos de backend compatíveis.
-- O API Gateway é o ponto de entrada das APIs. Um Backend for Frontend (BFF) específico por canal poderá ser introduzido se houver necessidade de composição ou adaptação; não é obrigatório nesta fundação.
+- O website usará um BFF .NET 10, aprovado na decisão 0003, com tokens no servidor e sessão por cookie protegido no navegador. O BFF encaminha chamadas pelo Gateway sem concentrar regras de negócio. iOS e Android consomem as APIs pelo Gateway; BFFs móveis não são exigidos.
 - Clientes móveis podem permanecer em versões anteriores após uma atualização do backend. Contratos devem considerar essa coexistência, evitando exigir atualização simultânea de todos os aplicativos.
 - Identificação e autorização são verificadas pelo backend em todos os canais. Cada plataforma usará mecanismos adequados para sua sessão e armazenamento seguro; a implementação será detalhada posteriormente.
 - O frontend controla a experiência, mas não é autoridade para permissões, valores aprovados, disponibilidade ou estado do serviço.
@@ -364,7 +369,7 @@ A estrutura física poderá usar uma base React Native compartilhada entre iOS e
 
 ### 10.1 Identificação e autorização
 
-A autenticação será integrada a um mecanismo apropriado, a definir. Gateway e serviços validam os contratos de identidade pertinentes. Cada serviço verifica autorização sobre seus próprios recursos, inclusive participação na conversa e vínculo com atendimento, artista e reserva.
+A autenticação utiliza Keycloak com OIDC/OAuth 2.0 e Authorization Code com PKCE, conforme decisão 0003. APIs validam access tokens JWT, não ID tokens. A identidade interna é vinculada ao emissor e ao sujeito do provedor. Chamadores técnicos usam Client Credentials quando atuam em nome próprio. Gateway e serviços validam os contratos de identidade pertinentes. Cada serviço verifica autorização sobre seus próprios recursos, inclusive participação na conversa e vínculo com atendimento, artista e reserva.
 
 Credenciais entre serviços são distintas das credenciais de usuários. O acesso externo às APIs e a comunicação interna devem ser protegidos conforme o ambiente. Segredos são fornecidos por configuração segura, nunca pelo frontend ou por arquivos versionados.
 
@@ -383,6 +388,10 @@ A base deve permitir observar falhas de API, latência, conflitos de reserva, at
 Health checks e sinais de prontidão devem refletir sua finalidade, evitando transformar indisponibilidade de um contexto em reinício indiscriminado de todos os serviços. Ferramentas, metas e limites serão definidos com o ambiente operacional.
 
 ## 11. Testes e critérios arquiteturais
+
+A [decisão 0004](decisions/0004-tooling.md) adota xUnit, WebApplicationFactory, Testcontainers para PostgreSQL e ArchUnitNET. Dependências de desenvolvimento serão organizadas com Docker Compose; a CI inicial utilizará GitHub Actions. SDK .NET 10 e versões compatíveis das dependências serão fixados na implementação. Segredos locais usarão User Secrets ou variáveis de ambiente, e consistência de código será apoiada por .editorconfig, analisadores .NET e dotnet format.
+
+Testes de autenticação com Keycloak são distintos dos testes que substituem a identidade por um contexto controlado. A decisão das ferramentas não significa que seu ambiente ou implementação já estejam configurados.
 
 A verificação deve incluir:
 
@@ -410,9 +419,9 @@ Critérios de conformidade da arquitetura:
 
 A abordagem ágil será aplicada por entregas pequenas de capacidades utilizáveis. Cada entrega atualiza requisitos, decisões, contratos e testes necessários à funcionalidade, sem exigir que todas as escolhas futuras sejam resolvidas antecipadamente.
 
-A nova aplicação terá repositório próprio denominado `InkLink-Platform`, separado de `INKLINK-Prototype`, e caminho local `C:\Users\INFIS001125\Documents\ChatGPT\InkLink-Platform`. O SDD fica em `docs/` e a implementação em `src/`. O repositório do produto concentra a fonte oficial desses documentos; cópias no protótipo não devem ser mantidas como documentação concorrente. A organização interna de serviços, testes e frontends será detalhada em T00.02 e nas decisões posteriores. Pipelines deverão identificar componentes afetados sem eliminar a autonomia de publicação dos serviços.
+A nova aplicação terá repositório próprio denominado `InkLink-Platform`, separado de `INKLINK-Prototype`, e caminho local `C:\Users\INFIS001125\Documents\ChatGPT\InkLink-Platform`. O SDD fica em `docs/` e a implementação em `src/`. O repositório do produto concentra a fonte oficial desses documentos; cópias no protótipo não devem ser mantidas como documentação concorrente. A organização inicial foi aprovada em T00.02, conforme decisão 0001; detalhes adicionais serão definidos nas etapas correspondentes. Pipelines deverão identificar componentes afetados sem eliminar a autonomia de publicação dos serviços.
 
-O desenvolvimento local deve possuir instruções para iniciar os componentes necessários e suas dependências. Imagens e ambientes reproduzíveis poderão ser utilizados. Produtos de contêiner, orquestração e nuvem serão escolhidos posteriormente.
+O desenvolvimento local deve possuir instruções para iniciar os componentes necessários e suas dependências. Docker Compose e Testcontainers foram aprovados para desenvolvimento e testes conforme decisão 0004. Imagens e versões serão fixadas na implementação. Orquestração e nuvem de produção continuam em aberto.
 
 A escalabilidade deve considerar o perfil de carga de cada serviço. Catálogo e consultas, conexões de chat, gravação de mensagens e confirmação de reservas têm necessidades diferentes. Replicar instâncias exige tratar estado compartilhado, conexões, consumidores e concorrência de forma apropriada; a adoção de microsserviços, isoladamente, não garante capacidade ou desempenho.
 
@@ -422,12 +431,12 @@ Não há obrigação inicial de Kubernetes, microfrontends, event sourcing, banc
 
 Continuam abertas, sem bloquear esta fundação:
 
-- Organização interna de `src/`, projetos, testes e nomes definitivos dos serviços; o repositório próprio `InkLink-Platform` e a separação `docs/`–`src/` já foram definidos.
+- Detalhes de organização que surgirem além da estrutura inicial aprovada na decisão 0001. Nomes técnicos definidos: Identity, Catalog, Engagements, Scheduling, Messaging e Finance.
 - Compartilhamento de código entre web, iOS e Android, estrutura React Native, ferramentas e processos de publicação por canal.
-- Provedor de identidade e fluxo de autenticação.
-- Banco de dados e estratégia de concorrência de Agenda.
+- Configuração operacional do Keycloak e BFF, cadastro/ativação de usuários e políticas de sessão; provedor e fluxos base estão definidos na decisão 0003.
+- Versão mantida do PostgreSQL, patches compatíveis de EF Core/Npgsql e detalhes da restrição de intervalos, conforme a base já aprovada na decisão 0002.
 - Gateway, broker, ferramentas de Outbox e coordenação de processos.
-- Contratos HTTP e de eventos, versionamento e compatibilidade.
+- Contratos específicos de recursos e eventos. As convenções HTTP e de versionamento público já estão aprovadas na decisão 0005.
 - Protocolo concreto de encerramento e habilitação de conversa por novo atendimento.
 - Tecnologia de atualização de mensagens e escala das conexões.
 - Mecanismo de pesquisa e armazenamento de mídia.

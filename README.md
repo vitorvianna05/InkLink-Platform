@@ -15,10 +15,11 @@ O backend será desenvolvido em .NET 10 com microsserviços. Os canais previstos
 - [Arquitetura](docs/architecture.md)
 - [Plano](docs/plan.md)
 - [Tarefas](docs/tasks.md)
+- [Revisão da fundação P00](docs/decisions/0006-p00-review.md)
 
 ## Situação
 
-Estrutura inicial de documentação preparada. Nenhuma implementação do protótipo foi copiada. As decisões P00 serão resolvidas antes de iniciar P01.
+Estrutura inicial de documentação preparada. Nenhuma implementação do protótipo foi copiada. As decisões P00 foram revisadas e concluídas. O próximo passo é T01.01, início do serviço Identity com GetMyProfile; a implementação permanece pendente.
 
 Nome do repositório aprovado: `InkLink-Platform`. Repositório criado em https://github.com/vitorvianna05/InkLink-Platform.
 

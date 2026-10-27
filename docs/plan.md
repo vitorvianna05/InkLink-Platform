@@ -79,17 +79,17 @@ Não é necessário esperar a etapa de validação integrada para criar testes, 
 
 ### P00 — Preparar as decisões mínimas e o novo projeto
 
-**Prioridade:** inicial. **Dependências:** requisitos e arquitetura revisados. **Situação:** em andamento; destino e separação do projeto definidos.
+**Prioridade:** inicial. **Dependências:** requisitos e arquitetura revisados. **Situação:** concluída no nível de decisões e revisão, conforme T00.07.
 
 **Objetivo:** viabilizar o início da nova solução sem reaproveitar a implementação do protótipo.
 
 - [x] Definir o local da nova aplicação e a estratégia de repositório: `InkLink-Platform`, repositório próprio `InkLink-Platform`, SDD em `docs/` e implementação em `src/`, separados do protótipo. Repositório remoto criado como `vitorvianna05/InkLink-Platform`.
-- [ ] Definir a organização física inicial e a convenção de nomes de serviços, projetos e testes.
-- [ ] Selecionar o banco inicial e a ferramenta de persistência, considerando propriedade dos dados e concorrência de Agenda.
-- [ ] Selecionar a abordagem de autenticação e sua integração com Identidade e perfis.
-- [ ] Escolher as ferramentas mínimas de testes, configuração e execução local.
-- [ ] Definir o padrão inicial de contratos HTTP, erros, identificadores e documentação das APIs.
-- [ ] Refinar o primeiro incremento de Identidade e perfis e registrar as decisões tomadas.
+- [x] Definir a organização física inicial, nomes técnicos, projetos e testes conforme a decisão 0001 (T00.02), incluindo GetMyProfile como primeiro caso de uso.
+- [x] Selecionar PostgreSQL, EF Core 10 e Npgsql 10, com isolamento por serviço, migrações controladas e restrição de intervalos na Agenda, conforme decisão 0002 (T00.03).
+- [x] Selecionar Keycloak, OIDC/OAuth 2.0, PKCE, JWT e BFF web conforme decisão 0003 (T00.04).
+- [x] Definir SDK .NET 10, Docker Compose, xUnit, WebApplicationFactory, Testcontainers PostgreSQL, ArchUnitNET, configuração segura e GitHub Actions conforme decisão 0004 (T00.05).
+- [x] Definir convenções HTTP, UUIDv7, Problem Details, paginação por cursor, idempotência seletiva, OpenAPI e /api/v1, conforme decisão 0005 (T00.06).
+- [x] Revisar a fundação e delimitar GetMyProfile em Identity, conforme revisão 0006 (T00.07), mantendo a execução e validação do ambiente em P01.
 
 **Critério de conclusão:** é possível iniciar P01 sem assumir decisões não documentadas. Não se exige, neste ponto, escolher broker, busca, stack móvel ou plataforma final de nuvem.
 
@@ -122,7 +122,7 @@ Não é necessário esperar a etapa de validação integrada para criar testes, 
 - [ ] Associar a identidade autenticada a usuários internos e funções permitidas.
 - [ ] Disponibilizar os casos mínimos de consulta e manutenção do perfil previstos para a entrega.
 - [ ] Definir a política inicial de cadastro e vínculo de artista necessária às etapas seguintes.
-- [ ] Introduzir o Gateway e o roteamento do serviço existente.
+- [ ] Introduzir o Gateway, o roteamento e a base do BFF web .NET, com sessão protegida e tokens no servidor, testável sem a interface React.
 - [ ] Validar identidade no Gateway e no serviço e contextualizar o usuário nas operações.
 - [ ] Definir a identidade técnica para chamadas entre serviços quando necessária.
 - [ ] Testar sessão inválida, ausência de permissão e tentativa de acessar outro usuário.
@@ -387,6 +387,6 @@ A conclusão de uma etapa não significa a conclusão automática das etapas dep
 
 ## 8. Próxima ação
 
-Continuar P00 por T00.02: definir a organização interna e o primeiro caso de uso, seguidos de persistência, identidade e ferramentas mínimas. T00.01 já definiu o destino local e o repositório independente; o SDD foi transferido para `InkLink-Platform/docs/`.
+Iniciar T01.01: criar a solução e os projetos necessários do serviço Identity em .NET 10, conforme a [revisão de P00](decisions/0006-p00-review.md). P00 está concluída quanto às decisões; P01 permanece pendente.
 
-A criação deste plano não seleciona essas ferramentas nem inicia a geração de código. O próximo incremento deve produzir uma decisão revisável e permitir avançar para P01 com um escopo pequeno e verificável.
+A primeira entrega utiliza GetMyProfile com persistência real e testes controlados. Validação do Docker, configurações e versões compatíveis acompanham a preparação da implementação; não são consideradas realizadas pela conclusão documental de P00. Keycloak, Gateway e BFF serão integrados em P02.

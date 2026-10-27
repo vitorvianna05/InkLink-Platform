@@ -21,17 +21,17 @@ Cada linha abaixo é uma tarefa com ID estável, dependências diretas, entregá
 
 ### P00 — Preparação e decisões mínimas
 
-**Referências:** RNF01, RNF04, RNF07 e RNF08. **Marco:** M0. **Situação:** em andamento; T00.01 concluída.
+**Referências:** RNF01, RNF04, RNF07 e RNF08. **Marco:** M0. **Situação:** concluída; T00.01 a T00.07 verificadas no nível de decisão e revisão.
 
 | ID / tarefa | Dependências | Entregável | Aceite e verificação |
 | --- | --- | --- | --- |
 | T00.01 — [x] Definir destino da nova solução | Nenhuma tarefa anterior | Caminho `C:\Users\INFIS001125\Documents\ChatGPT\InkLink-Platform`, repositório próprio `InkLink-Platform`, documentação em `docs/` e código em `src/`. | Decisão aprovada pelo responsável; pasta, separação e transferência do SDD verificadas. Git local independente inicializado. Repositório remoto criado no GitHub como `vitorvianna05/InkLink-Platform`. |
-| T00.02 — [ ] Definir organização e primeiro caso de uso | T00.01 | Mapa inicial de serviços, projetos, nomes e caso mínimo de perfil em Identidade. | Há entrada, saída e validação suficientes para iniciar um incremento persistente, sem gerar todos os serviços vazios ou expor perfil privado anonimamente. |
-| T00.03 — [ ] Selecionar persistência e migrações | T00.02 | Decisão de banco e acesso a dados, isolamento por serviço e estratégia viável de concorrência para Agenda. | Alternativas e consequências estão registradas; a estratégia permite verificar reservas concorrentes e não exige acesso cruzado a tabelas. |
-| T00.04 — [ ] Selecionar autenticação e identidade | T00.02 | Decisão de mecanismo de autenticação, identificação interna e configuração de desenvolvimento. | Está definido como obter e validar identidade sem confiar no identificador livremente informado pelo cliente. Broker e nuvem não precisam ser escolhidos. |
-| T00.05 — [ ] Definir ferramentas locais e de testes | T00.03, T00.04 | Pré-requisitos e comandos previstos para desenvolvimento .NET 10, testes e dependências locais. | Existe uma forma reproduzível de executar testes contra persistência real e fornecer configuração sem segredos versionados. |
-| T00.06 — [ ] Definir convenções de API | T00.02 | Padrão de identificadores, validação, erros, paginação, documentação e compatibilidade. | Exemplos de sucesso, entrada inválida, acesso negado e conflito são revisados; os contratos não expõem entidades internas ou detalhes do banco. |
-| T00.07 — [ ] Revisar as decisões para iniciar P01 | T00.03, T00.04, T00.05, T00.06 | Registro revisável das escolhas e escopo pequeno do primeiro incremento. | Não há decisão implícita indispensável a P01. Novos detalhes de negócio são aprovados antes da implementação dependente. |
+| T00.02 — [x] Definir organização e primeiro caso de uso | T00.01 | Estrutura por serviço em src/backend e frontends em src/frontends; nomes técnicos e camadas definidos; primeiro caso GetMyProfile em Identity. | Sugestões aprovadas pelo responsável. Entrada, saída, validação e execução controlada registradas em [decisão 0001](decisions/0001-organization.md). |
+| T00.03 — [x] Selecionar persistência e migrações | T00.02 | PostgreSQL, EF Core 10 e Npgsql 10, bancos e migrações por serviço, proteção de intervalos na Agenda. | Proposta aprovada e registrada na [decisão 0002](decisions/0002-persistence.md). Testes de concorrência usarão PostgreSQL real na implementação. |
+| T00.04 — [x] Selecionar autenticação e identidade | T00.02 | Keycloak, OIDC/OAuth 2.0, Authorization Code com PKCE, JWT nas APIs e BFF web. | Decisão aprovada e registrada em [decisão 0003](decisions/0003-authentication.md), incluindo identidade interna e autorização por serviço. |
+| T00.05 — [x] Definir ferramentas locais e de testes | T00.03, T00.04 | SDK .NET 10, Compose, xUnit, WebApplicationFactory, Testcontainers PostgreSQL, ArchUnitNET, User Secrets, analisadores e GitHub Actions. | Ferramentas aprovadas na [decisão 0004](decisions/0004-tooling.md). Instalação/configuração e validação do motor Docker serão verificadas na preparação da implementação. |
+| T00.06 — [x] Definir convenções de API | T00.02 | JSON/camelCase, recursos em inglês, UUIDv7, Problem Details, cursor, idempotência seletiva, OpenAPI e /api/v1. | Convenções aprovadas pelo responsável e registradas na [decisão 0005](decisions/0005-api-conventions.md). |
+| T00.07 — [x] Revisar as decisões para iniciar P01 | T00.03, T00.04, T00.05, T00.06 | Decisões consolidadas, GetMyProfile delimitado e pré-requisitos operacionais identificados. | [Revisão P00](decisions/0006-p00-review.md) concluída; implementação e validação do ambiente continuam nas tarefas de P01. |
 
 #### Registro da decisão T00.01 — 27/10/2026
 
@@ -71,7 +71,7 @@ Cada linha abaixo é uma tarefa com ID estável, dependências diretas, entregá
 | T02.01 — [ ] Integrar validação da autenticação | T01.07 | Middleware/adaptador da solução escolhida e identificação do solicitante. | Credencial válida identifica o usuário; credenciais ausentes, inválidas ou expiradas não autorizam ações privadas. |
 | T02.02 — [ ] Vincular conta interna e funções | T02.01 | Associação estável de identidade externa, usuário interno e funções autorizadas. | Reidentificação não duplica conta; alterar corpo da requisição não concede função ou acesso a outra identidade. Política de cadastro e vínculo de artista está definida. |
 | T02.03 — [ ] Expor o próprio perfil com autorização | T02.02 | Consulta e atualização dos campos de perfil aprovados para a entrega. | Usuário não altera identidade ou permissões pelo formulário nem acessa perfil privado de terceiro. Validação e erros são testados. |
-| T02.04 — [ ] Selecionar e configurar o Gateway | T02.01, T00.06 | Decisão de ferramenta, rota de Identidade e validação de identidade na entrada. | Operação permitida funciona pela entrada pública; o Gateway roteia sem concentrar regra de negócio. |
+| T02.04 — [ ] Configurar Gateway e a base do BFF web | T02.01, T00.06 | Decisão de Gateway, rota de Identity e BFF .NET com login, sessão protegida, tokens no servidor e defesa CSRF apropriada. | APIs validam identidade; login/saída/expiração e requisições de sessão são testáveis sem frontend React. BFF não concentra regras de negócio. |
 | T02.05 — [ ] Definir identidade técnica entre serviços | T02.02, T02.04 | Contrato de autenticação e autorização para chamadas técnicas das primeiras integrações. | Chamador técnico só executa operações previstas; identidade de usuário não concede automaticamente capacidade de atuar como serviço. |
 | T02.06 — [ ] Verificar isolamento no Gateway e serviço | T02.03, T02.04, T02.05 | Testes com duas contas e funções distintas, incluindo acesso direto ao serviço. | Mudar identificador, sessão ou rota não expõe outra conta. A autorização não depende somente da passagem pelo Gateway. |
 
@@ -246,11 +246,11 @@ Cada linha abaixo é uma tarefa com ID estável, dependências diretas, entregá
 
 **Conclusão de P13:** entrega Android verificável e distribuída no ambiente acordado.
 
-## 4. Primeiro lote e acompanhamento
+## 4. Próximo lote e acompanhamento
 
-T00.01 está concluída quanto à definição e separação local. O próximo passo é T00.02: organização interna dos serviços e definição do primeiro caso de uso. Em seguida, T00.03 a T00.06 resolvem persistência, identidade, ferramentas e contratos; T00.07 consolida as decisões antes de criar código em P01. O repositório remoto já foi criado pelo responsável como `vitorvianna05/InkLink-Platform`.
+P00 foi concluída no nível de decisões e revisão. A [revisão T00.07](decisions/0006-p00-review.md) consolida os registros de T00.01 a T00.06 e o escopo do primeiro incremento. O próximo passo é T01.01: inicializar Identity. Todas as tarefas de P01 em diante continuam pendentes. Antes dos testes com contêineres, o motor Docker e as dependências locais precisam ser validados.
 
-Broker, pesquisa e stack móvel têm tarefas próprias quando se tornam necessários. Não precisam ser decididos no primeiro lote.
+Broker, pesquisa e stack móvel têm tarefas próprias quando se tornam necessários. Não precisam ser decididos no primeiro incremento de Identity.
 
 Ao concluir uma tarefa, manter referência à evidência e atualizar o marco do plano apenas quando seus critérios estiverem demonstrados. Bloqueios devem identificar a dependência concreta e a ação necessária, sem marcar tarefas incompletas como concluídas.
 
