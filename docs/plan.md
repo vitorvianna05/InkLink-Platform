@@ -208,7 +208,7 @@ Não é necessário esperar a etapa de validação integrada para criar testes, 
 - [ ] Criar Agenda com persistência, migrações e permissões próprias.
 - [ ] Implementar consulta de disponibilidade, calendário e reservas por artista e data.
 - [ ] Implementar a confirmação da reserva vinculada ao atendimento, ao cliente e ao artista.
-- [ ] Escolher e implementar a proteção transacional contra sobreposição adequada ao banco definido em P00.
+- [ ] Detalhar e implementar a proteção transacional por restrição de exclusão de intervalos no PostgreSQL para o mesmo artista, conforme decisão 0002, permitindo intervalos adjacentes com início incluído e término excluído. A modelagem deverá definir os estados de reserva que ocupam a agenda e a representação temporal apropriada.
 - [ ] Testar intervalos adjacentes, parcialmente sobrepostos, contidos e completamente envolventes.
 - [ ] Testar conflitos com solicitações simultâneas e repetição da mesma operação.
 - [ ] Publicar confirmação por Outbox e documentar o resultado síncrono da reserva.

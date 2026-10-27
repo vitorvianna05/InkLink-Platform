@@ -17,7 +17,7 @@ O `requirements.md` e os demais documentos Markdown utilizados em SDD são mutá
 
 ## 2. Contrato de referência
 
-Nesta versão, o contrato descreve os conceitos, dados essenciais e comportamentos da aplicação. Endpoints, formatos de requisição e resposta, banco de dados e organização interna serão especificados nas próximas etapas. As rotas técnicas e os identificadores do protótipo não precisam ser reproduzidos.
+Nesta versão, o contrato descreve os conceitos, dados essenciais e comportamentos da aplicação. A organização inicial, a persistência em PostgreSQL com EF Core/Npgsql 10, a autenticação com Keycloak e BFF web e as convenções de API já foram aprovadas em P00 e estão registradas em [architecture.md](architecture.md) e nas decisões correspondentes. Endpoints específicos, modelos de dados e detalhes de configuração serão refinados nas etapas de implementação, respeitando essa base. As rotas técnicas e os identificadores do protótipo não precisam ser reproduzidos.
 
 - **Cliente:** usuário que pesquisa artistas, salva favoritos, solicita orçamento, acompanha propostas, conversa e agenda serviços.
 - **Artista:** tatuador com identidade própria, estúdio, localização, biografia, estilos, portfólio e preço inicial de referência, que atende clientes e gerencia sua atividade.
@@ -54,7 +54,7 @@ A aplicação deve oferecer experiências próprias para cliente e artista, com 
 
 **Critérios de aceite:** o cliente acessa descoberta, exploração, seus pedidos, favoritos e conversas. O artista acessa dashboard, seus clientes, conversas, agenda e portfólio. A identificação do usuário e a autoria das ações permanecem coerentes com a área utilizada. O acesso a uma área não concede acesso aos dados particulares de outros usuários.
 
-O botão temporário de troca entre personagens do protótipo não é um requisito do produto. Cadastro, autenticação e a possibilidade de uma mesma pessoa exercer as duas funções serão detalhados posteriormente.
+O botão temporário de troca entre personagens do protótipo não é um requisito do produto. Cadastro e a possibilidade de uma mesma pessoa exercer as duas funções serão detalhados posteriormente. A base de autenticação já está definida na [decisão 0003](decisions/0003-authentication.md): Keycloak, OIDC/OAuth 2.0, PKCE, access tokens JWT e BFF web; sua configuração operacional será refinada antes da implementação correspondente.
 
 ### RF02 — Apresentar a página Descobrir
 
@@ -220,7 +220,7 @@ Controles interativos devem ser identificáveis e utilizáveis por teclado.
 
 A aplicação deve persistir os dados de negócio no backend e restringir consulta e alteração aos usuários autorizados.
 
-**Critérios de aceite:** favoritos, pedidos, propostas, mensagens, reservas e encerramentos permanecem após novos acessos. O backend verifica acesso e participação antes de consultar ou alterar dados privados. Alterar identificadores ou o estado local da interface não permite acessar dados de outra conta. Banco de dados, autenticação e mecanismos de autorização serão detalhados em especificações posteriores; o armazenamento local e a troca de personagens da demonstração não serão utilizados como substitutos dessas capacidades.
+**Critérios de aceite:** favoritos, pedidos, propostas, mensagens, reservas e encerramentos permanecem após novos acessos. O backend verifica acesso e participação antes de consultar ou alterar dados privados. Alterar identificadores ou o estado local da interface não permite acessar dados de outra conta. A persistência seguirá a [decisão 0002](decisions/0002-persistence.md), com PostgreSQL, EF Core/Npgsql 10 e isolamento por serviço. A autenticação seguirá a [decisão 0003](decisions/0003-authentication.md), com Keycloak e autorização por recurso nos serviços. Modelos de dados, configurações e políticas específicas serão detalhados na implementação; o armazenamento local e a troca de personagens da demonstração não serão utilizados como substitutos dessas capacidades.
 
 ### RNF05 — Validação e consistência dos estados
 
@@ -254,7 +254,7 @@ O roteiro de referência inclui: descobrir um artista; pesquisar com sugestões 
 
 Esta versão estabelece a fundação do produto: implementação independente em React para web, React Native para iOS e Android e backend .NET 10, descoberta e pesquisa de artistas, portfólio e flashes, negociação, conversas vinculadas ao atendimento e gestão do artista. Pagamentos diretamente no site permanecem fora do escopo por enquanto.
 
-Detalhes ainda não decididos serão tratados em atualizações incrementais dos documentos de SDD. Banco de dados, contratos de API, autenticação, disponibilidade, infraestrutura e políticas operacionais serão especificados conforme as próximas etapas exigirem. Não é necessário resolver todas essas questões nesta versão; sua ausência também não representa aprovação implícita de uma solução técnica.
+A fundação aprovada em P00 está registrada nas [decisões de organização](decisions/0001-organization.md), [persistência](decisions/0002-persistence.md), [autenticação](decisions/0003-authentication.md), [ferramentas](decisions/0004-tooling.md) e [convenções de API](decisions/0005-api-conventions.md). Permanecem para refinamento incremental os modelos de dados, endpoints específicos, versões e configurações operacionais, disponibilidade, infraestrutura de produção e políticas de negócio ainda não definidas. Esses detalhes serão especificados conforme as próximas etapas exigirem, sem reabrir implicitamente as escolhas aprovadas. Uma mudança nessa base exige atualização explícita da decisão correspondente.
 
 O `requirements.md` e os demais arquivos Markdown de SDD devem acompanhar a evolução do projeto. Requisitos e critérios podem ser acrescentados, ajustados ou removidos conforme as decisões do responsável pelo produto, mantendo coerência entre os documentos e o escopo vigente. O histórico do Git permitirá acompanhar essas mudanças.
 
