@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Options;
 using Npgsql;
 
@@ -43,6 +44,7 @@ public static class DependencyInjection
         services.AddDbContext<IdentityDbContext>((provider, options) => Configure(options,
             provider.GetRequiredService<IOptions<IdentityDatabaseOptions>>().Value.ConnectionString));
         services.AddScoped<Application.IProfileReader, EfProfileReader>();
+        services.AddHealthChecks().AddCheck<IdentityReadinessCheck>("identity-database", tags: ["ready"]);
         return services;
     }
 
@@ -63,5 +65,22 @@ public sealed class IdentityDbContextFactory : IDesignTimeDbContextFactory<Ident
         var options = new DbContextOptionsBuilder<IdentityDbContext>();
         DependencyInjection.Configure(options, configuration.ConnectionString);
         return new IdentityDbContext(options.Options);
+    }
+}
+
+internal sealed class IdentityReadinessCheck(IdentityDbContext database) : IHealthCheck
+{
+    public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await database.Profiles.Select(profile => profile.Id).Take(1).ToListAsync(cancellationToken);
+            return HealthCheckResult.Healthy();
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
+        catch (Exception)
+        {
+            return HealthCheckResult.Unhealthy("Identity database unavailable or schema not migrated.");
+        }
     }
 }
