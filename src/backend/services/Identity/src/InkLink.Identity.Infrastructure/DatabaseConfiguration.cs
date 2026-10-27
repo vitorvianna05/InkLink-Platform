@@ -42,6 +42,7 @@ public static class DependencyInjection
         services.AddOptions<IdentityDatabaseOptions>().Bind(configuration.GetSection(IdentityDatabaseOptions.Section)).ValidateOnStart();
         services.AddDbContext<IdentityDbContext>((provider, options) => Configure(options,
             provider.GetRequiredService<IOptions<IdentityDatabaseOptions>>().Value.ConnectionString));
+        services.AddScoped<Application.IProfileReader, EfProfileReader>();
         return services;
     }
 

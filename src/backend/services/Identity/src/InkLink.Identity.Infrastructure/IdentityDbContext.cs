@@ -18,3 +18,9 @@ public sealed class IdentityDbContext(DbContextOptions<IdentityDbContext> option
         });
     }
 }
+
+internal sealed class EfProfileReader(IdentityDbContext database) : Application.IProfileReader
+{
+    public Task<Profile?> FindByIdAsync(Guid id, CancellationToken cancellationToken) =>
+        database.Profiles.AsNoTracking().SingleOrDefaultAsync(profile => profile.Id == id, cancellationToken);
+}
