@@ -5,7 +5,7 @@ Nova aplicação InkLink, criada do zero e separada do protótipo.
 ## Organização
 
 - `docs/`: fonte oficial da documentação SDD.
-- `src/`: código da nova aplicação, a ser criado nas etapas de implementação.
+- `src/`: código da nova aplicação; primeiro serviço Identity em src/backend/services/Identity.
 
 O backend será desenvolvido em .NET 10 com microsserviços. Os canais previstos são website React e aplicativos iOS e Android em React Native. A prioridade inicial é o backend.
 
@@ -19,7 +19,9 @@ O backend será desenvolvido em .NET 10 com microsserviços. Os canais previstos
 
 ## Situação
 
-Estrutura inicial de documentação preparada. Nenhuma implementação do protótipo foi copiada. As decisões P00 foram revisadas e concluídas. O próximo passo é T01.01, início do serviço Identity com GetMyProfile; a implementação permanece pendente.
+P00 e P01 concluídas: Identity em .NET 10, PostgreSQL privado, GetMyProfile em host controlado, sinais operacionais, testes e CI. Nenhuma implementação do protótipo foi copiada. A próxima etapa é P02, autenticação e entrada protegida das APIs. O marco M1 ainda depende de P02.
+
+Consulte [execução e testes do Identity](docs/development/identity.md) e [evidências da P01](docs/verification/p01.md).
 
 Nome do repositório aprovado: `InkLink-Platform`. Repositório criado em https://github.com/vitorvianna05/InkLink-Platform.
 

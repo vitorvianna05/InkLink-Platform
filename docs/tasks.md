@@ -48,19 +48,23 @@ Cada linha abaixo é uma tarefa com ID estável, dependências diretas, entregá
 
 ### P01 — Fundação técnica do primeiro serviço
 
-**Referências:** RNF01, RNF04–RNF08. **Marco:** M1. **Situação inicial:** pendente.
+**Referências:** RNF01, RNF04–RNF08. **Marco:** M1. **Situação:** concluída; evidências em [verificação P01](verification/p01.md).
 
 | ID / tarefa | Dependências | Entregável | Aceite e verificação |
 | --- | --- | --- | --- |
-| T01.01 — [ ] Inicializar Identidade em .NET 10 | T00.07 | Solução nova com projetos necessários, composição e referências de camadas. | Build passa em net10.0; Domain não depende de transporte ou infraestrutura. Nenhum projeto referencia o código do protótipo. |
-| T01.02 — [ ] Configurar ambientes e segredos | T01.01 | Configuração de desenvolvimento/teste e exemplos sem credenciais. | Ausência de configuração obrigatória é identificada sem expor segredos. Não há substituição silenciosa de ambiente por configurações de teste. |
-| T01.03 — [ ] Criar a persistência privada inicial | T01.02 | Modelo de perfil, migração inicial e credencial do serviço. | Um banco limpo recebe a migração, nova execução não duplica estruturas e a credencial não permite acesso aos dados privados de outros contextos. |
-| T01.04 — [ ] Implementar o caso controlado de perfil | T01.03 | Caso de uso escolhido em P00 com validação e persistência real. | Teste de integração cria e consulta o perfil e rejeita dados inválidos. Antes de P02, o teste pode usar hospedeiro controlado, sem endpoint privado anônimo. |
-| T01.05 — [ ] Implementar erros e sinais operacionais | T01.04 | Tratamento de erros, saúde, prontidão, logs estruturados e correlação. | Erros respeitam T00.06 sem stack trace ou segredos; sinais distinguem processo ativo e dependência indisponível; uma requisição é rastreável. |
-| T01.06 — [ ] Configurar testes e restrições arquiteturais | T01.05 | Suítes unitária, integração e verificação da direção de dependências. | A execução é repetível; um cenário controlado comprova que referência proibida entre camadas é detectada. |
-| T01.07 — [ ] Automatizar build e validar execução limpa | T01.06 | Pipeline inicial e instruções de restauração, migração, execução e testes. | Um ambiente limpo executa a sequência documentada e falhas de teste impedem aprovação do build. |
+| T01.01 — [x] Inicializar Identidade em .NET 10 | T00.07 | Solução nova com projetos necessários, composição e referências de camadas. | Build passa em net10.0; Domain não depende de transporte ou infraestrutura. Nenhum projeto referencia o código do protótipo. |
+| T01.02 — [x] Configurar ambientes e segredos | T01.01 | Configuração de desenvolvimento/teste e exemplos sem credenciais. | Ausência de configuração obrigatória é identificada sem expor segredos. Não há substituição silenciosa de ambiente por configurações de teste. |
+| T01.03 — [x] Criar a persistência privada inicial | T01.02 | Modelo de perfil, migração inicial e credencial do serviço. | Um banco limpo recebe a migração, nova execução não duplica estruturas e a credencial não permite acesso aos dados privados de outros contextos. |
+| T01.04 — [x] Implementar o caso controlado de perfil | T01.03 | Caso de uso escolhido em P00 com validação e persistência real. | Teste de integração cria e consulta o perfil e rejeita dados inválidos. Antes de P02, o teste pode usar hospedeiro controlado, sem endpoint privado anônimo. |
+| T01.05 — [x] Implementar erros e sinais operacionais | T01.04 | Tratamento de erros, saúde, prontidão, logs estruturados e correlação. | Erros respeitam T00.06 sem stack trace ou segredos; sinais distinguem processo ativo e dependência indisponível; uma requisição é rastreável. |
+| T01.06 — [x] Configurar testes e restrições arquiteturais | T01.05 | Suítes unitária, integração e verificação da direção de dependências. | A execução é repetível; um cenário controlado comprova que referência proibida entre camadas é detectada. |
+| T01.07 — [x] Automatizar build e validar execução limpa | T01.06 | Pipeline inicial e instruções de restauração, migração, execução e testes. | Um ambiente limpo executa a sequência documentada e falhas de teste impedem aprovação do build. |
+
+**Evidência:** [verificação por tarefa, comandos e resultados](verification/p01.md); [execução local](development/identity.md). 29 testes aprovados, build Release sem avisos/erros e validação em cópia limpa. Workflow preparado; execução remota após envio ao GitHub. M1 ainda depende de P02.
 
 **Conclusão de P01:** primeiro serviço executável e verificável, com persistência e responsabilidades reais.
+
+**Revisão dos contratos:** os desvios de Problem Details por Accept e de schemas/respostas OpenAPI foram corrigidos. A suíte atual passou com 38 testes; detalhes na [verificação P01](verification/p01.md#correção-dos-contratos-após-revisão--27102026).
 
 ### P02 — Identidade, funções e entrada das APIs
 
@@ -248,7 +252,7 @@ Cada linha abaixo é uma tarefa com ID estável, dependências diretas, entregá
 
 ## 4. Próximo lote e acompanhamento
 
-P00 foi concluída no nível de decisões e revisão. A [revisão T00.07](decisions/0006-p00-review.md) consolida os registros de T00.01 a T00.06 e o escopo do primeiro incremento. O próximo passo é T01.01: inicializar Identity. Todas as tarefas de P01 em diante continuam pendentes. Antes dos testes com contêineres, o motor Docker e as dependências locais precisam ser validados.
+P00 foi concluída no nível de decisões e revisão. A [revisão T00.07](decisions/0006-p00-review.md) consolida os registros de T00.01 a T00.06 e o escopo do primeiro incremento. P01 foi implementada e verificada conforme [evidências](verification/p01.md), incluindo Docker e PostgreSQL real. O próximo passo é T02.01. As tarefas de P02 em diante permanecem pendentes.
 
 Broker, pesquisa e stack móvel têm tarefas próprias quando se tornam necessários. Não precisam ser decididos no primeiro incremento de Identity.
 

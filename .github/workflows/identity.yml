@@ -1,0 +1,31 @@
+name: Identity foundation
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - name: Restore tools and locked dependencies
+        run: |
+          dotnet tool restore
+          dotnet restore InkLink.Platform.slnx --locked-mode
+      - name: Check formatting
+        run: dotnet format InkLink.Platform.slnx --no-restore --verify-no-changes
+      - name: Build
+        run: dotnet build InkLink.Platform.slnx --no-restore --configuration Release --warnaserror
+      - name: Test with real PostgreSQL
+        run: dotnet test InkLink.Platform.slnx --no-build --configuration Release --logger "trx;LogFilePrefix=identity" --results-directory artifacts/test-results
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: identity-test-results
+          path: artifacts/test-results/*.trx
+          if-no-files-found: ignore

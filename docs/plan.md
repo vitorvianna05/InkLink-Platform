@@ -95,22 +95,26 @@ Não é necessário esperar a etapa de validação integrada para criar testes, 
 
 ### P01 — Construir a fundação técnica com um primeiro serviço executável
 
-**Prioridade:** backend. **Dependências:** P00. **Situação:** pendente.
+**Prioridade:** backend. **Dependências:** P00. **Situação:** concluída; [evidências P01](verification/p01.md).
 
 **Objetivo:** validar a estrutura .NET 10 por meio do início real de Identidade e perfis, sem uma solução composta apenas por projetos vazios.
 
-- [ ] Criar os projetos necessários ao primeiro serviço em `net10.0`.
-- [ ] Organizar API, Application, Domain e Infrastructure conforme a complexidade do primeiro caso de uso.
-- [ ] Configurar injeção de dependências e verificar a direção das referências entre camadas.
-- [ ] Configurar persistência privada, credenciais próprias e primeira migração.
-- [ ] Implementar configuração por ambiente e tratamento consistente de erros.
-- [ ] Disponibilizar sinais básicos de saúde e prontidão e documentação de execução.
-- [ ] Introduzir logs estruturados e correlação das requisições, sem conteúdo sensível.
-- [ ] Configurar testes unitários e de integração e uma verificação de dependências arquiteturais.
-- [ ] Configurar o processo inicial de build e testes automatizados.
-- [ ] Demonstrar acesso à persistência por um caso de uso controlado de Identidade, sem expor operações privadas anonimamente.
+- [x] Criar os projetos necessários ao primeiro serviço em `net10.0`.
+- [x] Organizar API, Application, Domain e Infrastructure conforme a complexidade do primeiro caso de uso.
+- [x] Configurar injeção de dependências e verificar a direção das referências entre camadas.
+- [x] Configurar persistência privada, credenciais próprias e primeira migração.
+- [x] Implementar configuração por ambiente e tratamento consistente de erros.
+- [x] Disponibilizar sinais básicos de saúde e prontidão e documentação de execução.
+- [x] Introduzir logs estruturados e correlação das requisições, sem conteúdo sensível.
+- [x] Configurar testes unitários e de integração e uma verificação de dependências arquiteturais.
+- [x] Configurar o processo inicial de build e testes automatizados.
+- [x] Demonstrar acesso à persistência por um caso de uso controlado de Identidade, sem expor operações privadas anonimamente.
 
 **Critério de conclusão:** um ambiente limpo consegue restaurar, compilar, iniciar e testar o serviço seguindo instruções documentadas. O núcleo de negócio não depende de HTTP ou do banco. A fundação é ampliada conforme novas necessidades surgirem, sem impor cópia de regras ou entidades entre serviços.
+
+**Evidência:** 29 testes aprovados em cópia limpa, build Release sem avisos/erros, migrações repetíveis e verificação local dos sinais operacionais. [Instruções](development/identity.md). A CI foi preparada e validada pela sequência local; execução remota após envio. M1 ainda depende de P02.
+
+**Revisão dos contratos:** os desvios de Problem Details por Accept e de schemas/respostas OpenAPI foram corrigidos. A suíte atual passou com 38 testes; detalhes na [verificação P01](verification/p01.md#correção-dos-contratos-após-revisão--27102026).
 
 ### P02 — Integrar identidade, funções e entrada das APIs
 
@@ -387,6 +391,6 @@ A conclusão de uma etapa não significa a conclusão automática das etapas dep
 
 ## 8. Próxima ação
 
-Iniciar T01.01: criar a solução e os projetos necessários do serviço Identity em .NET 10, conforme a [revisão de P00](decisions/0006-p00-review.md). P00 está concluída quanto às decisões; P01 permanece pendente.
+Iniciar T02.01: integrar validação de autenticação no Identity. P00 e P01 estão concluídas em seus respectivos escopos; a [verificação P01](verification/p01.md) registra a implementação e os testes.
 
-A primeira entrega utiliza GetMyProfile com persistência real e testes controlados. Validação do Docker, configurações e versões compatíveis acompanham a preparação da implementação; não são consideradas realizadas pela conclusão documental de P00. Keycloak, Gateway e BFF serão integrados em P02.
+GetMyProfile está implementado com persistência real e testes controlados. Docker, configurações, migrações e versões foram validados na P01. Keycloak, Gateway e BFF serão integrados em P02; o perfil privado ainda não possui transporte público.
