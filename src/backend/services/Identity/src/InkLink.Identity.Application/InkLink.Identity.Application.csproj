@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="../InkLink.Identity.Domain/InkLink.Identity.Domain.csproj" />
+  </ItemGroup>
+</Project>

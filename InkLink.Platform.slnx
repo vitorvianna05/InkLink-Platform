@@ -1,0 +1,17 @@
+<Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/backend/" />
+  <Folder Name="/src/backend/services/" />
+  <Folder Name="/src/backend/services/Identity/" />
+  <Folder Name="/src/backend/services/Identity/src/">
+    <Project Path="src/backend/services/Identity/src/InkLink.Identity.Api/InkLink.Identity.Api.csproj" />
+    <Project Path="src/backend/services/Identity/src/InkLink.Identity.Application/InkLink.Identity.Application.csproj" />
+    <Project Path="src/backend/services/Identity/src/InkLink.Identity.Domain/InkLink.Identity.Domain.csproj" />
+    <Project Path="src/backend/services/Identity/src/InkLink.Identity.Infrastructure/InkLink.Identity.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/backend/services/Identity/tests/">
+    <Project Path="src/backend/services/Identity/tests/InkLink.Identity.ArchitectureTests/InkLink.Identity.ArchitectureTests.csproj" />
+    <Project Path="src/backend/services/Identity/tests/InkLink.Identity.IntegrationTests/InkLink.Identity.IntegrationTests.csproj" />
+    <Project Path="src/backend/services/Identity/tests/InkLink.Identity.UnitTests/InkLink.Identity.UnitTests.csproj" />
+  </Folder>
+</Solution>
