@@ -17,4 +17,7 @@
     <Project Path="src/backend/services/Identity/tests/InkLink.Identity.IntegrationTests/InkLink.Identity.IntegrationTests.csproj" />
     <Project Path="src/backend/services/Identity/tests/InkLink.Identity.UnitTests/InkLink.Identity.UnitTests.csproj" />
   </Folder>
+  <Folder Name="/src/backend/services/Identity/tools/">
+    <Project Path="src/backend/services/Identity/tools/InkLink.Identity.Admin/InkLink.Identity.Admin.csproj" />
+  </Folder>
 </Solution>

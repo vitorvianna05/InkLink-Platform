@@ -23,6 +23,28 @@ namespace InkLink.Identity.Infrastructure.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("InkLink.Identity.Domain.ExternalAccount", b =>
+                {
+                    b.Property<string>("Issuer")
+                        .HasColumnType("text")
+                        .HasColumnName("issuer");
+
+                    b.Property<string>("Subject")
+                        .HasColumnType("text")
+                        .HasColumnName("subject");
+
+                    b.Property<Guid>("ProfileId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("profile_id");
+
+                    b.HasKey("Issuer", "Subject");
+
+                    b.HasIndex("ProfileId")
+                        .IsUnique();
+
+                    b.ToTable("external_accounts", "identity");
+                });
+
             modelBuilder.Entity("InkLink.Identity.Domain.Profile", b =>
                 {
                     b.Property<Guid>("Id")
@@ -34,12 +56,27 @@ namespace InkLink.Identity.Infrastructure.Migrations
                         .HasColumnType("text")
                         .HasColumnName("display_name");
 
+                    b.Property<bool>("IsArtist")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_artist");
+
                     b.HasKey("Id");
 
                     b.ToTable("profiles", "identity", t =>
                         {
                             t.HasCheckConstraint("ck_profiles_display_name", "length(btrim(display_name)) > 0");
                         });
+                });
+
+            modelBuilder.Entity("InkLink.Identity.Domain.ExternalAccount", b =>
+                {
+                    b.HasOne("InkLink.Identity.Domain.Profile", null)
+                        .WithOne()
+                        .HasForeignKey("InkLink.Identity.Domain.ExternalAccount", "ProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

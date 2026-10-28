@@ -44,6 +44,7 @@ public static class DependencyInjection
         services.AddDbContext<IdentityDbContext>((provider, options) => Configure(options,
             provider.GetRequiredService<IOptions<IdentityDatabaseOptions>>().Value.ConnectionString));
         services.AddScoped<Application.IProfileReader, EfProfileReader>();
+        services.AddScoped<Application.IAccountStore, EfAccountStore>();
         services.AddHealthChecks().AddCheck<IdentityReadinessCheck>("identity-database", tags: ["ready"]);
         return services;
     }
@@ -74,7 +75,8 @@ internal sealed class IdentityReadinessCheck(IdentityDbContext database) : IHeal
     {
         try
         {
-            await database.Profiles.Select(profile => profile.Id).Take(1).ToListAsync(cancellationToken);
+            await database.Profiles.Select(profile => new { profile.Id, profile.IsArtist }).Take(1).ToListAsync(cancellationToken);
+            await database.ExternalAccounts.Select(account => account.ProfileId).Take(1).ToListAsync(cancellationToken);
             return HealthCheckResult.Healthy();
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
