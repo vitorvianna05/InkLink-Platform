@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OpenApi;
@@ -21,8 +20,10 @@ internal sealed class ApiProblemDetailsWriter(IOptions<ProblemDetailsOptions> op
         problem.Type ??= "about:blank";
         options.Value.CustomizeProblemDetails?.Invoke(context);
         context.HttpContext.Response.StatusCode = problem.Status.Value;
-        return new(context.HttpContext.Response.WriteAsJsonAsync(problem, (JsonSerializerOptions?)null,
-            "application/problem+json", context.HttpContext.RequestAborted));
+        context.HttpContext.Response.ContentType = "application/problem+json";
+        var json = context.HttpContext.RequestServices.GetRequiredService<IOptions<Microsoft.AspNetCore.Http.Json.JsonOptions>>().Value.SerializerOptions;
+        return new(JsonSerializer.SerializeAsync(context.HttpContext.Response.Body, problem, problem.GetType(), json,
+            context.HttpContext.RequestAborted));
     }
 }
 
@@ -30,7 +31,7 @@ internal sealed class ProblemDetailsSchemaTransformer : IOpenApiSchemaTransforme
 {
     public Task TransformAsync(OpenApiSchema schema, OpenApiSchemaTransformerContext context, CancellationToken cancellationToken)
     {
-        if (context.JsonTypeInfo.Type != typeof(ProblemDetails)) return Task.CompletedTask;
+        if (!typeof(ProblemDetails).IsAssignableFrom(context.JsonTypeInfo.Type)) return Task.CompletedTask;
         schema.Properties ??= new Dictionary<string, IOpenApiSchema>();
         schema.Properties["code"] = new OpenApiSchema
         {

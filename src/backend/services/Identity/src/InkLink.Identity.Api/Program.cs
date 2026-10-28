@@ -1,18 +1,26 @@
-using System.Diagnostics;
+using InkLink.Authentication;
 using InkLink.Identity.Api;
 using InkLink.Identity.Application;
 using InkLink.Identity.Infrastructure;
+using InkLink.Observability;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using System.Diagnostics;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Logging.ClearProviders();
 builder.Logging.AddJsonConsole(options => options.IncludeScopes = true);
 builder.Services.AddIdentityInfrastructure(builder.Configuration);
 builder.Services.AddScoped<GetMyProfile>();
-builder.Services.AddScoped<ICurrentUser, UnavailableCurrentUser>();
-builder.Services.AddOpenApi(options => options.AddSchemaTransformer<ProblemDetailsSchemaTransformer>());
+builder.Services.AddScoped<UpdateMyProfile>();
+builder.Services.AddScoped<ProvisionAccount>();
+builder.Services.AddInkLinkAccessTokens(builder.Configuration, builder.Environment);
+builder.Services.AddScoped<CallerContext>();
+builder.Services.AddScoped<ICurrentUser>(provider => provider.GetRequiredService<CallerContext>());
+builder.Services.Configure<RouteHandlerOptions>(options => options.ThrowOnBadRequest = true);
+builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow);
 builder.Services.AddSingleton<IProblemDetailsWriter, ApiProblemDetailsWriter>();
 builder.Services.AddProblemDetails(options => options.CustomizeProblemDetails = context =>
 {
@@ -20,27 +28,18 @@ builder.Services.AddProblemDetails(options => options.CustomizeProblemDetails = 
     context.ProblemDetails.Extensions.TryAdd("code", "http." + context.ProblemDetails.Status);
 });
 builder.Services.AddExceptionHandler<SanitizedExceptionHandler>();
-var app = builder.Build();
-app.Use(async (context, next) =>
+builder.Services.AddOpenApi(options =>
 {
-    var traceId = Activity.Current?.TraceId.ToString() ?? context.TraceIdentifier;
-    context.Response.OnStarting(() =>
-    {
-        context.Response.Headers["X-Trace-Id"] = traceId;
-        return Task.CompletedTask;
-    });
-    using var scope = app.Logger.BeginScope(new Dictionary<string, object> { ["traceId"] = traceId });
-    var start = Stopwatch.GetTimestamp();
-    try { await next(context); }
-    finally
-    {
-        app.Logger.LogInformation("HTTP {Method} {Path} returned {StatusCode} in {ElapsedMs} ms",
-            context.Request.Method, context.Request.Path.Value, context.Response.StatusCode,
-            Stopwatch.GetElapsedTime(start).TotalMilliseconds);
-    }
+    options.AddSchemaTransformer<ProblemDetailsSchemaTransformer>();
+    options.AddOperationTransformer<AuthenticationOpenApi>();
 });
+var app = builder.Build();
+app.UseCorrelatedRequestLogging();
 app.UseExceptionHandler();
 app.UseStatusCodePages();
+app.UseAuthentication();
+app.UseAuthorization();
+app.UseMiddleware<CallerMiddleware>();
 app.MapGet("/health/live", () => TypedResults.Ok(new HealthResponse("Healthy")))
     .WithSummary("Check process liveness")
     .WithDescription("Returns 200 while the process responds; does not query the database.")
@@ -58,25 +57,39 @@ app.MapGet("/health/ready", async (HealthCheckService health, CancellationToken 
     .ProducesProblem(StatusCodes.Status503ServiceUnavailable)
     .ProducesProblem(StatusCodes.Status500InternalServerError);
 if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Testing")) app.MapOpenApi();
-// The private profile transport and trusted caller adapter are introduced in P02.
+app.MapGet("/api/v1/profiles/me", async (GetMyProfile query, CallerContext caller, CancellationToken cancellationToken) =>
+{
+    var result = await query.ExecuteAsync(cancellationToken);
+    return result.Status == ProfileStatus.Found
+        ? Results.Ok(new MyProfileResponse(result.Profile!.Id, result.Profile.DisplayName, caller.IsArtist ? ["Client", "Artist"] : ["Client"]))
+        : Results.Problem(statusCode: result.Status == ProfileStatus.Unauthenticated ? 401 : 404);
+}).RequireAuthorization(AccessTokens.UserPolicy).WithMetadata(new CurrentAccountEndpoint()).Produces<MyProfileResponse>().ProducesProblem(401).ProducesProblem(403).ProducesProblem(404).ProducesProblem(StatusCodes.Status500InternalServerError);
+app.MapPut("/api/v1/profiles/me", async (RenameProfileRequest request, UpdateMyProfile command, CancellationToken cancellationToken) =>
+{
+    var result = await command.ExecuteAsync(request.DisplayName, cancellationToken);
+    return result switch
+    {
+        UpdateProfileStatus.Updated => Results.NoContent(),
+        UpdateProfileStatus.InvalidName => Results.ValidationProblem(new Dictionary<string, string[]> { ["displayName"] = ["Display name is required."] }),
+        _ => Results.Problem(statusCode: result == UpdateProfileStatus.Unauthenticated ? 401 : 404)
+    };
+}).RequireAuthorization(AccessTokens.UserPolicy).WithMetadata(new CurrentAccountEndpoint()).Produces(204).ProducesValidationProblem().ProducesProblem(401).ProducesProblem(403).ProducesProblem(404).ProducesProblem(StatusCodes.Status500InternalServerError);
+
 app.Run();
 
-public partial class Program;
-internal sealed class UnavailableCurrentUser : ICurrentUser { public Guid? UserId => null; }
+public partial class IdentityProgram;
 internal sealed class SanitizedExceptionHandler(IProblemDetailsService problems) : IExceptionHandler
 {
     public async ValueTask<bool> TryHandleAsync(HttpContext context, Exception exception, CancellationToken cancellationToken)
     {
-        context.Response.StatusCode = 500;
-        return await problems.TryWriteAsync(new ProblemDetailsContext
-        {
-            HttpContext = context,
-            ProblemDetails = new ProblemDetails
-            {
-                Status = 500,
-                Title = "An unexpected error occurred.",
-                Extensions = { ["code"] = "internal_error" }
-            }
-        });
+        var status = exception is BadHttpRequestException badRequest ? badRequest.StatusCode : 500;
+        ProblemDetails problem = status == 400
+            ? new HttpValidationProblemDetails(new Dictionary<string, string[]> { ["body"] = ["The request body has unknown fields or invalid values."] })
+            : new ProblemDetails();
+        problem.Status = status;
+        problem.Title = status < 500 ? "Invalid request." : "An unexpected error occurred.";
+        problem.Extensions["code"] = status < 500 ? "request.invalid" : "internal_error";
+        context.Response.StatusCode = status;
+        return await problems.TryWriteAsync(new ProblemDetailsContext { HttpContext = context, ProblemDetails = problem });
     }
 }

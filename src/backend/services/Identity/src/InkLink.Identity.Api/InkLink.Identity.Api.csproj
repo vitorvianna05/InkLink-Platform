@@ -3,6 +3,8 @@
     <UserSecretsId>inklink-identity-development</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="../../../../building-blocks/InkLink.Observability/InkLink.Observability.csproj" />
+    <ProjectReference Include="../../../../building-blocks/InkLink.Authentication/InkLink.Authentication.csproj" />
     <ProjectReference Include="../InkLink.Identity.Application/InkLink.Identity.Application.csproj" />
     <ProjectReference Include="../InkLink.Identity.Infrastructure/InkLink.Identity.Infrastructure.csproj" />
   </ItemGroup>

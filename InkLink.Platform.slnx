@@ -3,6 +3,7 @@
   <Folder Name="/src/backend/" />
   <Folder Name="/src/backend/building-blocks/">
     <Project Path="src/backend/building-blocks/InkLink.Authentication/InkLink.Authentication.csproj" />
+    <Project Path="src/backend/building-blocks/InkLink.Observability/InkLink.Observability.csproj" />
   </Folder>
   <Folder Name="/src/backend/services/" />
   <Folder Name="/src/backend/services/Identity/" />
