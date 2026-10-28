@@ -1,6 +1,9 @@
 <Solution>
   <Folder Name="/src/" />
   <Folder Name="/src/backend/" />
+  <Folder Name="/src/backend/building-blocks/">
+    <Project Path="src/backend/building-blocks/InkLink.Authentication/InkLink.Authentication.csproj" />
+  </Folder>
   <Folder Name="/src/backend/services/" />
   <Folder Name="/src/backend/services/Identity/" />
   <Folder Name="/src/backend/services/Identity/src/">
