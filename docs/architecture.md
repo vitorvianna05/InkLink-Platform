@@ -174,6 +174,8 @@ O bootstrap e a ativação de contas em Identity são coordenados por casos de u
 
 Interfaces devem ficar na camada que define a necessidade. Entidades de domínio não são contratos HTTP nem eventos públicos compartilhados. O domínio não deve depender de framework web, broker ou detalhes de persistência.
 
+A composição dos executáveis fica em `Program.cs`, com chamadas explícitas para métodos de extensão separados por contexto nas pastas `Extensions/` dos respectivos hosts. Registros de casos de uso, autenticação, persistência, contratos HTTP, documentação, observabilidade, proxy e endpoints permanecem segregados conforme a responsabilidade. Essas extensões não recebem regras de negócio nem introduzem dependências web em Application ou Domain. A ordem dos middlewares deve permanecer visível e respeitar correlação, tratamento de erros, autenticação, autorização e proteções específicas do canal. A ferramenta administrativa mantém sua composição e seu adaptador de linha de comando separados do caso de uso de ativação.
+
 ### 5.2 Organização por funcionalidade
 
 Os casos de uso serão organizados por funcionalidade, combinando Vertical Slices com as fronteiras das camadas.
