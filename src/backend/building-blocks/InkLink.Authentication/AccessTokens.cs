@@ -87,7 +87,10 @@ public static class AccessTokens
         {
             options.AddPolicy(UserPolicy, policy => policy.RequireAuthenticatedUser()
                 .RequireAssertion(context => IsUser(context.User, settings)));
-
+            options.AddPolicy(TechnicalPolicy, policy => policy.RequireAuthenticatedUser().RequireAssertion(context =>
+                context.User.FindFirstValue("inklink_actor") == "service"
+                && settings.TechnicalClients.Contains(context.User.FindFirstValue("azp"), StringComparer.Ordinal)
+                && (context.User.FindFirstValue("scope") ?? "").Split(' ').Contains("identity.profile.read", StringComparer.Ordinal)));
         });
         return services;
     }

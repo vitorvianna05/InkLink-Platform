@@ -74,7 +74,11 @@ app.MapPut("/api/v1/profiles/me", async (RenameProfileRequest request, UpdateMyP
         _ => Results.Problem(statusCode: result == UpdateProfileStatus.Unauthenticated ? 401 : 404)
     };
 }).RequireAuthorization(AccessTokens.UserPolicy).WithMetadata(new CurrentAccountEndpoint()).Produces(204).ProducesValidationProblem().ProducesProblem(401).ProducesProblem(403).ProducesProblem(404).ProducesProblem(StatusCodes.Status500InternalServerError);
-
+app.MapGet("/api/v1/internal/profiles/{id:guid}", async (Guid id, IProfileReader profiles, CancellationToken cancellationToken) =>
+{
+    var profile = await profiles.FindByIdAsync(id, cancellationToken);
+    return profile is null ? Results.NotFound() : Results.Ok(new ProfileResponse(profile.Id, profile.DisplayName));
+}).RequireAuthorization(AccessTokens.TechnicalPolicy).Produces<ProfileResponse>().ProducesProblem(401).ProducesProblem(403).ProducesProblem(404).ProducesProblem(StatusCodes.Status500InternalServerError);
 app.Run();
 
 public partial class IdentityProgram;
