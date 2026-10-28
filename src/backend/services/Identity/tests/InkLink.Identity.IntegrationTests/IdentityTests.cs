@@ -16,7 +16,7 @@ public sealed class IdentityTests(PostgresFixture postgres) : IClassFixture<Post
     {
         await using var database = postgres.CreateOwnerContext();
         await database.Database.MigrateAsync();
-        Assert.Single(await database.Database.GetAppliedMigrationsAsync());
+        Assert.Equal(2, (await database.Database.GetAppliedMigrationsAsync()).Count());
         Assert.Empty(await database.Database.GetPendingMigrationsAsync());
     }
 
@@ -50,7 +50,7 @@ public sealed class IdentityTests(PostgresFixture postgres) : IClassFixture<Post
         using var client = host.CreateClient();
         var response = await client.GetAsync("/api/v1/profiles/" + other.Id);
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
-        Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync("/api/v1/profiles/me")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/api/v1/profiles/me")).StatusCode);
     }
 
     [Fact]

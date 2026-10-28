@@ -12,7 +12,7 @@ public sealed class LayerTests
 {
     private static readonly Architecture Architecture = new ArchLoader().LoadAssemblies(
         typeof(Profile).Assembly, typeof(GetMyProfile).Assembly,
-        typeof(IdentityDbContext).Assembly, typeof(Program).Assembly, typeof(ForbiddenFixture).Assembly).Build();
+        typeof(IdentityDbContext).Assembly, typeof(IdentityProgram).Assembly, typeof(ForbiddenFixture).Assembly).Build();
 
     [Theory]
     [InlineData("InkLink.Identity.Domain", "InkLink.Identity.Application")]

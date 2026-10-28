@@ -4,7 +4,7 @@
 
 Primeiro serviço da aplicação definitiva, criado do zero em .NET 10. Domain contém Profile; Application contém a consulta GetMyProfile e as portas ICurrentUser/IProfileReader; Infrastructure implementa EF Core/Npgsql; Api compõe as dependências e os sinais operacionais.
 
-A consulta recebe somente a identidade interna do contexto confiável e devolve ID e nome de exibição. Não recebe um ID arbitrário de outra pessoa. O host de integração fornece a identidade controlada e a fixture persiste perfis reais. O host normal não reconhece usuários: não existe endpoint público de perfil nesta etapa. Keycloak, vínculo da identidade externa, autorização, Gateway e BFF pertencem à P02.
+A consulta recebe somente a identidade interna do contexto confiável e devolve ID e nome de exibição. Não recebe um ID arbitrário de outra pessoa. O host de integração fornece a identidade controlada e a fixture persiste perfis reais. Essa foi a base da P01. A P02 acrescentou Keycloak, vínculo externo/interno, autorização, Gateway e BFF; veja o [guia atual de autenticação](authentication.md). O perfil agora possui transporte HTTP autenticado.
 
 ## Pré-requisitos
 
@@ -44,7 +44,7 @@ O bootstrap só roda na criação do volume. Alterar .env.local depois de criar 
 docker compose --env-file .env.local -f src/backend/compose.yaml down
 ~~~
 
-Para outros ambientes, forneça IdentityDatabase__ConnectionString pelo gerenciador de segredos/ambiente, com host, database, username e password. A aplicação falha no startup se a configuração estiver ausente, incompleta ou inválida, com mensagem sanitizada. Ambiente Testing não é selecionado automaticamente nem oferece configuração substituta. A conexão é validada sintaticamente no startup; sua disponibilidade é verificada pela prontidão.
+Para outros ambientes, forneça IdentityDatabase__ConnectionString pelo gerenciador de segredos/ambiente, com host, database, username e password. A P02 também exige a configuração Authentication de issuer, audience e clientes; consulte o [guia atual](authentication.md). A aplicação falha no startup se a configuração estiver ausente, incompleta ou inválida, com mensagem sanitizada. Ambiente Testing não é selecionado automaticamente nem oferece configuração substituta. A conexão é validada sintaticamente no startup; sua disponibilidade é verificada pela prontidão.
 
 ## Migrações controladas
 
@@ -64,8 +64,8 @@ A geração usa a factory de design e exige IdentityDatabase__ConnectionString v
 | --- | --- |
 | GET /health/live | 200 enquanto o processo responde; independe de consulta ao PostgreSQL. |
 | GET /health/ready | 200 quando consegue consultar a tabela profiles; 503 se o banco estiver indisponível, sem permissão ou sem migração. |
-| GET /openapi/v1.json | Documento dos sinais atuais, com schema do corpo 200, erro 503 de prontidão e erros 500; somente em Development/Testing. |
-| GET /api/v1/profiles/me | Ainda não implementada publicamente; 404. Exposição protegida em P02. |
+| GET /openapi/v1.json | Documento dos sinais operacionais e perfis protegidos, incluindo schemas de sucesso, erros e Bearer; somente em Development/Testing. |
+| GET /api/v1/profiles/me | Implementada em P02: 200 para o próprio usuário autenticado; 401/403 para credenciais ausentes ou sem autorização. |
 
 Erros HTTP usam application/problem+json, status, code e traceId, inclusive quando Accept solicita texto, HTML ou XML. O contrato de erro permanece JSON independentemente da preferência de mídia do cliente. Exceções inesperadas retornam internal_error sem mensagem interna ou stack trace. Indisponibilidade retorna identity.database_unavailable. O cabeçalho X-Trace-Id corresponde ao campo traceId do problema e ao escopo dos logs JSON. O middleware registra método, caminho sem query, status e duração; não registra corpo, autorização ou connection string. Logs detalhados do EF e de exceções automáticas são filtrados para preservar essa política. A investigação usa a correlação, sem habilitar dados sensíveis em produção.
 

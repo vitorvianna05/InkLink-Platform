@@ -22,7 +22,7 @@ ID token do login não é usado como access token das APIs. Identidade técnica 
 
 O navegador não mantém os access/refresh tokens do provedor como estado de aplicação. A sessão usa cookie com proteção apropriada, incluindo HttpOnly e Secure no ambiente publicado, política SameSite compatível e defesa contra CSRF nas operações necessárias.
 
-Sessões e tokens no BFF devem permitir execução com múltiplas instâncias. O mecanismo de armazenamento e proteção de sessão, tempo de vida, renovação e saída será detalhado antes da implementação. Um cookie de sessão não elimina a necessidade de autorização nos serviços.
+Sessões e tokens no BFF devem permitir execução com múltiplas instâncias. O mecanismo de armazenamento e proteção de sessão, tempo de vida, renovação e saída foi detalhado para P02 na [decisão 0007](0007-p02-identity-and-sessions.md). Um cookie de sessão não elimina a necessidade de autorização nos serviços.
 
 ## Desenvolvimento e fases
 
@@ -40,7 +40,7 @@ Keycloak foi escolhido para utilizar uma solução dedicada e pronta para autent
 
 A opção de SPA web conduzindo diretamente o fluxo foi preterida em favor do BFF, para manter tokens no servidor. A decisão acrescenta responsabilidades explícitas de sessão, CSRF e operação do BFF.
 
-Cadastro público, ativação de artista, coexistência de funções e tempos de sessão continuam sujeitos a definição antes dos casos de uso correspondentes. Esta decisão não instala Keycloak ou implementa autenticação.
+Cadastro administrativo, ativação de artista, coexistência de funções e sessão inicial foram refinados na decisão 0007. Esta decisão 0003 registra a seleção original; a implementação e a verificação de P02 estão registradas em [verificação P02](../verification/p02.md).
 
 ## Referências
 

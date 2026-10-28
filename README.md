@@ -19,9 +19,9 @@ O backend será desenvolvido em .NET 10 com microsserviços. Os canais previstos
 
 ## Situação
 
-P00 e P01 concluídas: Identity em .NET 10, PostgreSQL privado, GetMyProfile em host controlado, sinais operacionais, testes e CI. Nenhuma implementação do protótipo foi copiada. A próxima etapa é P02, autenticação e entrada protegida das APIs. O marco M1 ainda depende de P02.
+P00, P01 e P02 concluídas: Identity .NET 10 com PostgreSQL privado, perfis protegidos por Keycloak, funções locais, Gateway YARP e BFF com sessão no servidor. Marco M1 atingido; 71 testes aprovados. Nenhuma implementação do protótipo foi copiada. A próxima etapa é P03, Catálogo.
 
-Consulte [execução e testes do Identity](docs/development/identity.md) e [evidências da P01](docs/verification/p01.md).
+Consulte [execução de Identity, Gateway e BFF](docs/development/authentication.md), [evidências da P02](docs/verification/p02.md) e o [histórico da P01](docs/verification/p01.md).
 
 Nome do repositório aprovado: `InkLink-Platform`. Repositório criado em https://github.com/vitorvianna05/InkLink-Platform.
 

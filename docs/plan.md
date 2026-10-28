@@ -118,23 +118,27 @@ Não é necessário esperar a etapa de validação integrada para criar testes, 
 
 ### P02 — Integrar identidade, funções e entrada das APIs
 
-**Prioridade:** backend. **Dependências:** P01. **Situação:** pendente.
+**Prioridade:** backend. **Dependências:** P01. **Situação:** concluída; [evidências P02](verification/p02.md).
 
 **Objetivo:** estabelecer identidade e autorização antes dos fluxos privados de cliente e artista.
 
-- [ ] Implementar a integração com o mecanismo de autenticação escolhido.
-- [ ] Associar a identidade autenticada a usuários internos e funções permitidas.
-- [ ] Disponibilizar os casos mínimos de consulta e manutenção do perfil previstos para a entrega.
-- [ ] Definir a política inicial de cadastro e vínculo de artista necessária às etapas seguintes.
-- [ ] Introduzir o Gateway, o roteamento e a base do BFF web .NET, com sessão protegida e tokens no servidor, testável sem a interface React.
-- [ ] Validar identidade no Gateway e no serviço e contextualizar o usuário nas operações.
-- [ ] Definir a identidade técnica para chamadas entre serviços quando necessária.
-- [ ] Testar sessão inválida, ausência de permissão e tentativa de acessar outro usuário.
-- [ ] Usar identidades de teste controladas, sem transportar o botão de personagens do protótipo para a aplicação real.
+- [x] Implementar a integração com o mecanismo de autenticação escolhido.
+- [x] Associar a identidade autenticada a usuários internos e funções permitidas.
+- [x] Disponibilizar os casos mínimos de consulta e manutenção do perfil previstos para a entrega.
+- [x] Definir a política inicial de cadastro e vínculo de artista necessária às etapas seguintes.
+- [x] Introduzir o Gateway, o roteamento e a base do BFF web .NET, com sessão protegida e tokens no servidor, testável sem a interface React.
+- [x] Validar identidade no Gateway e no serviço e contextualizar o usuário nas operações.
+- [x] Definir a identidade técnica para chamadas entre serviços quando necessária.
+- [x] Testar sessão inválida, ausência de permissão e tentativa de acessar outro usuário.
+- [x] Usar identidades de teste controladas, sem transportar o botão de personagens do protótipo para a aplicação real.
 
 **Critério de conclusão:** usuários de teste identificados como cliente e artista realizam somente as operações permitidas, com verificação no backend. O Gateway não substitui autorização por recurso dentro dos serviços.
 
 **Rastreabilidade:** RF01, RF21; RNF01, RNF04, RNF05 e RNF08.
+
+**Evidência e marco:** [71 testes aprovados e conferência local dos processos](verification/p02.md), com Keycloak e PostgreSQL reais. M1 atingido: primeiro serviço executável, identidade integrada e entrada protegida por Gateway/BFF. Não inclui frontend ou infraestrutura de produção.
+
+**Revisão de conformidade (28/10/2026):** corrigidas resolução por endpoint, coordenação em Application, respostas 500 no OpenAPI e logs correlacionados nos três componentes. [Evidências](verification/p02.md).
 
 ### P03 — Implementar Catálogo e o primeiro fluxo de pesquisa
 
@@ -391,6 +395,6 @@ A conclusão de uma etapa não significa a conclusão automática das etapas dep
 
 ## 8. Próxima ação
 
-Iniciar T02.01: integrar validação de autenticação no Identity. P00 e P01 estão concluídas em seus respectivos escopos; a [verificação P01](verification/p01.md) registra a implementação e os testes.
+Iniciar T03.01: criar Catálogo com persistência própria e rota no Gateway. P00, P01 e P02 estão concluídas em seus respectivos escopos; a [verificação P02](verification/p02.md) consolida a integração de identidade e o marco M1.
 
-GetMyProfile está implementado com persistência real e testes controlados. Docker, configurações, migrações e versões foram validados na P01. Keycloak, Gateway e BFF serão integrados em P02; o perfil privado ainda não possui transporte público.
+GetMyProfile possui transporte autenticado, atualização controlada de nome, vínculo externo/interno e funções locais. Keycloak, Gateway e BFF estão integrados e verificados em P02. Os próximos fluxos continuam priorizando backend, com autorização própria em cada serviço.

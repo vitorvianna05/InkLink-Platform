@@ -54,7 +54,7 @@ A aplicação deve oferecer experiências próprias para cliente e artista, com 
 
 **Critérios de aceite:** o cliente acessa descoberta, exploração, seus pedidos, favoritos e conversas. O artista acessa dashboard, seus clientes, conversas, agenda e portfólio. A identificação do usuário e a autoria das ações permanecem coerentes com a área utilizada. O acesso a uma área não concede acesso aos dados particulares de outros usuários.
 
-O botão temporário de troca entre personagens do protótipo não é um requisito do produto. Cadastro e a possibilidade de uma mesma pessoa exercer as duas funções serão detalhados posteriormente. A base de autenticação já está definida na [decisão 0003](decisions/0003-authentication.md): Keycloak, OIDC/OAuth 2.0, PKCE, access tokens JWT e BFF web; sua configuração operacional será refinada antes da implementação correspondente.
+O botão temporário de troca entre personagens do protótipo não é um requisito do produto. Na política inicial de P02, contas são criadas administrativamente no Keycloak, recebem Client no primeiro acesso e podem receber Artist por operação administrativa, mantendo as duas funções, conforme a [decisão 0007](decisions/0007-p02-identity-and-sessions.md). A base de autenticação já está definida na [decisão 0003](decisions/0003-authentication.md): Keycloak, OIDC/OAuth 2.0, PKCE, access tokens JWT e BFF web; sua configuração operacional será refinada antes da implementação correspondente.
 
 ### RF02 — Apresentar a página Descobrir
 

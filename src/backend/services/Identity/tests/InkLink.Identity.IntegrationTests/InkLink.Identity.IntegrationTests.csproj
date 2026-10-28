@@ -4,6 +4,10 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="../../../../gateway/InkLink.Gateway/InkLink.Gateway.csproj" />
+    <ProjectReference Include="../../../../bff/InkLink.Bff/InkLink.Bff.csproj" />
+    <Content Include="../../../../identity-provider/inklink-realm.json" Link="inklink-realm.json" CopyToOutputDirectory="PreserveNewest" />
+    <PackageReference Include="Testcontainers" />
     <ProjectReference Include="../../src/InkLink.Identity.Api/InkLink.Identity.Api.csproj" />
   </ItemGroup>
   <ItemGroup>

@@ -68,18 +68,22 @@ Cada linha abaixo é uma tarefa com ID estável, dependências diretas, entregá
 
 ### P02 — Identidade, funções e entrada das APIs
 
-**Referências:** RF01 e RF21; RNF04, RNF05, RNF07 e RNF08. **Marco:** M1. **Situação inicial:** pendente.
+**Referências:** RF01 e RF21; RNF04, RNF05, RNF07 e RNF08. **Marco:** M1. **Situação:** concluída; [verificação P02](verification/p02.md).
 
 | ID / tarefa | Dependências | Entregável | Aceite e verificação |
 | --- | --- | --- | --- |
-| T02.01 — [ ] Integrar validação da autenticação | T01.07 | Middleware/adaptador da solução escolhida e identificação do solicitante. | Credencial válida identifica o usuário; credenciais ausentes, inválidas ou expiradas não autorizam ações privadas. |
-| T02.02 — [ ] Vincular conta interna e funções | T02.01 | Associação estável de identidade externa, usuário interno e funções autorizadas. | Reidentificação não duplica conta; alterar corpo da requisição não concede função ou acesso a outra identidade. Política de cadastro e vínculo de artista está definida. |
-| T02.03 — [ ] Expor o próprio perfil com autorização | T02.02 | Consulta e atualização dos campos de perfil aprovados para a entrega. | Usuário não altera identidade ou permissões pelo formulário nem acessa perfil privado de terceiro. Validação e erros são testados. |
-| T02.04 — [ ] Configurar Gateway e a base do BFF web | T02.01, T00.06 | Decisão de Gateway, rota de Identity e BFF .NET com login, sessão protegida, tokens no servidor e defesa CSRF apropriada. | APIs validam identidade; login/saída/expiração e requisições de sessão são testáveis sem frontend React. BFF não concentra regras de negócio. |
-| T02.05 — [ ] Definir identidade técnica entre serviços | T02.02, T02.04 | Contrato de autenticação e autorização para chamadas técnicas das primeiras integrações. | Chamador técnico só executa operações previstas; identidade de usuário não concede automaticamente capacidade de atuar como serviço. |
-| T02.06 — [ ] Verificar isolamento no Gateway e serviço | T02.03, T02.04, T02.05 | Testes com duas contas e funções distintas, incluindo acesso direto ao serviço. | Mudar identificador, sessão ou rota não expõe outra conta. A autorização não depende somente da passagem pelo Gateway. |
+| T02.01 — [x] Integrar validação da autenticação | T01.07 | Middleware/adaptador da solução escolhida e identificação do solicitante. | Credencial válida identifica o usuário; credenciais ausentes, inválidas ou expiradas não autorizam ações privadas. |
+| T02.02 — [x] Vincular conta interna e funções | T02.01 | Associação estável de identidade externa, usuário interno e funções autorizadas. | Reidentificação não duplica conta; alterar corpo da requisição não concede função ou acesso a outra identidade. Política de cadastro e vínculo de artista está definida. |
+| T02.03 — [x] Expor o próprio perfil com autorização | T02.02 | Consulta e atualização dos campos de perfil aprovados para a entrega. | Usuário não altera identidade ou permissões pelo formulário nem acessa perfil privado de terceiro. Validação e erros são testados. |
+| T02.04 — [x] Configurar Gateway e a base do BFF web | T02.01, T00.06 | Decisão de Gateway, rota de Identity e BFF .NET com login, sessão protegida, tokens no servidor e defesa CSRF apropriada. | APIs validam identidade; login/saída/expiração e requisições de sessão são testáveis sem frontend React. BFF não concentra regras de negócio. |
+| T02.05 — [x] Definir identidade técnica entre serviços | T02.02, T02.04 | Contrato de autenticação e autorização para chamadas técnicas das primeiras integrações. | Chamador técnico só executa operações previstas; identidade de usuário não concede automaticamente capacidade de atuar como serviço. |
+| T02.06 — [x] Verificar isolamento no Gateway e serviço | T02.03, T02.04, T02.05 | Testes com duas contas e funções distintas, incluindo acesso direto ao serviço. | Mudar identificador, sessão ou rota não expõe outra conta. A autorização não depende somente da passagem pelo Gateway. |
 
 **Conclusão de P02:** operações privadas protegidas e identidade adequada às integrações.
+
+**Evidência:** [verificação por tarefa](verification/p02.md), [decisão de identidade e sessão](decisions/0007-p02-identity-and-sessions.md) e [execução local](development/authentication.md). Suíte completa com 71 testes aprovados; build Release sem avisos/erros. M1 concluído no escopo P01/P02.
+
+**Revisão de conformidade (28/10/2026):** corrigidas resolução por endpoint, coordenação em Application, respostas 500 no OpenAPI e logs correlacionados nos três componentes. [Evidências](verification/p02.md).
 
 ### P03 — Catálogo, pesquisa e favoritos
 
@@ -252,7 +256,7 @@ Cada linha abaixo é uma tarefa com ID estável, dependências diretas, entregá
 
 ## 4. Próximo lote e acompanhamento
 
-P00 foi concluída no nível de decisões e revisão. A [revisão T00.07](decisions/0006-p00-review.md) consolida os registros de T00.01 a T00.06 e o escopo do primeiro incremento. P01 foi implementada e verificada conforme [evidências](verification/p01.md), incluindo Docker e PostgreSQL real. O próximo passo é T02.01. As tarefas de P02 em diante permanecem pendentes.
+P00 foi concluída no nível de decisões e revisão. A [revisão T00.07](decisions/0006-p00-review.md) consolida os registros de T00.01 a T00.06 e o escopo do primeiro incremento. P01 foi implementada e verificada conforme [evidências](verification/p01.md), incluindo Docker e PostgreSQL real. P02 foi concluída conforme [evidências](verification/p02.md). O próximo passo é T03.01. As tarefas de P03 em diante permanecem pendentes.
 
 Broker, pesquisa e stack móvel têm tarefas próprias quando se tornam necessários. Não precisam ser decididos no primeiro incremento de Identity.
 

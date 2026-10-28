@@ -62,5 +62,25 @@ public sealed class PostgresFixture : IAsyncLifetime
         await command.ExecuteNonQueryAsync();
     }
 
+    public async Task<(string Owner, string App)> CreateBffDatabaseAsync()
+    {
+        var password = Guid.NewGuid().ToString("N");
+        await using var admin = new NpgsqlConnection(container.GetConnectionString());
+        await admin.OpenAsync();
+        await Execute(admin, $"CREATE ROLE inklink_bff_owner LOGIN PASSWORD '{password}'");
+        await Execute(admin, $"CREATE ROLE inklink_bff_app LOGIN PASSWORD '{password}'");
+        await Execute(admin, "CREATE DATABASE inklink_bff OWNER inklink_bff_owner");
+        await Execute(admin, "REVOKE CONNECT ON DATABASE inklink_bff FROM PUBLIC");
+        await Execute(admin, "GRANT CONNECT ON DATABASE inklink_bff TO inklink_bff_owner, inklink_bff_app");
+        var owner = new NpgsqlConnectionStringBuilder(container.GetConnectionString()) { Database = "inklink_bff", Username = "inklink_bff_owner", Password = password }.ConnectionString;
+        var app = new NpgsqlConnectionStringBuilder(owner) { Username = "inklink_bff_app" }.ConnectionString;
+        await using var connection = new NpgsqlConnection(owner);
+        await connection.OpenAsync();
+        await Execute(connection, "CREATE SCHEMA bff AUTHORIZATION inklink_bff_owner");
+        await Execute(connection, "GRANT USAGE ON SCHEMA bff TO inklink_bff_app");
+        await Execute(connection, "ALTER DEFAULT PRIVILEGES IN SCHEMA bff GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO inklink_bff_app");
+        return (owner, app);
+    }
+
     public async Task DisposeAsync() => await container.DisposeAsync();
 }

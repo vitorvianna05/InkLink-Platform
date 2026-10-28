@@ -1,4 +1,4 @@
-name: Identity foundation
+name: Backend foundation and identity
 on:
   push:
   pull_request:
@@ -7,7 +7,7 @@ permissions:
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -21,7 +21,7 @@ jobs:
         run: dotnet format InkLink.Platform.slnx --no-restore --verify-no-changes
       - name: Build
         run: dotnet build InkLink.Platform.slnx --no-restore --configuration Release --warnaserror
-      - name: Test with real PostgreSQL
+      - name: Test with real PostgreSQL and Keycloak
         run: dotnet test InkLink.Platform.slnx --no-build --configuration Release --logger "trx;LogFilePrefix=identity" --results-directory artifacts/test-results
       - uses: actions/upload-artifact@v4
         if: always()

@@ -41,6 +41,7 @@ Esses princípios não exigem uma interface para cada classe, um serviço por en
 flowchart TB
     Web[Website React] --> BFF[BFF web .NET 10]
     BFF --> Gateway[API Gateway]
+    BFF --> BffData[(Sessões e chaves operacionais do BFF)]
     IOS[App iOS React Native] --> Gateway
     Android[App Android React Native] --> Gateway
     Auth[Keycloak OIDC e OAuth 2.0] -. Autenticação .-> BFF
@@ -68,7 +69,7 @@ flowchart TB
 
 O diagrama apresenta responsabilidades lógicas, não uma decisão sobre provedor de nuvem, quantidade de servidores ou produtos de infraestrutura. As ligações de eventos não significam que cada serviço consuma eventos de todos os demais.
 
-O Gateway concentra a entrada das APIs e o roteamento. Os serviços continuam responsáveis pelas regras de negócio e pela autorização sobre seus recursos. O frontend não acessa bancos ou o broker diretamente.
+O Gateway concentra a entrada das APIs e o roteamento. A implementação inicial utiliza YARP, conforme a [decisão 0007](decisions/0007-p02-identity-and-sessions.md), que também detalha funções e sessão web. Os serviços continuam responsáveis pelas regras de negócio e pela autorização sobre seus recursos. O frontend não acessa bancos ou o broker diretamente.
 
 ## 4. Limites dos microsserviços
 
@@ -168,6 +169,8 @@ API            -> Application
 API            -> Infrastructure apenas para composição das dependências
 Domain         -> nenhuma das demais camadas
 ```
+
+O bootstrap e a ativação de contas em Identity são coordenados por casos de uso de Application, conforme decisão 0007. O adaptador HTTP resolve claims e endpoint selecionado; o repositório EF executa persistência e traduz conflitos de banco, sem decidir as transições de perfil.
 
 Interfaces devem ficar na camada que define a necessidade. Entidades de domínio não são contratos HTTP nem eventos públicos compartilhados. O domínio não deve depender de framework web, broker ou detalhes de persistência.
 
@@ -383,6 +386,8 @@ Circuit breakers, isolamento de recursos, filas e controle de carga serão aplic
 
 Os serviços devem produzir logs estruturados, métricas e rastreamento distribuído, permitindo acompanhar uma operação por suas chamadas e eventos. Contexto de correlação deve ser propagado e não substitui o identificador idempotente de uma operação.
 
+A base implementada usa InkLink.Observability em Identity, Gateway e BFF para logs de requisição com escopo de serviço e traceId, sem query strings ou credenciais. O mesmo traceId aparece no cabeçalho e nos problemas HTTP.
+
 A base deve permitir observar falhas de API, latência, conflitos de reserva, atraso de projeções, publicações pendentes e processos distribuídos incompletos. Logs não devem expor credenciais ou conteúdo integral de conversas por padrão.
 
 Health checks e sinais de prontidão devem refletir sua finalidade, evitando transformar indisponibilidade de um contexto em reinício indiscriminado de todos os serviços. Ferramentas, metas e limites serão definidos com o ambiente operacional.
@@ -433,9 +438,9 @@ Continuam abertas, sem bloquear esta fundação:
 
 - Detalhes de organização que surgirem além da estrutura inicial aprovada na decisão 0001. Nomes técnicos definidos: Identity, Catalog, Engagements, Scheduling, Messaging e Finance.
 - Compartilhamento de código entre web, iOS e Android, estrutura React Native, ferramentas e processos de publicação por canal.
-- Configuração operacional do Keycloak e BFF, cadastro/ativação de usuários e políticas de sessão; provedor e fluxos base estão definidos na decisão 0003.
-- Versão mantida do PostgreSQL, patches compatíveis de EF Core/Npgsql e detalhes da restrição de intervalos, conforme a base já aprovada na decisão 0002.
-- Gateway, broker, ferramentas de Outbox e coordenação de processos.
+- Operação de produção do Keycloak/BFF e políticas adicionais de conta. A base, o cadastro administrativo, funções e sessão inicial foram definidos na decisão 0007 e implementados em P02.
+- Evolução das versões fixadas nos arquivos de dependências e detalhes da restrição de intervalos de Agenda, conforme a base aprovada na decisão 0002.
+- Broker, ferramentas de Outbox e coordenação de processos. O Gateway inicial utiliza YARP, conforme decisão 0007.
 - Contratos específicos de recursos e eventos. As convenções HTTP e de versionamento público já estão aprovadas na decisão 0005.
 - Protocolo concreto de encerramento e habilitação de conversa por novo atendimento.
 - Tecnologia de atualização de mensagens e escala das conexões.
