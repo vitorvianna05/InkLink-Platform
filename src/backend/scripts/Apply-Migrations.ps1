@@ -15,3 +15,13 @@ try {
         if ($LASTEXITCODE -ne 0) { throw 'Migration failed.' }
     } finally { Pop-Location }
 } finally { $env:IdentityDatabase__ConnectionString = $previousConnection }
+
+$previousBffConnection = $env:Bff__ConnectionString
+try {
+    $env:Bff__ConnectionString = 'Host=127.0.0.1;Port=54330;Database=inklink_bff;Username=inklink_bff_owner;Password=' + $settings.BFF_OWNER_PASSWORD
+    Push-Location $repoRoot
+    try {
+        dotnet ef database update --project src/backend/bff/InkLink.Bff --startup-project src/backend/bff/InkLink.Bff
+        if ($LASTEXITCODE -ne 0) { throw 'BFF migration failed.' }
+    } finally { Pop-Location }
+} finally { $env:Bff__ConnectionString = $previousBffConnection }

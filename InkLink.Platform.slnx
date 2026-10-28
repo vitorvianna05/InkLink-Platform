@@ -1,9 +1,15 @@
 <Solution>
   <Folder Name="/src/" />
   <Folder Name="/src/backend/" />
+  <Folder Name="/src/backend/bff/">
+    <Project Path="src/backend/bff/InkLink.Bff/InkLink.Bff.csproj" />
+  </Folder>
   <Folder Name="/src/backend/building-blocks/">
     <Project Path="src/backend/building-blocks/InkLink.Authentication/InkLink.Authentication.csproj" />
     <Project Path="src/backend/building-blocks/InkLink.Observability/InkLink.Observability.csproj" />
+  </Folder>
+  <Folder Name="/src/backend/gateway/">
+    <Project Path="src/backend/gateway/InkLink.Gateway/InkLink.Gateway.csproj" />
   </Folder>
   <Folder Name="/src/backend/services/" />
   <Folder Name="/src/backend/services/Identity/" />

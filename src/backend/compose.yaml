@@ -16,5 +16,58 @@ services:
       interval: 2s
       timeout: 3s
       retries: 30
+  bff-db:
+    image: postgres:17.7-alpine
+    environment:
+      POSTGRES_PASSWORD: ${BFF_POSTGRES_PASSWORD:?Run Initialize-Local.ps1}
+      BFF_OWNER_PASSWORD: ${BFF_OWNER_PASSWORD:?Run Initialize-Local.ps1}
+      BFF_APP_PASSWORD: ${BFF_APP_PASSWORD:?Run Initialize-Local.ps1}
+    ports:
+      - "127.0.0.1:54330:5432"
+    volumes:
+      - bff-data:/var/lib/postgresql/data
+      - ./scripts/db/init-bff.sh:/docker-entrypoint-initdb.d/10-bff.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d inklink_bff"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+  keycloak-db:
+    image: postgres:17.7-alpine
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: ${KEYCLOAK_DB_PASSWORD:?Run Initialize-Local.ps1}
+    volumes:
+      - keycloak-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U keycloak -d keycloak"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.8.1
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD:?Run Initialize-Local.ps1}
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?Run Initialize-Local.ps1}
+      KC_HTTP_ENABLED: "false"
+      KC_HTTPS_CERTIFICATE_FILE: /opt/keycloak/conf/localhost.pem
+      KC_HTTPS_CERTIFICATE_KEY_FILE: /opt/keycloak/conf/localhost.key
+    ports:
+      - "127.0.0.1:5189:8443"
+    volumes:
+      - ../../artifacts/local/inklink-realm.json:/opt/keycloak/data/import/inklink-realm.json:ro
+      - ../../artifacts/local/localhost.pem:/opt/keycloak/conf/localhost.pem:ro
+      - ../../artifacts/local/localhost.key:/opt/keycloak/conf/localhost.key:ro
+    depends_on:
+      keycloak-db:
+        condition: service_healthy
 volumes:
   identity-data:
+  bff-data:
+  keycloak-data:
