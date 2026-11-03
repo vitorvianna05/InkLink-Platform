@@ -14,37 +14,57 @@ for ($attempt = 0; $attempt -lt 12; $attempt++) {
     } catch { Start-Sleep -Seconds 2 }
 }
 if (-not $ready) { throw 'Local Keycloak is not ready over trusted HTTPS.' }
-$token = Invoke-RestMethod "$baseUri/realms/master/protocol/openid-connect/token" -Method Post -ContentType 'application/x-www-form-urlencoded' -Body @{ grant_type = 'password'; client_id = 'admin-cli'; username = 'admin'; password = $settings.KEYCLOAK_ADMIN_PASSWORD }
-$headers = @{ Authorization = 'Bearer ' + $token.access_token }
+$script:inklinkAdminToken = $null
+$script:inklinkAdminExpiry = [DateTimeOffset]::MinValue
+function Update-KeycloakAdminToken {
+    param([switch]$Force)
+    if ($Force -or -not $script:inklinkAdminToken -or $script:inklinkAdminExpiry -le [DateTimeOffset]::UtcNow.AddSeconds(15)) {
+        $script:inklinkAdminToken = Invoke-RestMethod "$baseUri/realms/master/protocol/openid-connect/token" -Method Post -TimeoutSec 20 -ContentType 'application/x-www-form-urlencoded' -Body @{ grant_type = 'password'; client_id = 'admin-cli'; username = 'admin'; password = $settings.KEYCLOAK_ADMIN_PASSWORD }
+        $script:inklinkAdminExpiry = [DateTimeOffset]::UtcNow.AddSeconds([int]$script:inklinkAdminToken.expires_in)
+    }
+}
+function Invoke-KeycloakAdmin {
+    param([Parameter(Mandatory)][string]$Uri, [string]$Method = 'Get', [object]$Body, [string]$ContentType = 'application/json')
+    for ($adminAttempt = 0; $adminAttempt -lt 2; $adminAttempt++) {
+        Update-KeycloakAdminToken -Force:($adminAttempt -gt 0)
+        $requestOptions = @{ Uri = $Uri; Method = $Method; TimeoutSec = 20; Headers = @{ Authorization = 'Bearer ' + $script:inklinkAdminToken.access_token } }
+        if ($PSBoundParameters.ContainsKey('Body')) { $requestOptions.Body = $Body; $requestOptions.ContentType = $ContentType }
+        try { return Invoke-RestMethod @requestOptions }
+        catch {
+            if ($adminAttempt -eq 0 -and [int]$_.Exception.Response.StatusCode -eq 401) { continue }
+            throw
+        }
+    }
+}
 $realm = Get-Content -LiteralPath (Join-Path $repoRoot 'artifacts/local/inklink-realm.json') -Raw | ConvertFrom-Json
-$existingScopes = Invoke-RestMethod "$baseUri/admin/realms/inklink/client-scopes" -Headers $headers
+$existingScopes = Invoke-KeycloakAdmin "$baseUri/admin/realms/inklink/client-scopes"
 foreach ($scope in $realm.clientScopes) {
     $existing = $existingScopes | Where-Object name -eq $scope.name | Select-Object -First 1
     if ($existing) {
-        $null = Invoke-RestMethod "$baseUri/admin/realms/inklink/client-scopes/$($existing.id)" -Headers $headers -Method Put -ContentType 'application/json' -Body ($scope | ConvertTo-Json -Depth 20)
+        $null = Invoke-KeycloakAdmin "$baseUri/admin/realms/inklink/client-scopes/$($existing.id)" -Method Put -ContentType 'application/json' -Body ($scope | ConvertTo-Json -Depth 20)
     } else {
-        $null = Invoke-RestMethod "$baseUri/admin/realms/inklink/client-scopes" -Headers $headers -Method Post -ContentType 'application/json' -Body ($scope | ConvertTo-Json -Depth 20)
+        $null = Invoke-KeycloakAdmin "$baseUri/admin/realms/inklink/client-scopes" -Method Post -ContentType 'application/json' -Body ($scope | ConvertTo-Json -Depth 20)
     }
 }
-$existingScopes = Invoke-RestMethod "$baseUri/admin/realms/inklink/client-scopes" -Headers $headers
+$existingScopes = Invoke-KeycloakAdmin "$baseUri/admin/realms/inklink/client-scopes"
 foreach ($client in $realm.clients) {
-    $clients = Invoke-RestMethod "$baseUri/admin/realms/inklink/clients?clientId=$($client.clientId)" -Headers $headers
+    $clients = Invoke-KeycloakAdmin "$baseUri/admin/realms/inklink/clients?clientId=$($client.clientId)"
     $existing = $clients | Where-Object clientId -eq $client.clientId | Select-Object -First 1
     if (-not $existing) {
-        $null = Invoke-RestMethod "$baseUri/admin/realms/inklink/clients" -Headers $headers -Method Post -ContentType 'application/json' -Body ($client | ConvertTo-Json -Depth 20)
-        $clients = Invoke-RestMethod "$baseUri/admin/realms/inklink/clients?clientId=$($client.clientId)" -Headers $headers
+        $null = Invoke-KeycloakAdmin "$baseUri/admin/realms/inklink/clients" -Method Post -ContentType 'application/json' -Body ($client | ConvertTo-Json -Depth 20)
+        $clients = Invoke-KeycloakAdmin "$baseUri/admin/realms/inklink/clients?clientId=$($client.clientId)"
         $existing = $clients | Where-Object clientId -eq $client.clientId | Select-Object -First 1
         if (-not $existing) { throw 'Unable to create the local client.' }
     }
-    $null = Invoke-RestMethod "$baseUri/admin/realms/inklink/clients/$($existing.id)" -Headers $headers -Method Put -ContentType 'application/json' -Body ($client | ConvertTo-Json -Depth 20)
+    $null = Invoke-KeycloakAdmin "$baseUri/admin/realms/inklink/clients/$($existing.id)" -Method Put -ContentType 'application/json' -Body ($client | ConvertTo-Json -Depth 20)
     foreach ($name in $client.defaultClientScopes) {
         $scope = $existingScopes | Where-Object name -eq $name | Select-Object -First 1
-        $null = Invoke-RestMethod "$baseUri/admin/realms/inklink/clients/$($existing.id)/default-client-scopes/$($scope.id)" -Headers $headers -Method Put
+        $null = Invoke-KeycloakAdmin "$baseUri/admin/realms/inklink/clients/$($existing.id)/default-client-scopes/$($scope.id)" -Method Put
     }
     foreach ($name in $client.optionalClientScopes) {
         $scope = $existingScopes | Where-Object name -eq $name | Select-Object -First 1
         if (-not $scope) { throw 'Expected optional scope is missing.' }
-        $null = Invoke-RestMethod "$baseUri/admin/realms/inklink/clients/$($existing.id)/optional-client-scopes/$($scope.id)" -Headers $headers -Method Put
+        $null = Invoke-KeycloakAdmin "$baseUri/admin/realms/inklink/clients/$($existing.id)/optional-client-scopes/$($scope.id)" -Method Put
     }
 }
 Write-Host 'Local client and scope configuration synchronized. Existing users were preserved.'

@@ -1,10 +1,14 @@
 using System.Net;
 using System.Net.Http.Json;
 using InkLink.Messaging.Application.Conversations;
+using InkLink.Messaging.Infrastructure.Integration;
 using InkLink.Messaging.Infrastructure.Persistence;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace InkLink.Messaging.IntegrationTests;
 
@@ -15,8 +19,16 @@ public sealed class ConversationApiTests(MessagingFixture fixture)
     {
         var client = fixture.Host.CreateClient(); client.DefaultRequestHeaders.Authorization = new("Bearer", fixture.Base.Token(user)); return client;
     }
-    private EventEnvelope Event(Guid engagement) => new(Guid.NewGuid(), "engagement.negotiation-opened.v1", 1, DateTimeOffset.UtcNow,
-        Guid.NewGuid().ToString("N"), null, new(engagement, fixture.Base.Accounts["alice"], fixture.Base.Accounts["bob"], 1, true));
+    private async Task<EventEnvelope> EventAsync(Guid key)
+    {
+        var snapshot = new InkLink.Engagements.Application.Negotiations.CatalogSnapshot(Guid.NewGuid(), "Bob Artista", "Estúdio", "São Paulo", 300, null);
+        var engagement = InkLink.Engagements.Domain.Engagement.Create(fixture.Base.Accounts["alice"], fixture.Base.Accounts["bob"], snapshot.ArtistId,
+            null, "Ideia", "Braço", 10, System.Text.Json.JsonSerializer.Serialize(snapshot), key, "fixture", DateTimeOffset.UtcNow);
+        await using var database = fixture.Base.CreateOwnerContext();
+        await new InkLink.Engagements.Infrastructure.Persistence.EfEngagementStore(database).CreateAsync(engagement, default);
+        return new(Guid.NewGuid(), "engagement.negotiation-opened.v1", 1, DateTimeOffset.UtcNow, Guid.NewGuid().ToString("N"), null,
+            new(engagement.Id, engagement.ClientId, engagement.ArtistAccountId, 1, true));
+    }
     private async Task<Guid> OpenAsync(EventEnvelope envelope)
     {
         await using var database = fixture.CreateOwnerContext();
@@ -50,7 +62,7 @@ public sealed class ConversationApiTests(MessagingFixture fixture)
     [Fact]
     public async Task Incremental_history_does_not_miss_concurrent_or_earlier_timestamp_messages()
     {
-        var id = await OpenAsync(Event(Guid.NewGuid())); using var alice = Client("alice");
+        var id = await OpenAsync(await EventAsync(Guid.NewGuid())); using var alice = Client("alice");
         var first = (await (await SendAsync(alice, id, Guid.NewGuid(), "Primeira")).Content.ReadFromJsonAsync<MessageView>())!;
         var firstPage = (await alice.GetFromJsonAsync<Page<MessageView>>($"/api/v1/conversations/{id}/messages?limit=1"))!;
         Assert.Single(firstPage.Items);
@@ -101,8 +113,10 @@ public sealed class ConversationApiTests(MessagingFixture fixture)
     {
         await using var db = fixture.Base.CreateOwnerContext();
         var account = fixture.Base.Accounts["alice"];
-        var engagement = InkLink.Engagements.Domain.Engagement.Create(account, fixture.Base.Accounts["bob"], Guid.NewGuid(), null,
-            "Ideia", "Braço", 10, "{}", Guid.NewGuid(), "fixture", DateTimeOffset.UtcNow);
+        var sourceArtist = Guid.NewGuid();
+        var snapshot = System.Text.Json.JsonSerializer.Serialize(new InkLink.Engagements.Application.Negotiations.CatalogSnapshot(sourceArtist, "Bob Artista", "Estúdio", "São Paulo", 300, null));
+        var engagement = InkLink.Engagements.Domain.Engagement.Create(account, fixture.Base.Accounts["bob"], sourceArtist, null,
+            "Ideia", "Braço", 10, snapshot, Guid.NewGuid(), "fixture", DateTimeOffset.UtcNow);
         var transaction = await db.Database.BeginTransactionAsync();
         await new InkLink.Engagements.Infrastructure.Persistence.EfEngagementStore(db).CreateAsync(engagement, default);
         Assert.True(await db.Outbox.AnyAsync(e => e.EngagementId == engagement.Id));
@@ -117,11 +131,26 @@ public sealed class ConversationApiTests(MessagingFixture fixture)
     [Fact]
     public async Task Duplicate_events_are_idempotent_and_incompatible_participants_roll_back_inbox()
     {
-        var envelope = Event(Guid.NewGuid()); var id = await OpenAsync(envelope);
+        var envelope = await EventAsync(Guid.NewGuid()); var id = await OpenAsync(envelope);
         await using var db = fixture.CreateOwnerContext(); var store = new EfConversationStore(db);
         await new OpenConversation(store).ExecuteAsync(envelope, default);
         Assert.Equal(1, await db.Conversations.CountAsync(c => c.EngagementId == envelope.Data.EngagementId));
         Assert.Equal(1, await db.Inbox.CountAsync(i => i.Id == envelope.MessageId));
+        // Pre-tracing envelopes must retain their persisted fingerprint after the optional-field evolution.
+        var legacy = System.Text.Json.JsonSerializer.Serialize(new
+        {
+            envelope.MessageId,
+            envelope.Type,
+            envelope.SchemaVersion,
+            envelope.OccurredAt,
+            envelope.CorrelationId,
+            envelope.CausationId,
+            envelope.Data
+        });
+        var legacyFingerprint = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(legacy)));
+        Assert.Equal(legacyFingerprint, (await db.Inbox.SingleAsync(i => i.Id == envelope.MessageId)).Fingerprint);
+        var conflicting = envelope with { Data = envelope.Data with { Revision = 2 } };
+        await Assert.ThrowsAsync<InkLink.Messaging.Domain.InvalidConversationData>(() => new OpenConversation(store).ExecuteAsync(conflicting, default));
         var wrong = envelope with { MessageId = Guid.NewGuid(), Data = envelope.Data with { ClientId = Guid.NewGuid() } };
         await Assert.ThrowsAsync<InkLink.Messaging.Domain.InvalidConversationData>(() => new OpenConversation(store).ExecuteAsync(wrong, default));
         db.ChangeTracker.Clear(); Assert.False(await db.Inbox.AnyAsync(i => i.Id == wrong.MessageId));
@@ -131,7 +160,7 @@ public sealed class ConversationApiTests(MessagingFixture fixture)
     [Fact]
     public async Task Both_participants_share_persistent_history_and_third_party_is_denied()
     {
-        var envelope = Event(Guid.NewGuid()); var id = await OpenAsync(envelope);
+        var envelope = await EventAsync(Guid.NewGuid()); var id = await OpenAsync(envelope);
         using var alice = Client("alice"); using var bob = Client("bob"); using var carol = Client("carol");
         var key = Guid.NewGuid(); var first = await SendAsync(alice, id, key, "  Olá!  "); Assert.Equal(HttpStatusCode.Created, first.StatusCode);
         var message = (await first.Content.ReadFromJsonAsync<MessageView>())!; Assert.Equal("Olá!", message.Body); Assert.Equal(fixture.Base.Accounts["alice"], message.AuthorId);
@@ -149,6 +178,11 @@ public sealed class ConversationApiTests(MessagingFixture fixture)
         Assert.Equal(HttpStatusCode.NotFound, (await SendAsync(carol, id, Guid.NewGuid(), "Intrusão")).StatusCode);
         var detail = (await bob.GetFromJsonAsync<ConversationView>($"/api/v1/conversations/{id}"))!;
         Assert.Equal("Resposta", detail.LastMessage!.Body);
+        Assert.Equal("alice", detail.Counterpart.DisplayName);
+        Assert.Equal(fixture.Base.Accounts["alice"], detail.Counterpart.Id);
+        Assert.Equal("Negotiating", detail.EngagementState);
+        var clientView = (await alice.GetFromJsonAsync<ConversationView>($"/api/v1/conversations/{id}"))!;
+        Assert.Equal("Bob Artista", clientView.Counterpart.DisplayName);
         using var restarted = new MessagingHost(fixture); using var reopened = restarted.CreateClient();
         reopened.DefaultRequestHeaders.Authorization = new("Bearer", fixture.Base.Token("alice"));
         var persisted = (await reopened.GetFromJsonAsync<Page<MessageView>>($"/api/v1/conversations/{id}/messages"))!;
@@ -158,7 +192,7 @@ public sealed class ConversationApiTests(MessagingFixture fixture)
     [Fact]
     public async Task Technical_block_endpoint_accepts_only_its_service_scope()
     {
-        var envelope = Event(Guid.NewGuid()); var id = await OpenAsync(envelope);
+        var envelope = await EventAsync(Guid.NewGuid()); var id = await OpenAsync(envelope);
         using var user = Client("alice");
         var path = $"/api/v1/internal/engagements/{envelope.Data.EngagementId}/writing-block";
         Assert.Equal(HttpStatusCode.Forbidden, (await user.PutAsync(path, null)).StatusCode);
@@ -174,7 +208,7 @@ public sealed class ConversationApiTests(MessagingFixture fixture)
     [Fact]
     public async Task Blocking_and_sending_are_serialized_and_old_events_cannot_reopen()
     {
-        var envelope = Event(Guid.NewGuid()); var id = await OpenAsync(envelope); using var alice = Client("alice");
+        var envelope = await EventAsync(Guid.NewGuid()); var id = await OpenAsync(envelope); using var alice = Client("alice");
         await using var database = fixture.CreateOwnerContext();
         var block = new EfConversationStore(database).BlockAsync(envelope.Data.EngagementId, default);
         var send = SendAsync(alice, id, Guid.NewGuid(), "Durante o bloqueio");
@@ -185,5 +219,54 @@ public sealed class ConversationApiTests(MessagingFixture fixture)
         await new OpenConversation(new EfConversationStore(database)).ExecuteAsync(envelope with { MessageId = Guid.NewGuid() }, default);
         Assert.True((await database.Conversations.SingleAsync(c => c.Id == id)).WritingBlocked);
         Assert.Equal(HttpStatusCode.Conflict, (await SendAsync(alice, id, Guid.NewGuid(), "Ainda bloqueada")).StatusCode);
+    }
+    [Fact]
+    public async Task Lists_identify_the_counterpart_and_reject_a_cursor_from_another_account()
+    {
+        await OpenAsync(await EventAsync(Guid.NewGuid()));
+        await OpenAsync(await EventAsync(Guid.NewGuid()));
+        using var alice = Client("alice"); using var bob = Client("bob"); using var carol = Client("carol");
+        var first = (await alice.GetFromJsonAsync<Page<ConversationView>>("/api/v1/conversations?limit=1"))!;
+        Assert.Single(first.Items); Assert.True(first.HasMore);
+        Assert.Equal(fixture.Base.Accounts["bob"], first.Items[0].Counterpart.Id);
+        Assert.False(string.IsNullOrWhiteSpace(first.Items[0].Counterpart.DisplayName));
+        Assert.Equal("Negotiating", first.Items[0].EngagementState);
+        var cursor = Uri.EscapeDataString(first.NextCursor!);
+        var next = (await alice.GetFromJsonAsync<Page<ConversationView>>("/api/v1/conversations?limit=1&cursor=" + cursor))!;
+        Assert.NotEqual(first.Items[0].Id, next.Items[0].Id);
+        Assert.Equal(HttpStatusCode.BadRequest, (await bob.GetAsync("/api/v1/conversations?cursor=" + cursor)).StatusCode);
+        var empty = (await carol.GetFromJsonAsync<Page<ConversationView>>("/api/v1/conversations"))!;
+        Assert.Empty(empty.Items); Assert.Equal(0, empty.Total); Assert.False(empty.HasMore);
+    }
+
+    [Fact]
+    public async Task Presentation_outage_does_not_invent_status_or_expose_a_third_party_conversation()
+    {
+        var id = await OpenAsync(await EventAsync(Guid.NewGuid()));
+        var handler = new PresentationFailureHandler();
+        using var host = fixture.Host.WithWebHostBuilder(builder => builder.ConfigureTestServices(services =>
+            services.AddHttpClient<IConversationPresentationDirectory, ConversationPresentationDirectory>().ConfigurePrimaryHttpMessageHandler(() => handler)));
+        using var alice = host.CreateClient(); alice.DefaultRequestHeaders.Authorization = new("Bearer", fixture.Base.Token("alice"));
+        var failed = await alice.GetAsync($"/api/v1/conversations/{id}");
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, failed.StatusCode);
+        Assert.Contains("messaging.presentation_unavailable", await failed.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, (await alice.GetAsync($"/api/v1/conversations/{id}/messages")).StatusCode);
+        var calls = handler.Calls;
+        using var carol = host.CreateClient(); carol.DefaultRequestHeaders.Authorization = new("Bearer", fixture.Base.Token("carol"));
+        Assert.Equal(HttpStatusCode.NotFound, (await carol.GetAsync($"/api/v1/conversations/{id}")).StatusCode);
+        Assert.Equal(calls, handler.Calls);
+    }
+
+}
+
+
+internal sealed class PresentationFailureHandler : HttpMessageHandler
+{
+    private int calls;
+    public int Calls => calls;
+    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    {
+        Interlocked.Increment(ref calls);
+        return Task.FromResult(new HttpResponseMessage(HttpStatusCode.ServiceUnavailable));
     }
 }

@@ -8,7 +8,7 @@ if (-not (Test-Path -LiteralPath $envFile)) {
     }
     [IO.File]::WriteAllLines($envFile, $entries)
 }
-$requiredKeys = 'BFF_POSTGRES_PASSWORD', 'BFF_OWNER_PASSWORD', 'BFF_APP_PASSWORD', 'KEYCLOAK_DB_PASSWORD', 'KEYCLOAK_ADMIN_PASSWORD', 'INKLINK_BFF_SECRET', 'INKLINK_CATALOG_SECRET', 'INKLINK_ENGAGEMENTS_SECRET', 'BFF_CERT_PASSWORD', 'CATALOG_POSTGRES_PASSWORD', 'CATALOG_OWNER_PASSWORD', 'CATALOG_APP_PASSWORD', 'ENGAGEMENTS_POSTGRES_PASSWORD', 'ENGAGEMENTS_OWNER_PASSWORD', 'ENGAGEMENTS_APP_PASSWORD', 'MESSAGING_POSTGRES_PASSWORD', 'MESSAGING_OWNER_PASSWORD', 'MESSAGING_APP_PASSWORD', 'INKLINK_BROKER_PASSWORD', 'INKLINK_BROKER_PUBLISHER_PASSWORD', 'INKLINK_BROKER_CONSUMER_PASSWORD'
+$requiredKeys = 'INKLINK_MESSAGING_SECRET', 'BFF_POSTGRES_PASSWORD', 'BFF_OWNER_PASSWORD', 'BFF_APP_PASSWORD', 'KEYCLOAK_DB_PASSWORD', 'KEYCLOAK_ADMIN_PASSWORD', 'INKLINK_BFF_SECRET', 'INKLINK_CATALOG_SECRET', 'INKLINK_ENGAGEMENTS_SECRET', 'BFF_CERT_PASSWORD', 'CATALOG_POSTGRES_PASSWORD', 'CATALOG_OWNER_PASSWORD', 'CATALOG_APP_PASSWORD', 'ENGAGEMENTS_POSTGRES_PASSWORD', 'ENGAGEMENTS_OWNER_PASSWORD', 'ENGAGEMENTS_APP_PASSWORD', 'MESSAGING_POSTGRES_PASSWORD', 'MESSAGING_OWNER_PASSWORD', 'MESSAGING_APP_PASSWORD', 'INKLINK_BROKER_PASSWORD', 'INKLINK_BROKER_PUBLISHER_PASSWORD', 'INKLINK_BROKER_CONSUMER_PASSWORD'
 $existing = Get-Content -LiteralPath $envFile
 foreach ($name in $requiredKeys) {
     if (-not ($existing -match "^$name=")) {
@@ -50,8 +50,9 @@ finally { $tlsPrivateKey.Dispose() }
 $realm = [IO.File]::ReadAllText((Join-Path $repoRoot 'src/backend/identity-provider/inklink-realm.json'))
 $realm = $realm.Replace(([string][char]36 + '{INKLINK_BFF_SECRET}'), $settings.INKLINK_BFF_SECRET).Replace(([string][char]36 + '{INKLINK_CATALOG_SECRET}'), $settings.INKLINK_CATALOG_SECRET)
 $realm = $realm.Replace(([string][char]36 + '{INKLINK_ENGAGEMENTS_SECRET}'), $settings.INKLINK_ENGAGEMENTS_SECRET)
+$realm = $realm.Replace(([string][char]36 + '{INKLINK_MESSAGING_SECRET}'), $settings.INKLINK_MESSAGING_SECRET)
 [IO.File]::WriteAllText((Join-Path $localDirectory 'inklink-realm.json'), $realm)
-$authentication = @{ Authority = 'https://localhost:5189/realms/inklink'; Audience = 'inklink-api'; UserClients = @('inklink-bff', 'inklink-ios', 'inklink-android'); TechnicalClients = @('inklink-catalog'); AllowHttpMetadata = $false }
+$authentication = @{ Authority = 'https://localhost:5189/realms/inklink'; Audience = 'inklink-api'; UserClients = @('inklink-bff', 'inklink-ios', 'inklink-android'); TechnicalClients = @('inklink-catalog', 'inklink-messaging'); AllowHttpMetadata = $false }
 @{ Authentication = $authentication } | ConvertTo-Json -Depth 5 | dotnet user-secrets set --project $apiProject
 if ($LASTEXITCODE -ne 0) { throw 'Unable to configure Identity authentication.' }
 @{ Authentication = $authentication; Gateway = @{ IdentityAddress = 'http://127.0.0.1:5180/'; CatalogAddress = 'http://127.0.0.1:5193/'; EngagementsAddress = 'http://127.0.0.1:5194/'; MessagingAddress = 'http://127.0.0.1:5195/' } } | ConvertTo-Json -Depth 5 | dotnet user-secrets set --project "$repoRoot/src/backend/gateway/InkLink.Gateway"
@@ -65,5 +66,5 @@ if ($LASTEXITCODE -ne 0) { throw 'Unable to configure Catalog.' }
 
 @{ EngagementsDatabase = @{ ConnectionString = ('Host=127.0.0.1;Port=54332;Database=inklink_engagements;Username=inklink_engagements_app;Password=' + $settings.ENGAGEMENTS_APP_PASSWORD) }; Authentication = $authentication; Engagements = @{ IdentityAddress = 'http://127.0.0.1:5180/'; CatalogAddress = 'http://127.0.0.1:5193/'; ClientSecret = $settings.INKLINK_ENGAGEMENTS_SECRET }; Broker = @{ Uri = ('amqp://inklink_publisher:' + $settings.INKLINK_BROKER_PUBLISHER_PASSWORD + '@127.0.0.1:5673/') } } | ConvertTo-Json -Depth 5 | dotnet user-secrets set --project "$repoRoot/src/backend/services/Engagements/src/InkLink.Engagements.Api"
 if ($LASTEXITCODE -ne 0) { throw 'Unable to configure Engagements.' }
-@{ MessagingDatabase = @{ ConnectionString = ('Host=127.0.0.1;Port=54333;Database=inklink_messaging;Username=inklink_messaging_app;Password=' + $settings.MESSAGING_APP_PASSWORD) }; Authentication = $authentication; Messaging = @{ IdentityAddress = 'http://127.0.0.1:5180/' }; Broker = @{ Uri = ('amqp://inklink_consumer:' + $settings.INKLINK_BROKER_CONSUMER_PASSWORD + '@127.0.0.1:5673/') } } | ConvertTo-Json -Depth 5 | dotnet user-secrets set --project "$repoRoot/src/backend/services/Messaging/src/InkLink.Messaging.Api"
+@{ MessagingDatabase = @{ ConnectionString = ('Host=127.0.0.1;Port=54333;Database=inklink_messaging;Username=inklink_messaging_app;Password=' + $settings.MESSAGING_APP_PASSWORD) }; Authentication = $authentication; Messaging = @{ IdentityAddress = 'http://127.0.0.1:5180/'; EngagementsAddress = 'http://127.0.0.1:5194/'; ClientSecret = $settings.INKLINK_MESSAGING_SECRET }; Broker = @{ Uri = ('amqp://inklink_consumer:' + $settings.INKLINK_BROKER_CONSUMER_PASSWORD + '@127.0.0.1:5673/') } } | ConvertTo-Json -Depth 5 | dotnet user-secrets set --project "$repoRoot/src/backend/services/Messaging/src/InkLink.Messaging.Api"
 if ($LASTEXITCODE -ne 0) { throw 'Unable to configure Messaging.' }

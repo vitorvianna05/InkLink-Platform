@@ -17,6 +17,8 @@ public sealed class SecurityFixture : IAsyncLifetime
     private IContainer keycloak = null!;
     public string Password { get; } = Convert.ToHexString(RandomNumberGenerator.GetBytes(24));
     public string BffSecret { get; } = Convert.ToHexString(RandomNumberGenerator.GetBytes(24));
+    public string EngagementsSecret { get; } = Convert.ToHexString(RandomNumberGenerator.GetBytes(24));
+    public string MessagingSecret { get; } = Convert.ToHexString(RandomNumberGenerator.GetBytes(24));
     public string ServiceSecret { get; } = Convert.ToHexString(RandomNumberGenerator.GetBytes(24));
     public string CertificateThumbprint { get; private set; } = string.Empty;
     public string Authority { get; private set; } = string.Empty;
@@ -52,7 +54,8 @@ public sealed class SecurityFixture : IAsyncLifetime
         clients[0]!["secret"] = BffSecret;
         clients[3]!["secret"] = ServiceSecret;
         // Every confidential client in the shared realm receives a test-only secret before import.
-        clients.Single(client => client!["clientId"]!.GetValue<string>() == "inklink-engagements")!["secret"] = Convert.ToHexString(RandomNumberGenerator.GetBytes(24));
+        clients.Single(client => client!["clientId"]!.GetValue<string>() == "inklink-engagements")!["secret"] = EngagementsSecret;
+        clients.Single(client => client!["clientId"]!.GetValue<string>() == "inklink-messaging")!["secret"] = MessagingSecret;
         var testClient = clients[1]!.DeepClone();
         testClient["clientId"] = "inklink-test-users";
         testClient["directAccessGrantsEnabled"] = true;
@@ -66,7 +69,7 @@ public sealed class SecurityFixture : IAsyncLifetime
         wrongAudience["clientId"] = "inklink-test-other-audience";
         wrongAudience["protocolMappers"]![0]!["config"]!["included.custom.audience"] = "other-api";
         clients.Add(wrongAudience);
-        realm["users"] = new JsonArray("alice", "bob", "unprovisioned").Select(name => (JsonNode?)new JsonObject
+        realm["users"] = new JsonArray("alice", "bob", "unprovisioned", "carol").Select(name => (JsonNode?)new JsonObject
         {
             ["username"] = name!.GetValue<string>(),
             ["enabled"] = true,

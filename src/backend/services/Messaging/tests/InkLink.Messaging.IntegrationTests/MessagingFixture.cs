@@ -1,5 +1,8 @@
+using System.Net;
+using System.Net.Http.Json;
 using InkLink.Engagements.IntegrationTests;
 using InkLink.Messaging.Application.Accounts;
+using InkLink.Messaging.Application.Conversations;
 using InkLink.Messaging.Infrastructure.Integration;
 using InkLink.Messaging.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -16,6 +19,8 @@ public sealed class MessagingFixture : IAsyncLifetime
     public EngagementFixture Base { get; } = new();
     public string OwnerConnection { get; private set; } = string.Empty;
     public string AppConnection { get; private set; } = string.Empty;
+    public string ServiceSecret { get; } = Guid.NewGuid().ToString("N");
+    public string ClientSecret => Base.RealProvider?.MessagingSecret ?? ServiceSecret;
     public MessagingHost Host { get; private set; } = null!;
 
     public async Task InitializeAsync()
@@ -46,15 +51,33 @@ public sealed class MessagingHost(MessagingFixture fixture) : WebApplicationFact
         foreach (var setting in new Dictionary<string, string?>
         {
             ["MessagingDatabase:ConnectionString"] = fixture.AppConnection,
-            ["Authentication:Authority"] = EngagementFixture.Issuer,
+            ["Authentication:Authority"] = fixture.Base.Authority,
             ["Authentication:Audience"] = "inklink-api",
-            ["Authentication:UserClients:0"] = "p04-users",
-            ["Messaging:IdentityAddress"] = "http://identity.test/"
+            ["Authentication:UserClients:0"] = fixture.Base.UserClient,
+            ["Messaging:IdentityAddress"] = "http://identity.test/",
+            ["Messaging:EngagementsAddress"] = "http://engagements.test/",
+            ["Messaging:ClientSecret"] = fixture.ClientSecret
         }) builder.UseSetting(setting.Key, setting.Value);
         builder.ConfigureTestServices(services =>
         {
+            services.AddHttpClient<IConversationPresentationDirectory, ConversationPresentationDirectory>().ConfigurePrimaryHttpMessageHandler(() => fixture.Base.Engagements.Server.CreateHandler());
+            services.AddHttpClient<ParticipantProfiles>().ConfigurePrimaryHttpMessageHandler(() => fixture.Base.Identity.Server.CreateHandler());
+            services.AddHttpClient<MessagingTokenClient>().ConfigurePrimaryHttpMessageHandler(() => fixture.Base.RealProvider is null ? new MessagingTokenHandler(fixture) : fixture.Base.RealProvider.CreateProviderHandler());
             services.Configure<JwtBearerOptions>("Bearer", fixture.Base.ValidateTokens);
             services.AddHttpClient<IIdentityDirectory, IdentityDirectory>().ConfigurePrimaryHttpMessageHandler(() => fixture.Base.Identity.Server.CreateHandler());
         });
+    }
+}
+
+
+internal sealed class MessagingTokenHandler(MessagingFixture fixture) : HttpMessageHandler
+{
+    protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    {
+        var form = await request.Content!.ReadAsStringAsync(cancellationToken);
+        Assert.Contains("client_id=inklink-messaging", form);
+        Assert.True(form.Contains("client_secret=" + fixture.ClientSecret, StringComparison.Ordinal), "Messaging test credential mismatch.");
+        Assert.Contains("scope=identity.profile.read", form);
+        return new HttpResponseMessage(HttpStatusCode.OK) { Content = JsonContent.Create(new { access_token = fixture.Base.Token("service-account", "service", "inklink-messaging", "identity.profile.read") }) };
     }
 }

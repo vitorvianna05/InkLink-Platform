@@ -7,6 +7,7 @@ using InkLink.Engagements.Application.Negotiations;
 using InkLink.Engagements.Infrastructure.Integration;
 using InkLink.Engagements.Infrastructure.Persistence;
 using InkLink.Identity.Application;
+using InkLink.Identity.IntegrationTests;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -34,7 +35,13 @@ public sealed class EngagementFixture : IAsyncLifetime
     public string OwnerConnection { get; private set; } = string.Empty;
     public string AppConnection { get; private set; } = string.Empty;
     public string CatalogDatabaseName => new NpgsqlConnectionStringBuilder(catalogConnection).Database!;
-    public string ServiceSecret { get; } = Guid.NewGuid().ToString("N");
+    private readonly string localServiceSecret = Guid.NewGuid().ToString("N");
+    public string ServiceSecret => RealProvider?.EngagementsSecret ?? localServiceSecret;
+    public SecurityFixture? RealProvider { get; private set; }
+    public string Authority => RealProvider?.Authority ?? Issuer;
+    public string UserClient => RealProvider is null ? "p04-users" : "inklink-test-users";
+    private readonly Dictionary<string, string> realTokens = [];
+    public void UseRealIdentity(SecurityFixture provider) => RealProvider = provider;
     public Dictionary<string, Guid> Accounts { get; } = [];
     public ServiceHost<IdentityProgram> Identity { get; private set; } = null!;
     public ServiceHost<CatalogProgram> Catalog { get; private set; } = null!;
@@ -42,6 +49,8 @@ public sealed class EngagementFixture : IAsyncLifetime
 
     public async Task InitializeAsync()
     {
+        if (RealProvider is not null)
+            foreach (var user in new[] { "alice", "bob", "carol" }) realTokens[user] = (await RealProvider.TokenAsync(user))["access_token"]!.GetValue<string>();
         adminConnection = Environment.GetEnvironmentVariable("INKLINK_TEST_POSTGRES") ?? string.Empty;
         if (adminConnection.Length == 0)
         {
@@ -73,7 +82,7 @@ public sealed class EngagementFixture : IAsyncLifetime
             if (user != "carol")
             {
                 using var scope = Identity.Services.CreateScope();
-                Assert.True(await new ActivateArtist(scope.ServiceProvider.GetRequiredService<IAccountStore>()).ExecuteAsync(Issuer, user, default));
+                Assert.True(await new ActivateArtist(scope.ServiceProvider.GetRequiredService<IAccountStore>()).ExecuteAsync(Authority, new JsonWebToken(Token(user)).Subject, default));
             }
         }
         Catalog = new(this, "catalog");
@@ -85,6 +94,7 @@ public sealed class EngagementFixture : IAsyncLifetime
 
     public string Token(string user = "alice", string actor = "user", string client = "p04-users", string scope = "", bool expired = false)
     {
+        if (RealProvider is not null) return realTokens[user];
         var key = new RsaSecurityKey(rsa) { KeyId = "p04" };
         return new JsonWebTokenHandler().CreateToken(new SecurityTokenDescriptor
         {
@@ -100,6 +110,7 @@ public sealed class EngagementFixture : IAsyncLifetime
 
     public void ValidateTokens(JwtBearerOptions options)
     {
+        if (RealProvider is not null) { options.BackchannelHttpHandler = RealProvider.CreateProviderHandler(); return; }
         options.Configuration = new OpenIdConnectConfiguration { Issuer = Issuer };
         options.Configuration.SigningKeys.Add(new RsaSecurityKey(rsa) { KeyId = "p04" });
         options.TokenValidationParameters.IssuerSigningKey = new RsaSecurityKey(rsa) { KeyId = "p04" };
@@ -107,10 +118,11 @@ public sealed class EngagementFixture : IAsyncLifetime
 
     internal Dictionary<string, string?> Settings(string kind) => new()
     {
-        ["Authentication:Authority"] = Issuer,
+        ["Authentication:Authority"] = Authority,
         ["Authentication:Audience"] = "inklink-api",
-        ["Authentication:UserClients:0"] = "p04-users",
+        ["Authentication:UserClients:0"] = UserClient,
         ["Authentication:TechnicalClients:0"] = "inklink-catalog",
+        ["Authentication:TechnicalClients:1"] = "inklink-messaging",
         ["IdentityDatabase:ConnectionString"] = identityConnection,
         ["CatalogDatabase:ConnectionString"] = catalogConnection,
         ["EngagementsDatabase:ConnectionString"] = AppConnection,
@@ -186,7 +198,7 @@ public sealed class ServiceHost<T>(EngagementFixture fixture, string kind, bool 
             {
                 services.AddHttpClient<IIdentityDirectory, IdentityDirectory>().ConfigurePrimaryHttpMessageHandler(() => identityUnavailable ? new FailureHandler() : fixture.Identity.Server.CreateHandler());
                 services.AddHttpClient<ICatalogDirectory, CatalogDirectory>().ConfigurePrimaryHttpMessageHandler(() => catalogUnavailable ? new FailureHandler() : fixture.Catalog.Server.CreateHandler());
-                services.AddHttpClient<ServiceTokenClient>().ConfigurePrimaryHttpMessageHandler(() => new TokenHandler(fixture));
+                services.AddHttpClient<ServiceTokenClient>().ConfigurePrimaryHttpMessageHandler(() => fixture.RealProvider is null ? new TokenHandler(fixture) : fixture.RealProvider.CreateProviderHandler());
             }
             if (kind == "gateway") services.AddSingleton<IForwarderHttpClientFactory>(new ProxyClient(fixture.Engagements.Server.CreateHandler()));
         });

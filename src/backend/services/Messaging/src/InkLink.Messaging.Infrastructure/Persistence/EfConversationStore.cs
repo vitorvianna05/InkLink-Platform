@@ -25,7 +25,7 @@ public sealed class EfConversationStore(MessagingDbContext database) : IConversa
         await transaction.CommitAsync(ct);
     }
 
-    public async Task<ConversationView?> ReadAsync(Guid id, Guid participant, CancellationToken ct)
+    public async Task<ConversationRecord?> ReadAsync(Guid id, Guid participant, CancellationToken ct)
     {
         var conversation = await database.Conversations.AsNoTracking().SingleOrDefaultAsync(c => c.Id == id && (c.ClientId == participant || c.ArtistAccountId == participant), ct);
         if (conversation is null) return null;
@@ -33,20 +33,21 @@ public sealed class EfConversationStore(MessagingDbContext database) : IConversa
         return View(conversation, last);
     }
 
-    public async Task<Page<ConversationView>> ListAsync(Guid participant, int limit, Guid? after, CancellationToken ct)
+    public async Task<Page<ConversationRecord>> ListAsync(Guid participant, int limit, Guid? after, CancellationToken ct)
     {
         await using var transaction = await database.Database.BeginTransactionAsync(IsolationLevel.RepeatableRead, ct);
         var query = database.Conversations.AsNoTracking().Where(c => c.ClientId == participant || c.ArtistAccountId == participant);
         var total = await query.CountAsync(ct);
         if (after.HasValue) query = query.Where(c => c.Id.CompareTo(after.Value) > 0);
-        var items = await query.OrderBy(c => c.Id).Take(limit + 1).ToListAsync(ct);
-        var result = new List<ConversationView>();
-        foreach (var item in items.Take(limit))
-        {
-            var last = await database.Messages.AsNoTracking().Where(m => m.ConversationId == item.Id).OrderByDescending(m => m.Sequence).FirstOrDefaultAsync(ct);
-            result.Add(View(item, last));
-        }
-        return new(result, null, items.Count > limit, total);
+        var rows = await query.OrderBy(c => c.Id).Take(limit + 1)
+            .Select(conversation => new
+            {
+                Conversation = conversation,
+                Last = database.Messages.AsNoTracking()
+                .Where(message => message.ConversationId == conversation.Id).OrderByDescending(message => message.Sequence).FirstOrDefault()
+            })
+            .ToListAsync(ct);
+        return new(rows.Take(limit).Select(row => View(row.Conversation, row.Last)).ToArray(), null, rows.Count > limit, total);
     }
 
     public async Task<Page<MessageView>> HistoryAsync(Guid id, Guid participant, int limit, long? after, CancellationToken ct)
@@ -84,6 +85,6 @@ public sealed class EfConversationStore(MessagingDbContext database) : IConversa
         var conversation = await database.Conversations.FromSqlInterpolated($"SELECT * FROM messaging.conversations WHERE \"EngagementId\" = {engagement} FOR UPDATE").SingleOrDefaultAsync(ct) ?? throw ManageConversations.NotFound();
         conversation.Block(); await database.SaveChangesAsync(ct); await transaction.CommitAsync(ct);
     }
-    private static ConversationView View(Conversation c, Message? last) => new(c.Id, c.EngagementId, c.ClientId, c.ArtistAccountId, c.WritingBlocked, c.CreatedAt, last is null ? null : View(last));
+    private static ConversationRecord View(Conversation c, Message? last) => new(c.Id, c.EngagementId, c.ClientId, c.ArtistAccountId, c.WritingBlocked, c.CreatedAt, last is null ? null : View(last));
     private static MessageView View(Message m) => new(m.Id, m.ConversationId, m.AuthorId, m.Body, m.CreatedAt, m.Sequence);
 }

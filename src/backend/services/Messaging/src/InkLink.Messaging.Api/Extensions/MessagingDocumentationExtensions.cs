@@ -17,6 +17,12 @@ internal static class MessagingDocumentationExtensions
         });
         return services;
     }
+
+    public static WebApplication MapMessagingDocumentation(this WebApplication app)
+    {
+        if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Testing")) app.MapOpenApi();
+        return app;
+    }
 }
 
 internal sealed class MessageSchemaTransformer : IOpenApiSchemaTransformer
@@ -42,9 +48,14 @@ internal sealed class MessageIdempotencyTransformer : IOpenApiOperationTransform
     {
         if (context.Description.HttpMethod != "POST") return Task.CompletedTask;
         operation.Parameters ??= [];
-        operation.Parameters.Add(new OpenApiParameter { Name = "Idempotency-Key", In = ParameterLocation.Header, Required = true,
+        operation.Parameters.Add(new OpenApiParameter
+        {
+            Name = "Idempotency-Key",
+            In = ParameterLocation.Header,
+            Required = true,
             Description = "Nonempty UUID scoped to author and conversation; retry with the same content.",
-            Schema = new OpenApiSchema { Type = JsonSchemaType.String, Format = "uuid" } });
+            Schema = new OpenApiSchema { Type = JsonSchemaType.String, Format = "uuid" }
+        });
         return Task.CompletedTask;
     }
 }
