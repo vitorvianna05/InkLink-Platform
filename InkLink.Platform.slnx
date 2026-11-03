@@ -12,6 +12,13 @@
     <Project Path="src/backend/gateway/InkLink.Gateway/InkLink.Gateway.csproj" />
   </Folder>
   <Folder Name="/src/backend/services/" />
+  <Folder Name="/src/backend/services/Catalog/" />
+  <Folder Name="/src/backend/services/Catalog/src/">
+    <Project Path="src/backend/services/Catalog/src/InkLink.Catalog.Api/InkLink.Catalog.Api.csproj" />
+    <Project Path="src/backend/services/Catalog/src/InkLink.Catalog.Application/InkLink.Catalog.Application.csproj" />
+    <Project Path="src/backend/services/Catalog/src/InkLink.Catalog.Domain/InkLink.Catalog.Domain.csproj" />
+    <Project Path="src/backend/services/Catalog/src/InkLink.Catalog.Infrastructure/InkLink.Catalog.Infrastructure.csproj" />
+  </Folder>
   <Folder Name="/src/backend/services/Identity/" />
   <Folder Name="/src/backend/services/Identity/src/">
     <Project Path="src/backend/services/Identity/src/InkLink.Identity.Api/InkLink.Identity.Api.csproj" />

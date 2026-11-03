@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup><UserSecretsId>inklink-catalog-development</UserSecretsId></PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../InkLink.Catalog.Application/InkLink.Catalog.Application.csproj" />
+    <ProjectReference Include="../InkLink.Catalog.Infrastructure/InkLink.Catalog.Infrastructure.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../../../building-blocks/InkLink.Authentication/InkLink.Authentication.csproj" />
+    <ProjectReference Include="../../../../building-blocks/InkLink.Observability/InkLink.Observability.csproj" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+  </ItemGroup>
+</Project>

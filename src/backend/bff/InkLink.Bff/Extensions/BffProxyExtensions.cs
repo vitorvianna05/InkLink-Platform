@@ -9,7 +9,8 @@ internal static class BffProxyExtensions
     public static IServiceCollection AddGatewayProxy(this IServiceCollection services, BffSettings settings)
     {
         services.AddReverseProxy().LoadFromMemory(
-            [new RouteConfig { RouteId = "web-api", ClusterId = "gateway", Match = new RouteMatch { Path = "/api/v1/{**remainder}" }, AuthorizationPolicy = "default" }],
+            [new RouteConfig { RouteId = "web-catalog-public", ClusterId = "gateway", Order = 0, Match = new RouteMatch { Path = "/api/v1/artists/{**remainder}", Methods = ["GET", "HEAD"] }, AuthorizationPolicy = "anonymous" },
+             new RouteConfig { RouteId = "web-api", Order = 1, ClusterId = "gateway", Match = new RouteMatch { Path = "/api/v1/{**remainder}" }, AuthorizationPolicy = "default" }],
             [new ClusterConfig { ClusterId = "gateway", Destinations = new Dictionary<string, DestinationConfig> { ["gateway"] = new() { Address = settings.GatewayAddress } },
                 HttpRequest = new() { ActivityTimeout = TimeSpan.FromSeconds(30) } }])
             .AddTransforms(context =>
@@ -21,7 +22,7 @@ internal static class BffProxyExtensions
                 context.AddRequestTransform(async transform =>
                 {
                     var token = await transform.HttpContext.GetTokenAsync("session", "access_token");
-                    transform.ProxyRequest.Headers.Authorization = new("Bearer", token);
+                    transform.ProxyRequest.Headers.Authorization = string.IsNullOrEmpty(token) ? null : new("Bearer", token);
                 });
             });
         return services;

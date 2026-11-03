@@ -8,7 +8,7 @@ if (-not (Test-Path -LiteralPath $envFile)) {
     }
     [IO.File]::WriteAllLines($envFile, $entries)
 }
-$requiredKeys = 'BFF_POSTGRES_PASSWORD', 'BFF_OWNER_PASSWORD', 'BFF_APP_PASSWORD', 'KEYCLOAK_DB_PASSWORD', 'KEYCLOAK_ADMIN_PASSWORD', 'INKLINK_BFF_SECRET', 'INKLINK_CATALOG_SECRET', 'BFF_CERT_PASSWORD'
+$requiredKeys = 'BFF_POSTGRES_PASSWORD', 'BFF_OWNER_PASSWORD', 'BFF_APP_PASSWORD', 'KEYCLOAK_DB_PASSWORD', 'KEYCLOAK_ADMIN_PASSWORD', 'INKLINK_BFF_SECRET', 'INKLINK_CATALOG_SECRET', 'BFF_CERT_PASSWORD', 'CATALOG_POSTGRES_PASSWORD', 'CATALOG_OWNER_PASSWORD', 'CATALOG_APP_PASSWORD'
 $existing = Get-Content -LiteralPath $envFile
 foreach ($name in $requiredKeys) {
     if (-not ($existing -match "^$name=")) {
@@ -53,8 +53,11 @@ $realm = $realm.Replace(([string][char]36 + '{INKLINK_BFF_SECRET}'), $settings.I
 $authentication = @{ Authority = 'https://localhost:5189/realms/inklink'; Audience = 'inklink-api'; UserClients = @('inklink-bff', 'inklink-ios', 'inklink-android'); TechnicalClients = @('inklink-catalog'); AllowHttpMetadata = $false }
 @{ Authentication = $authentication } | ConvertTo-Json -Depth 5 | dotnet user-secrets set --project $apiProject
 if ($LASTEXITCODE -ne 0) { throw 'Unable to configure Identity authentication.' }
-@{ Authentication = $authentication; Gateway = @{ IdentityAddress = 'http://127.0.0.1:5180/' } } | ConvertTo-Json -Depth 5 | dotnet user-secrets set --project "$repoRoot/src/backend/gateway/InkLink.Gateway"
+@{ Authentication = $authentication; Gateway = @{ IdentityAddress = 'http://127.0.0.1:5180/'; CatalogAddress = 'http://127.0.0.1:5193/' } } | ConvertTo-Json -Depth 5 | dotnet user-secrets set --project "$repoRoot/src/backend/gateway/InkLink.Gateway"
 if ($LASTEXITCODE -ne 0) { throw 'Unable to configure Gateway.' }
 @{ Kestrel = @{ Certificates = @{ Default = @{ Path = "$localDirectory/localhost-https.pfx"; Password = $settings.BFF_CERT_PASSWORD } } }; Bff = @{ Authority = $authentication.Authority; ClientId = 'inklink-bff'; ClientSecret = $settings.INKLINK_BFF_SECRET; GatewayAddress = 'http://127.0.0.1:5191/'; ConnectionString = ('Host=127.0.0.1;Port=54330;Database=inklink_bff;Username=inklink_bff_app;Password=' + $settings.BFF_APP_PASSWORD); CertificatePath = $certificatePath; CertificatePassword = $settings.BFF_CERT_PASSWORD; AllowHttpMetadata = $false } } | ConvertTo-Json -Depth 5 | dotnet user-secrets set --project "$repoRoot/src/backend/bff/InkLink.Bff"
 if ($LASTEXITCODE -ne 0) { throw 'Unable to configure BFF.' }
 Write-Host 'Identity, Gateway, BFF and local Keycloak import configured without printing credentials.'
+
+@{ CatalogDatabase = @{ ConnectionString = ('Host=127.0.0.1;Port=54331;Database=inklink_catalog;Username=inklink_catalog_app;Password=' + $settings.CATALOG_APP_PASSWORD) }; Authentication = $authentication; Catalog = @{ IdentityAddress = 'http://127.0.0.1:5180/' } } | ConvertTo-Json -Depth 5 | dotnet user-secrets set --project "$repoRoot/src/backend/services/Catalog/src/InkLink.Catalog.Api"
+if ($LASTEXITCODE -ne 0) { throw 'Unable to configure Catalog.' }

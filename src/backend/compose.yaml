@@ -16,6 +16,22 @@ services:
       interval: 2s
       timeout: 3s
       retries: 30
+  catalog-db:
+    image: postgres:17.7-alpine
+    environment:
+      POSTGRES_PASSWORD: ${CATALOG_POSTGRES_PASSWORD:?Run Initialize-Local.ps1}
+      CATALOG_OWNER_PASSWORD: ${CATALOG_OWNER_PASSWORD:?Run Initialize-Local.ps1}
+      CATALOG_APP_PASSWORD: ${CATALOG_APP_PASSWORD:?Run Initialize-Local.ps1}
+    ports:
+      - "127.0.0.1:54331:5432"
+    volumes:
+      - catalog-data:/var/lib/postgresql/data
+      - ./scripts/db/init-catalog.sh:/docker-entrypoint-initdb.d/10-catalog.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d inklink_catalog"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
   bff-db:
     image: postgres:17.7-alpine
     environment:
@@ -69,5 +85,6 @@ services:
         condition: service_healthy
 volumes:
   identity-data:
+  catalog-data:
   bff-data:
   keycloak-data:

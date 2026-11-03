@@ -25,3 +25,13 @@ try {
         if ($LASTEXITCODE -ne 0) { throw 'BFF migration failed.' }
     } finally { Pop-Location }
 } finally { $env:Bff__ConnectionString = $previousBffConnection }
+
+$previousCatalogConnection = $env:CatalogDatabase__ConnectionString
+try {
+    $env:CatalogDatabase__ConnectionString = 'Host=127.0.0.1;Port=54331;Database=inklink_catalog;Username=inklink_catalog_owner;Password=' + $settings.CATALOG_OWNER_PASSWORD
+    Push-Location $repoRoot
+    try {
+        dotnet ef database update --project src/backend/services/Catalog/src/InkLink.Catalog.Infrastructure --startup-project src/backend/services/Catalog/src/InkLink.Catalog.Infrastructure
+        if ($LASTEXITCODE -ne 0) { throw 'Catalog migration failed.' }
+    } finally { Pop-Location }
+} finally { $env:CatalogDatabase__ConnectionString = $previousCatalogConnection }

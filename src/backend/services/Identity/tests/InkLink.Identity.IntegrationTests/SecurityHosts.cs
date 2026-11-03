@@ -23,7 +23,7 @@ internal sealed class SecurityGatewayHost(SecurityFixture fixture, HttpMessageHa
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder) => builder.UseEnvironment("Testing")
         .UseSecuritySettings(SecurityConfiguration.Identity(fixture)
-            .Concat(new Dictionary<string, string?> { ["Gateway:IdentityAddress"] = "http://identity.test/" }))
+            .Concat(new Dictionary<string, string?> { ["Gateway:IdentityAddress"] = "http://identity.test/", ["Gateway:CatalogAddress"] = "http://catalog.test/" }))
         .ConfigureTestServices(services =>
         {
             services.AddSingleton<IForwarderHttpClientFactory>(new ProxyClientFactory(upstream));

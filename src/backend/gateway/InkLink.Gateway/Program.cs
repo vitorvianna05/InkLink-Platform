@@ -5,7 +5,7 @@ using InkLink.Observability;
 var builder = WebApplication.CreateBuilder(args);
 builder.Logging.AddGatewayLogging();
 builder.Services.AddInkLinkAccessTokens(builder.Configuration, builder.Environment);
-builder.Services.AddIdentityProxy(builder.Configuration, builder.Environment);
+builder.Services.AddBackendProxy(builder.Configuration, builder.Environment);
 
 var app = builder.Build();
 app.UseCorrelatedRequestLogging();
