@@ -36,7 +36,7 @@ Princípios de execução:
 Ordem principal:
 
 ```text
-P00 -> P01 -> P02 -> P03 -> P04 -> P05 -> P06 -> P07 -> P08 -> P09
+P00 -> P01 -> P02 -> P03 -> P04 -> P05 -> P06 -> GW -> P07 -> P08 -> P09
                                                                     |
                                                                     v
                                                                    P10
@@ -238,6 +238,18 @@ Não é necessário esperar a etapa de validação integrada para criar testes, 
 
 **Correções da revisão P06:** validação JSON de datas, falhas de telemetria sob orçamento da Outbox e invariantes/fuso em Domain. 29 casos de Scheduling com resultado final aprovado; [evidências](verification/p06.md) detalham o recorte e a reexecução da expectativa de jsonb.
 
+### Incremento GW — Antecipar documentação interativa do Gateway
+
+**Dependências:** P06. **Situação:** concluído; [evidências](verification/gateway-documentation.md). Decisão 0012, tarefas TGW.01–TGW.04. Antecipação aprovada pelo responsável para permitir testes manuais dos serviços antes de P07.
+
+- [x] Registrar fonte OpenAPI por serviço, limites e política de acesso.
+- [x] Disponibilizar Swagger UI com seleção dos serviços e chamadas pelas rotas públicas do Gateway.
+- [x] Integrar Authorization Code com PKCE por cliente público de desenvolvimento.
+- [x] Verificar filtro de contratos internos, autorização, indisponibilidade e ausência da ferramenta em produção.
+- [x] Documentar execução no Visual Studio e evidências reais de autenticação/consumo.
+
+T09.01 revisará a consolidação final, exemplos e compatibilidade de todos os contratos, incluindo os incrementos futuros. Este incremento não altera os critérios de conclusão de P07/P09.
+
 ### P07 — Integrar o ciclo de atendimento, encerramento e novo agendamento
 
 **Prioridade:** backend; marco crítico antes do frontend. **Dependências:** P04–P06. **Situação:** pendente.
@@ -407,6 +419,6 @@ A conclusão de uma etapa não significa a conclusão automática das etapas dep
 
 ## 8. Próxima ação
 
-Iniciar T07.01: especificar encerramento e permissões, com coordenação durável entre Atendimentos e Conversas. P00–P06 estão concluídas em seus recortes; a [verificação P06](verification/p06.md) consolida Agenda e concorrência. M1/M2/M3 concluídos no backend; encerramento distribuído e novo contexto de atendimento permanecem em P07.
+Incremento GW de documentação interativa concluído. Iniciar T07.01: especificar encerramento e permissões, com coordenação durável entre Atendimentos e Conversas. P00–P06 estão concluídas em seus recortes; a [verificação P06](verification/p06.md) consolida Agenda e concorrência. M1/M2/M3 concluídos no backend; encerramento distribuído e novo contexto de atendimento permanecem em P07.
 
 GetMyProfile possui transporte autenticado, atualização controlada de nome, vínculo externo/interno e funções locais. Keycloak, Gateway e BFF estão integrados e verificados em P02. Os próximos fluxos continuam priorizando backend, com autorização própria em cada serviço.

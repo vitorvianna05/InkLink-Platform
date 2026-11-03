@@ -161,6 +161,17 @@ Cada linha abaixo é uma tarefa com ID estável, dependências diretas, entregá
 
 **Conclusão de P06:** reserva consistente sob concorrência e visível às partes autorizadas.
 
+### Incremento GW — Documentação interativa antecipada
+
+Após P06 e antes de P07, conforme decisão 0012. Referências RNF06–RNF08 e contratos públicos já entregues. Situação: concluído; [evidências](verification/gateway-documentation.md). A consolidação T09.01 permanece pendente.
+
+| ID / tarefa | Dependências | Entregável | Aceite e verificação |
+| --- | --- | --- | --- |
+| TGW.01 — [x] Registrar antecipação e escopo | T06.06 | Decisão 0012 e atualização do SDD. | Autonomia dos contratos por serviço, acesso interativo pelo Gateway e limites de ambiente explícitos. |
+| TGW.02 — [x] Disponibilizar catálogo Swagger no Gateway | TGW.01 | UI embarcada e documentos selecionáveis dos serviços. | Try it out aponta para o Gateway; contratos internos são filtrados; falha de um serviço é explícita e isolada; produção não publica documentação. |
+| TGW.03 — [x] Integrar login PKCE para testes | TGW.02 | Cliente público inklink-swagger e configuração local. | Code+PKCE real emite token aceito no Gateway/serviço; nenhum segredo/password grant; papéis e autorização por recurso preservados. |
+| TGW.04 — [x] Validar e documentar execução local | TGW.03 | Testes, guia Visual Studio e evidências. | Conta autenticada consulta/altera dados permitidos por rotas reais; UI não ignora 401/403; passos reproduzíveis sem protótipo. |
+
 ### P07 — Ciclo integrado e recuperação
 
 **Referências:** RF09–RF15, RF18, RF19 e RF21; RNF04–RNF06. **Marco:** M4. **Situação inicial:** pendente.
@@ -197,7 +208,7 @@ Cada linha abaixo é uma tarefa com ID estável, dependências diretas, entregá
 
 | ID / tarefa | Dependências | Entregável | Aceite e verificação |
 | --- | --- | --- | --- |
-| T09.01 — [ ] Consolidar os contratos dos consumidores | T08.06 | Documentação e exemplos de APIs, eventos, paginação, limites, erros e operações em processamento. | Exemplos de sucesso e falha são verificáveis sem o protótipo; a política de compatibilidade está registrada. |
+| T09.01 — [ ] Consolidar os contratos dos consumidores | T08.06 | Documentação e exemplos de APIs, eventos, paginação, limites, erros e operações em processamento; revisar e ampliar o catálogo interativo antecipado em TGW.01–TGW.04. | Exemplos de sucesso e falha são verificáveis sem o protótipo; a política de compatibilidade está registrada. |
 | T09.02 — [ ] Executar regressão integrada e revisão de acesso | T09.01 | Suíte e relatório dos fluxos das duas funções, incluindo autorização nos serviços. | Roteiro de P07 e indicadores de P08 passam em ambiente integrado; critérios não atendidos são identificados em vez de omitidos. |
 | T09.03 — [ ] Verificar observabilidade e recuperação | T09.02 | Cenários de interrupção com correlação, Outbox pendente e processos incompletos visíveis. | Uma operação pode ser rastreada entre serviços sem expor conteúdo privado; retomada não duplica escrita ou perde fatos. |
 | T09.04 — [ ] Preparar ambiente de integração reproduzível | T09.03 | Ambiente com HTTPS, configurações, migrações e dados sintéticos separados; instruções de execução. | Ambiente limpo inicia os componentes necessários, sem credenciais versionadas ou dependência de armazenamento do navegador. |
@@ -269,7 +280,7 @@ Cada linha abaixo é uma tarefa com ID estável, dependências diretas, entregá
 
 ## 4. Próximo lote e acompanhamento
 
-P00 foi concluída no nível de decisões e revisão. A [revisão T00.07](decisions/0006-p00-review.md) consolida os registros de T00.01 a T00.06 e o escopo do primeiro incremento. P01 foi implementada e verificada conforme [evidências](verification/p01.md), incluindo Docker e PostgreSQL real. P02 foi concluída conforme [evidências](verification/p02.md). P03 foi concluída conforme [evidências](verification/p03.md). P04 foi concluída conforme [evidências](verification/p04.md), com o fluxo aprovado pelo responsável. P05 foi concluída conforme [evidências](verification/p05.md). P06 foi concluída conforme [evidências](verification/p06.md). O próximo passo é T07.01; tarefas de P07 em diante permanecem pendentes.
+P00 foi concluída no nível de decisões e revisão. A [revisão T00.07](decisions/0006-p00-review.md) consolida os registros de T00.01 a T00.06 e o escopo do primeiro incremento. P01 foi implementada e verificada conforme [evidências](verification/p01.md), incluindo Docker e PostgreSQL real. P02 foi concluída conforme [evidências](verification/p02.md). P03 foi concluída conforme [evidências](verification/p03.md). P04 foi concluída conforme [evidências](verification/p04.md), com o fluxo aprovado pelo responsável. P05 foi concluída conforme [evidências](verification/p05.md). P06 foi concluída conforme [evidências](verification/p06.md). O incremento GW foi concluído conforme [evidências](verification/gateway-documentation.md). O próximo passo é T07.01; tarefas de P07 em diante permanecem pendentes.
 
 O broker e a primeira integração confiável foram definidos/verificados em P05; stack móvel mantém tarefas próprias. A pesquisa inicial foi definida em P03, conforme decisão 0008. Essas escolhas não eram pré-requisitos do primeiro incremento de Identity.
 

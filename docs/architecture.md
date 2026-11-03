@@ -253,6 +253,8 @@ Arquivos de portfólio e flashes poderão ser mantidos em armazenamento próprio
 
 A [decisão 0005](decisions/0005-api-conventions.md) define JSON com camelCase, rotas por recursos em inglês, versão pública /api/v1, IDs internos UUIDv7 e erros Problem Details com code e traceId. Listagens adotam cursor, limite padrão de 20 e máximo de 100, salvo contrato específico justificado. Operações críticas adotam idempotência conforme seu contrato e APIs têm documentação OpenAPI por serviço.
 
+A decisão 0012 antecipa, após P06, Swagger UI no Gateway em Development/Testing. Os serviços continuam fontes oficiais do OpenAPI; o Gateway publica documentos de consumo filtrados e adaptados para sua própria origem. Não há compartilhamento de implementações, novos endpoints de negócio ou transporte de regras para o Gateway. Login da ferramenta usa cliente público com Code/PKCE; o website continua com BFF e tokens no servidor. Contratos internos ficam fora do catálogo interativo. Produção não registra UI ou documentos agregados.
+
 APIs serão usadas quando o solicitante precisa de resposta imediata ou de uma decisão do serviço responsável. Os contratos serão explícitos e documentados, incluindo validação, autorização, resultados, erros e compatibilidade.
 
 Chamadas entre serviços devem possuir autenticação adequada, timeouts, cancelamento e comportamento definido diante de indisponibilidade. Cadeias longas de chamadas devem ser evitadas. O Gateway não coordena regras de negócio distribuídas.

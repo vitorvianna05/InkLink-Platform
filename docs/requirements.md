@@ -236,6 +236,8 @@ A nova aplicação deve possuir verificações reproduzíveis alinhadas aos crit
 
 **Critérios de aceite:** a compilação da solução termina com sucesso. Testes com dados controlados verificam pesquisa aproximada, persistência, isolamento de dados, seleção de conversas, autoria, bloqueio após encerramento, agendamento, cálculos financeiros e conflitos de reservas. Verificações visuais e por teclado cobrem os principais fluxos. Os testes são próprios da nova aplicação e não dependem da base fictícia ou do armazenamento local do protótipo. Organização e ferramentas da suíte serão definidas no desenho técnico.
 
+Como apoio à verificação manual do backend, o incremento antecipado da decisão 0012 disponibiliza documentação interativa no Gateway em desenvolvimento/testes. Deve permitir selecionar os serviços e executar suas operações públicas reais com autenticação e autorização vigentes; documentação não concede permissões adicionais. O OpenAPI continua sob responsabilidade de cada serviço.
+
 ### RNF07 — Execução e publicação da nova aplicação
 
 Cada frontend entregue e o backend devem possuir processos documentados de execução e publicação compatíveis com suas tecnologias e plataformas.
