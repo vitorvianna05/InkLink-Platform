@@ -21,8 +21,15 @@ public sealed class Conversation
     {
         if (engagement == Guid.Empty || client == Guid.Empty || artist == Guid.Empty || client == artist || revision <= 0)
             throw new InvalidConversationData("participants", "Invalid engagement or participants.");
-        return new Conversation { Id = Guid.CreateVersion7(), EngagementId = engagement, ClientId = client, ArtistAccountId = artist,
-            CreatedAt = createdAt.ToUniversalTime(), Revision = revision };
+        return new Conversation
+        {
+            Id = Guid.CreateVersion7(),
+            EngagementId = engagement,
+            ClientId = client,
+            ArtistAccountId = artist,
+            CreatedAt = createdAt.ToUniversalTime(),
+            Revision = revision
+        };
     }
 
     public void VerifyParticipants(Guid client, Guid artist)
@@ -57,7 +64,15 @@ public sealed class Message
         if (conversation == Guid.Empty || author == Guid.Empty || key == Guid.Empty || sequence <= 0) throw new InvalidConversationData("id", "Nonempty UUID and positive sequence required.");
         if (text.Length == 0 || (body?.Length ?? 0) > 4000) throw new InvalidConversationData("body", "Message must contain 1–4000 characters.");
         var utc = now.ToUniversalTime();
-        return new Message { Id = Guid.CreateVersion7(), ConversationId = conversation, AuthorId = author, RequestKey = key, Sequence = sequence,
-            Body = text, CreatedAt = new DateTimeOffset(utc.Ticks - utc.Ticks % 10, TimeSpan.Zero) };
+        return new Message
+        {
+            Id = Guid.CreateVersion7(),
+            ConversationId = conversation,
+            AuthorId = author,
+            RequestKey = key,
+            Sequence = sequence,
+            Body = text,
+            CreatedAt = new DateTimeOffset(utc.Ticks - utc.Ticks % 10, TimeSpan.Zero)
+        };
     }
 }

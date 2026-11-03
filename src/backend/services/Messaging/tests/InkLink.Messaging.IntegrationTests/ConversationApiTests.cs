@@ -20,7 +20,7 @@ public sealed class ConversationApiTests(MessagingFixture fixture)
     private async Task<Guid> OpenAsync(EventEnvelope envelope)
     {
         await using var database = fixture.CreateOwnerContext();
-        await new EfConversationStore(database).ConsumeAsync(envelope, default);
+        await new OpenConversation(new EfConversationStore(database)).ExecuteAsync(envelope, default);
         return (await database.Conversations.SingleAsync(c => c.EngagementId == envelope.Data.EngagementId)).Id;
     }
     private static Task<HttpResponseMessage> SendAsync(HttpClient client, Guid id, Guid key, string body)
@@ -119,11 +119,11 @@ public sealed class ConversationApiTests(MessagingFixture fixture)
     {
         var envelope = Event(Guid.NewGuid()); var id = await OpenAsync(envelope);
         await using var db = fixture.CreateOwnerContext(); var store = new EfConversationStore(db);
-        await store.ConsumeAsync(envelope, default);
+        await new OpenConversation(store).ExecuteAsync(envelope, default);
         Assert.Equal(1, await db.Conversations.CountAsync(c => c.EngagementId == envelope.Data.EngagementId));
         Assert.Equal(1, await db.Inbox.CountAsync(i => i.Id == envelope.MessageId));
         var wrong = envelope with { MessageId = Guid.NewGuid(), Data = envelope.Data with { ClientId = Guid.NewGuid() } };
-        await Assert.ThrowsAsync<InkLink.Messaging.Domain.InvalidConversationData>(() => store.ConsumeAsync(wrong, default));
+        await Assert.ThrowsAsync<InkLink.Messaging.Domain.InvalidConversationData>(() => new OpenConversation(store).ExecuteAsync(wrong, default));
         db.ChangeTracker.Clear(); Assert.False(await db.Inbox.AnyAsync(i => i.Id == wrong.MessageId));
         Assert.NotEqual(Guid.Empty, id);
     }
@@ -182,7 +182,7 @@ public sealed class ConversationApiTests(MessagingFixture fixture)
         Assert.Contains((await send).StatusCode, new[] { HttpStatusCode.Created, HttpStatusCode.Conflict });
         Assert.Equal(HttpStatusCode.Conflict, (await SendAsync(alice, id, Guid.NewGuid(), "Depois")).StatusCode);
         await new EfConversationStore(database).BlockAsync(envelope.Data.EngagementId, default);
-        await new EfConversationStore(database).ConsumeAsync(envelope with { MessageId = Guid.NewGuid() }, default);
+        await new OpenConversation(new EfConversationStore(database)).ExecuteAsync(envelope with { MessageId = Guid.NewGuid() }, default);
         Assert.True((await database.Conversations.SingleAsync(c => c.Id == id)).WritingBlocked);
         Assert.Equal(HttpStatusCode.Conflict, (await SendAsync(alice, id, Guid.NewGuid(), "Ainda bloqueada")).StatusCode);
     }

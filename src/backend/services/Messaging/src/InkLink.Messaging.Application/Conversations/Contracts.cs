@@ -7,13 +7,17 @@ public sealed record MessageView(Guid Id, Guid ConversationId, Guid AuthorId, st
 public sealed record ConversationView(Guid Id, Guid EngagementId, Guid ClientId, Guid ArtistAccountId, bool WritingBlocked, DateTimeOffset CreatedAt, MessageView? LastMessage);
 public sealed record Page<T>(IReadOnlyList<T> Items, string? NextCursor, bool HasMore, int Total, string? ResumeCursor = null);
 public sealed record ConversationOpened(Guid EngagementId, Guid ClientId, Guid ArtistAccountId, long Revision, bool WritingAllowed);
-public sealed record EventEnvelope(Guid MessageId, string Type, int SchemaVersion, DateTimeOffset OccurredAt, string CorrelationId, string? CausationId, ConversationOpened Data);
+public sealed record EventEnvelope(Guid MessageId, string Type, int SchemaVersion, DateTimeOffset OccurredAt, string CorrelationId, string? CausationId, ConversationOpened Data,
+    [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] string? TraceParent = null);
 public sealed record Creation<T>(T Value, bool Created);
 public sealed record MessageChange<T>(T Result, Message? NewMessage = null);
 
+public sealed record ConversationOpening(Guid MessageId, string Fingerprint, Conversation Conversation);
+public sealed record OpeningState(string? ExistingFingerprint, Conversation? ExistingConversation);
+
 public interface IConversationStore
 {
-    Task ConsumeAsync(EventEnvelope envelope, CancellationToken cancellationToken);
+    Task ApplyOpeningAsync(ConversationOpening opening, Action<OpeningState> validate, CancellationToken cancellationToken);
     Task<ConversationView?> ReadAsync(Guid id, Guid participant, CancellationToken cancellationToken);
     Task<Page<ConversationView>> ListAsync(Guid participant, int limit, Guid? after, CancellationToken cancellationToken);
     Task<Page<MessageView>> HistoryAsync(Guid id, Guid participant, int limit, long? after, CancellationToken cancellationToken);

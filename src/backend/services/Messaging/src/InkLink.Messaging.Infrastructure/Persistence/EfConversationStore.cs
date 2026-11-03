@@ -1,7 +1,4 @@
 using System.Data;
-using System.Security.Cryptography;
-using System.Text;
-using System.Text.Json;
 using InkLink.Messaging.Application;
 using InkLink.Messaging.Application.Conversations;
 using InkLink.Messaging.Domain;
@@ -11,24 +8,20 @@ namespace InkLink.Messaging.Infrastructure.Persistence;
 
 public sealed class EfConversationStore(MessagingDbContext database) : IConversationStore
 {
-    public async Task ConsumeAsync(EventEnvelope envelope, CancellationToken ct)
+    public async Task ApplyOpeningAsync(ConversationOpening opening, Action<OpeningState> validate, CancellationToken ct)
     {
-        if (envelope.MessageId == Guid.Empty || envelope.Type != "engagement.negotiation-opened.v1" || envelope.SchemaVersion != 1
-            || envelope.OccurredAt == default || string.IsNullOrWhiteSpace(envelope.CorrelationId) || envelope.Data is null
-            || !envelope.Data.WritingAllowed) throw new InvalidConversationData("event", "Unsupported event.");
-        var opened = Conversation.Open(envelope.Data.EngagementId, envelope.Data.ClientId, envelope.Data.ArtistAccountId, envelope.OccurredAt, envelope.Data.Revision);
-        var fingerprint = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(envelope))));
+        var opened = opening.Conversation;
         await using var transaction = await database.Database.BeginTransactionAsync(ct);
-        var inserted = await database.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO messaging.inbox (\"Id\", \"Fingerprint\", \"ProcessedAt\") VALUES ({envelope.MessageId}, {fingerprint}, {DateTimeOffset.UtcNow}) ON CONFLICT DO NOTHING", ct);
+        var inserted = await database.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO messaging.inbox (\"Id\", \"Fingerprint\", \"ProcessedAt\") VALUES ({opening.MessageId}, {opening.Fingerprint}, {DateTimeOffset.UtcNow}) ON CONFLICT DO NOTHING", ct);
         if (inserted == 0)
         {
-            var existing = await database.Inbox.AsNoTracking().SingleAsync(x => x.Id == envelope.MessageId, ct);
-            if (existing.Fingerprint != fingerprint) throw new InvalidConversationData("messageId", "Repeated event ID has different content.");
+            var existing = await database.Inbox.AsNoTracking().SingleAsync(x => x.Id == opening.MessageId, ct);
+            validate(new(existing.Fingerprint, null));
             await transaction.CommitAsync(ct); return;
         }
-        await database.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO messaging.conversations (\"Id\", \"EngagementId\", \"ClientId\", \"ArtistAccountId\", \"CreatedAt\", \"WritingBlocked\", \"Revision\", \"LastMessageSequence\") VALUES ({opened.Id}, {opened.EngagementId}, {opened.ClientId}, {opened.ArtistAccountId}, {opened.CreatedAt}, {false}, {opened.Revision}, {0L}) ON CONFLICT (\"EngagementId\") DO NOTHING", ct);
+        await database.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO messaging.conversations (\"Id\", \"EngagementId\", \"ClientId\", \"ArtistAccountId\", \"CreatedAt\", \"WritingBlocked\", \"Revision\", \"LastMessageSequence\") VALUES ({opened.Id}, {opened.EngagementId}, {opened.ClientId}, {opened.ArtistAccountId}, {opened.CreatedAt}, {opened.WritingBlocked}, {opened.Revision}, {opened.LastMessageSequence}) ON CONFLICT (\"EngagementId\") DO NOTHING", ct);
         var conversation = await database.Conversations.AsNoTracking().SingleAsync(c => c.EngagementId == opened.EngagementId, ct);
-        conversation.VerifyParticipants(opened.ClientId, opened.ArtistAccountId);
+        validate(new(null, conversation));
         await transaction.CommitAsync(ct);
     }
 

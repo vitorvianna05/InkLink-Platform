@@ -9,6 +9,7 @@ builder.Logging.AddMessagingLogging();
 builder.Services.AddMessagingInfrastructure(builder.Configuration);
 builder.Services.AddScoped<ResolveMessagingAccount>();
 builder.Services.AddScoped<ManageConversations>();
+builder.Services.AddScoped<OpenConversation>();
 builder.Services.AddMessagingAuthentication(builder.Configuration, builder.Environment);
 builder.Services.AddIdentityIntegration(builder.Configuration, builder.Environment);
 builder.Services.AddMessagingHttpContracts();

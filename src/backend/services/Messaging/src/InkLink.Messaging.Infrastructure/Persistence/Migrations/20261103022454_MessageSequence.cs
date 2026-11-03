@@ -2,7 +2,8 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace InkLink.Messaging.Infrastructure.Persistence.Migrations; 
+namespace InkLink.Messaging.Infrastructure.Persistence.Migrations;
+
 /// <inheritdoc />
 public partial class MessageSequence : Migration
 {

@@ -36,7 +36,7 @@ internal sealed class ConversationConsumer(IServiceScopeFactory scopes, IConfigu
             if (delivery.Body.Length > 65536) throw new InvalidConversationData("event", "Envelope too large.");
             var envelope = JsonSerializer.Deserialize<EventEnvelope>(delivery.Body.Span, Json) ?? throw new InvalidConversationData("event", "Envelope required.");
             using var scope = scopes.CreateScope();
-            await scope.ServiceProvider.GetRequiredService<IConversationStore>().ConsumeAsync(envelope, ct);
+            await scope.ServiceProvider.GetRequiredService<OpenConversation>().ExecuteAsync(envelope, ct);
             logger.LogInformation("Integration event {EventId} for engagement {EngagementId} processed with correlation {CorrelationId}",
                 envelope.MessageId, envelope.Data.EngagementId, envelope.CorrelationId);
             channel.BasicAck(delivery.DeliveryTag, multiple: false);
