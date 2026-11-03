@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup><UserSecretsId>inklink-scheduling-development</UserSecretsId></PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../InkLink.Scheduling.Application/InkLink.Scheduling.Application.csproj" />
+    <ProjectReference Include="../InkLink.Scheduling.Infrastructure/InkLink.Scheduling.Infrastructure.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../../../building-blocks/InkLink.Authentication/InkLink.Authentication.csproj" />
+    <ProjectReference Include="../../../../building-blocks/InkLink.Observability/InkLink.Observability.csproj" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+  </ItemGroup>
+</Project>

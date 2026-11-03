@@ -55,3 +55,13 @@ try {
         if ($LASTEXITCODE -ne 0) { throw 'Messaging migration failed.' }
     } finally { Pop-Location }
 } finally { $env:MessagingDatabase__ConnectionString = $previousMessagingConnection }
+
+$previousSchedulingConnection = $env:SchedulingDatabase__ConnectionString
+try {
+    $env:SchedulingDatabase__ConnectionString = 'Host=127.0.0.1;Port=54334;Database=inklink_scheduling;Username=inklink_scheduling_owner;Password=' + $settings.SCHEDULING_OWNER_PASSWORD
+    Push-Location $repoRoot
+    try {
+        dotnet ef database update --project src/backend/services/Scheduling/src/InkLink.Scheduling.Infrastructure --startup-project src/backend/services/Scheduling/src/InkLink.Scheduling.Infrastructure
+        if ($LASTEXITCODE -ne 0) { throw 'Scheduling migration failed.' }
+    } finally { Pop-Location }
+} finally { $env:SchedulingDatabase__ConnectionString = $previousSchedulingConnection }

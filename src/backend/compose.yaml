@@ -64,6 +64,22 @@ services:
       interval: 2s
       timeout: 3s
       retries: 30
+  scheduling-db:
+    image: postgres:17.7-alpine
+    environment:
+      POSTGRES_PASSWORD: ${SCHEDULING_POSTGRES_PASSWORD:?Run Initialize-Local.ps1}
+      SCHEDULING_OWNER_PASSWORD: ${SCHEDULING_OWNER_PASSWORD:?Run Initialize-Local.ps1}
+      SCHEDULING_APP_PASSWORD: ${SCHEDULING_APP_PASSWORD:?Run Initialize-Local.ps1}
+    ports:
+      - "127.0.0.1:54334:5432"
+    volumes:
+      - scheduling-data:/var/lib/postgresql/data
+      - ./scripts/db/init-scheduling.sh:/docker-entrypoint-initdb.d/10-scheduling.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d inklink_scheduling"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
   rabbitmq:
     hostname: inklink-broker
     image: rabbitmq:3.13.7-alpine
@@ -71,6 +87,8 @@ services:
       RABBITMQ_DEFAULT_USER: inklink
       RABBITMQ_DEFAULT_PASS: ${INKLINK_BROKER_PASSWORD:?Run Initialize-Local.ps1}
       RABBITMQ_PUBLISHER_PASS: ${INKLINK_BROKER_PUBLISHER_PASSWORD:?Run Initialize-Local.ps1}
+      RABBITMQ_SCHEDULING_PUBLISHER_PASS: ${INKLINK_SCHEDULING_PUBLISHER_PASSWORD:?Run Initialize-Local.ps1}
+      RABBITMQ_RESERVATION_CONSUMER_PASS: ${INKLINK_RESERVATION_CONSUMER_PASSWORD:?Run Initialize-Local.ps1}
       RABBITMQ_CONSUMER_PASS: ${INKLINK_BROKER_CONSUMER_PASSWORD:?Run Initialize-Local.ps1}
     ports:
       - "127.0.0.1:5673:5672"
@@ -135,6 +153,7 @@ services:
       keycloak-db:
         condition: service_healthy
 volumes:
+  scheduling-data:
   identity-data:
   catalog-data:
   engagements-data:

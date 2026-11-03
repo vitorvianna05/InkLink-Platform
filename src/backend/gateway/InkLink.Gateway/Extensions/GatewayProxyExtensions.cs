@@ -24,6 +24,11 @@ internal static class GatewayProxyExtensions
             routes.Add(new RouteConfig { RouteId = "conversations", ClusterId = "messaging", Match = new RouteMatch { Path = "/api/v1/conversations/{**remainder}" }, AuthorizationPolicy = "default" });
             clusters.AddBackendCluster("messaging", configuration["Gateway:MessagingAddress"], environment);
         }
+        if (!string.IsNullOrWhiteSpace(configuration["Gateway:SchedulingAddress"]))
+        {
+            routes.Add(new RouteConfig { RouteId = "scheduling", ClusterId = "scheduling", Match = new RouteMatch { Path = "/api/v1/scheduling/{**remainder}" }, AuthorizationPolicy = "default" });
+            clusters.AddBackendCluster("scheduling", configuration["Gateway:SchedulingAddress"], environment);
+        }
         services.AddReverseProxy().LoadFromMemory(routes, clusters)
             .AddTransforms(context =>
             {

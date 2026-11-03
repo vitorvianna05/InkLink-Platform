@@ -68,4 +68,13 @@
   <Folder Name="/src/backend/services/Messaging/tests/">
     <Project Path="src/backend/services/Messaging/tests/InkLink.Messaging.ArchitectureTests/InkLink.Messaging.ArchitectureTests.csproj" />
   </Folder>
+  <Folder Name="/src/backend/services/Scheduling/">
+    <Project Path="src/backend/services/Scheduling/tests/InkLink.Scheduling.IntegrationTests/InkLink.Scheduling.IntegrationTests.csproj" />
+    <Project Path="src/backend/services/Scheduling/tests/InkLink.Scheduling.ArchitectureTests/InkLink.Scheduling.ArchitectureTests.csproj" />
+    <Project Path="src/backend/services/Scheduling/tests/InkLink.Scheduling.UnitTests/InkLink.Scheduling.UnitTests.csproj" />
+    <Project Path="src/backend/services/Scheduling/src/InkLink.Scheduling.Api/InkLink.Scheduling.Api.csproj" />
+    <Project Path="src/backend/services/Scheduling/src/InkLink.Scheduling.Application/InkLink.Scheduling.Application.csproj" />
+    <Project Path="src/backend/services/Scheduling/src/InkLink.Scheduling.Domain/InkLink.Scheduling.Domain.csproj" />
+    <Project Path="src/backend/services/Scheduling/src/InkLink.Scheduling.Infrastructure/InkLink.Scheduling.Infrastructure.csproj" />
+  </Folder>
 </Solution>

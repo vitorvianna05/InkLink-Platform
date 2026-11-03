@@ -77,6 +77,14 @@
       "attributes": {
         "include.in.token.scope": "true"
       }
+    },
+    {
+      "name": "engagements.scheduling-context.read",
+      "attributes": {
+        "include.in.token.scope": "true"
+      },
+      "protocol": "openid-connect",
+      "description": "Read minimal engagement context for scheduling"
     }
   ],
   "clients": [
@@ -301,6 +309,47 @@
       "serviceAccountsEnabled": true,
       "optionalClientScopes": [
         "identity.profile.read"
+      ],
+      "protocolMappers": [
+        {
+          "name": "inklink audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.custom.audience": "inklink-api",
+            "access.token.claim": "true",
+            "id.token.claim": "false"
+          }
+        },
+        {
+          "name": "inklink actor",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-hardcoded-claim-mapper",
+          "config": {
+            "claim.name": "inklink_actor",
+            "claim.value": "service",
+            "jsonType.label": "String",
+            "access.token.claim": "true",
+            "id.token.claim": "false"
+          }
+        }
+      ],
+      "defaultClientScopes": [
+        "basic",
+        "profile"
+      ]
+    },
+    {
+      "clientId": "inklink-scheduling",
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "${INKLINK_SCHEDULING_SECRET}",
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "optionalClientScopes": [
+        "identity.profile.read",
+        "engagements.scheduling-context.read"
       ],
       "protocolMappers": [
         {
