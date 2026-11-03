@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.Text;
 using System.Text.Json;
 using InkLink.Messaging.Application.Conversations;
 using InkLink.Messaging.Domain;
@@ -7,6 +9,8 @@ namespace InkLink.Messaging.Api.Extensions;
 
 internal sealed class ConversationConsumer(IServiceScopeFactory scopes, IConfiguration configuration, IHostEnvironment environment, ILogger<ConversationConsumer> logger) : BackgroundService
 {
+    private const int MaxAttempts = 10;
+    private const string AttemptHeader = "inklink-processing-attempt";
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -22,8 +26,7 @@ internal sealed class ConversationConsumer(IServiceScopeFactory scopes, IConfigu
 
     private async Task ConsumeOneAsync(CancellationToken ct)
     {
-        var uri = configuration["Broker:Uri"] ?? throw new InvalidOperationException("Broker URI missing.");
-        var broker = new Uri(uri);
+        var broker = new Uri(configuration["Broker:Uri"] ?? throw new InvalidOperationException("Broker URI missing."));
         if (broker.Scheme != "amqps" && !(broker.Scheme == "amqp" && (environment.IsDevelopment() || environment.IsEnvironment("Testing"))))
             throw new InvalidOperationException("Broker requires TLS outside local/test environments.");
         var factory = new ConnectionFactory { Uri = broker, RequestedConnectionTimeout = TimeSpan.FromSeconds(5), AutomaticRecoveryEnabled = false };
@@ -31,25 +34,91 @@ internal sealed class ConversationConsumer(IServiceScopeFactory scopes, IConfigu
         using var channel = connection.CreateModel();
         var delivery = channel.BasicGet("inklink.messaging.opened.v1", autoAck: false);
         if (delivery is null) return;
+        var started = Stopwatch.GetTimestamp();
+        var attempt = 1;
+        EventEnvelope? envelope = null;
+        Activity? activity = null;
+        var outcome = "transport_failure";
         try
         {
             if (delivery.Body.Length > 65536) throw new InvalidConversationData("event", "Envelope too large.");
-            var envelope = JsonSerializer.Deserialize<EventEnvelope>(delivery.Body.Span, Json) ?? throw new InvalidConversationData("event", "Envelope required.");
+            envelope = JsonSerializer.Deserialize<EventEnvelope>(delivery.Body.Span, Json) ?? throw new InvalidConversationData("event", "Envelope required.");
+            attempt = ReadAttempt(delivery.BasicProperties);
+            var parent = Header(delivery.BasicProperties, "traceparent") ?? envelope.TraceParent;
+            ActivityContext.TryParse(parent, null, isRemote: true, out var context);
+            activity = ConversationTelemetry.Activities.StartActivity("conversation.open", ActivityKind.Consumer, context);
+            activity?.SetTag("messaging.message.id", envelope.MessageId.ToString());
+            activity?.SetTag("messaging.operation.attempt", attempt);
+            activity?.SetTag("inklink.correlation_id", envelope.CorrelationId);
+            using var logScope = logger.BeginScope(new Dictionary<string, object?>
+            {
+                ["eventId"] = envelope.MessageId,
+                ["correlationId"] = envelope.CorrelationId,
+                ["traceId"] = activity?.TraceId.ToString(),
+                ["attempt"] = attempt
+            });
             using var scope = scopes.CreateScope();
             await scope.ServiceProvider.GetRequiredService<OpenConversation>().ExecuteAsync(envelope, ct);
-            logger.LogInformation("Integration event {EventId} for engagement {EngagementId} processed with correlation {CorrelationId}",
-                envelope.MessageId, envelope.Data.EngagementId, envelope.CorrelationId);
             channel.BasicAck(delivery.DeliveryTag, multiple: false);
+            outcome = "processed";
+            activity?.SetStatus(ActivityStatusCode.Ok);
+            logger.LogInformation("Integration event for engagement {EngagementId} processed", envelope.Data.EngagementId);
         }
         catch (Exception exception) when (exception is JsonException or InvalidConversationData)
         {
-            logger.LogWarning("Invalid integration event rejected: {FailureType}", exception.GetType().Name);
+            activity?.SetStatus(ActivityStatusCode.Error, exception.GetType().Name);
             channel.BasicReject(delivery.DeliveryTag, requeue: false);
+            outcome = "invalid";
+            logger.LogWarning("Invalid integration event {EventId} rejected: {FailureType}", envelope?.MessageId, exception.GetType().Name);
         }
-        catch (Exception exception) when (exception is not OperationCanceledException)
+        catch (Exception exception) when (exception is not OperationCanceledException || !ct.IsCancellationRequested)
         {
-            logger.LogWarning("Integration event processing delayed: {FailureType}", exception.GetType().Name);
-            channel.BasicNack(delivery.DeliveryTag, multiple: false, requeue: true);
+            activity?.SetStatus(ActivityStatusCode.Error, exception.GetType().Name);
+            if (attempt >= MaxAttempts)
+            {
+                channel.BasicReject(delivery.DeliveryTag, requeue: false);
+                outcome = "quarantined";
+            }
+            else
+            {
+                // Confirm the persistent replacement before acknowledging the original.
+                // On transport failure channel disposal returns the unacknowledged original.
+                var properties = channel.CreateBasicProperties();
+                properties.Persistent = true;
+                properties.ContentType = delivery.BasicProperties.ContentType;
+                properties.MessageId = delivery.BasicProperties.MessageId;
+                properties.Headers = delivery.BasicProperties.Headers is { } headers ? new Dictionary<string, object>(headers) : new();
+                properties.Headers[AttemptHeader] = attempt + 1;
+                properties.Headers["inklink-last-failure"] = exception.GetType().Name;
+                if (activity?.Id is { } traceParent) properties.Headers["traceparent"] = traceParent;
+                var returned = false;
+                channel.BasicReturn += (_, _) => returned = true;
+                channel.ConfirmSelect();
+                channel.BasicPublish("inklink.messaging.retry.v1", "retry", true, properties, delivery.Body);
+                channel.WaitForConfirmsOrDie(TimeSpan.FromSeconds(5));
+                if (returned) throw new InvalidOperationException("Retry event was unroutable.");
+                channel.BasicAck(delivery.DeliveryTag, multiple: false);
+                outcome = "retry";
+            }
+            logger.LogWarning("Integration event {EventId} with correlation {CorrelationId} attempt {Attempt}: {Outcome}; {FailureType}",
+                envelope?.MessageId, envelope?.CorrelationId, attempt, outcome, exception.GetType().Name);
+        }
+        finally
+        {
+            ConversationTelemetry.Record(outcome, started);
+            activity?.Dispose();
         }
     }
+
+    private static int ReadAttempt(IBasicProperties properties)
+    {
+        if (properties.Headers is null || !properties.Headers.TryGetValue(AttemptHeader, out var value)) return 1;
+        if (value is int number && number is >= 1 and <= MaxAttempts) return number;
+        throw new InvalidConversationData("attempt", "Invalid processing attempt.");
+    }
+
+    private static string? Header(IBasicProperties properties, string name) =>
+        properties.Headers is { } headers && headers.TryGetValue(name, out var value)
+            ? value is byte[] bytes ? Encoding.UTF8.GetString(bytes) : value as string
+            : null;
 }

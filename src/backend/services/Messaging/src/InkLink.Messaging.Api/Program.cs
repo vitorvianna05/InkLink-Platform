@@ -15,7 +15,7 @@ builder.Services.AddIdentityIntegration(builder.Configuration, builder.Environme
 builder.Services.AddMessagingHttpContracts();
 builder.Services.AddMessagingDocumentation();
 builder.Services.AddMessagingTechnicalAuthorization();
-if (!builder.Environment.IsEnvironment("Testing") || builder.Configuration.GetValue<bool>("Broker:EnableWorkers")) builder.Services.AddHostedService<ConversationConsumer>();
+builder.Services.AddConversationConsumer(builder.Configuration, builder.Environment);
 
 var app = builder.Build();
 app.UseCorrelatedRequestLogging();

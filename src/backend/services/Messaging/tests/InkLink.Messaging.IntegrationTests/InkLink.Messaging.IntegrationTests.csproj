@@ -14,4 +14,8 @@
     <PackageReference Include="Testcontainers.PostgreSql" />
   </ItemGroup>
   <ItemGroup><ProjectReference Include="../../../Engagements/tests/InkLink.Engagements.IntegrationTests/InkLink.Engagements.IntegrationTests.csproj" /></ItemGroup><ItemGroup><Using Include="Xunit" /></ItemGroup>
+  <ItemGroup>
+    <Content Include="../../../../scripts/configure-broker.sh" Link="Broker/configure-broker.sh" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../../../../scripts/broker-definitions.json" Link="Broker/broker-definitions.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>
