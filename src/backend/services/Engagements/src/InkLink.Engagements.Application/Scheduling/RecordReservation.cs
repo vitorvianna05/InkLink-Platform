@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using InkLink.Engagements.Application.Lifecycle;
 using InkLink.Engagements.Domain;
 
 namespace InkLink.Engagements.Application.Scheduling;
@@ -11,7 +12,7 @@ public sealed record ReservationEnvelope(Guid MessageId, string Type, int Schema
     Guid? CausationId, ReservationNotice Data, string? TraceParent = null);
 public interface IReservationReceiptStore
 {
-    Task ApplyAsync(ReservationEnvelope envelope, string fingerprint, Action<Engagement, ReservationNotice?, string?> validate, CancellationToken ct);
+    Task ApplyAsync(ReservationEnvelope envelope, string fingerprint, Func<Engagement, ReservationNotice?, string?, LifecycleOperation?, LifecycleOperation?> apply, CancellationToken ct);
 }
 public sealed class RecordReservation(IReservationReceiptStore store)
 {
@@ -25,11 +26,15 @@ public sealed class RecordReservation(IReservationReceiptStore store)
             || string.IsNullOrWhiteSpace(data.TimeZoneId))
             throw new InvalidEngagementData("event", "Unsupported reservation event.");
         var fingerprint = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(envelope))));
-        return store.ApplyAsync(envelope, fingerprint, (engagement, previous, existingFingerprint) =>
+        return store.ApplyAsync(envelope, fingerprint, (engagement, previous, existingFingerprint, activation) =>
         {
             if (engagement.ClientId != data.ClientId || engagement.ArtistAccountId != data.ArtistAccountId
                 || (previous is not null && previous != data) || (existingFingerprint is not null && existingFingerprint != fingerprint))
                 throw new InvalidEngagementData("event", "Incompatible reservation context.");
+            engagement.ReservationConfirmed();
+            if (!engagement.ActivationRequested || activation is not null) return null;
+            var correlation = LifecycleCorrelation.Capture(envelope.TraceParent, envelope.CorrelationId);
+            return LifecycleOperation.Create(engagement, "Activate", correlation.TraceParent, correlation.CorrelationId);
         }, ct);
     }
 }

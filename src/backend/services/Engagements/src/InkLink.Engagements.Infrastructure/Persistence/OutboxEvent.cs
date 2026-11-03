@@ -46,7 +46,7 @@ public sealed class OutboxEvent
                 clientId = engagement.ClientId,
                 artistAccountId = engagement.ArtistAccountId,
                 revision = 1,
-                writingAllowed = true
+                writingAllowed = !engagement.RequiresReservation
             }
         };
         return new OutboxEvent

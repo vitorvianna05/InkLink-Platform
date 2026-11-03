@@ -28,7 +28,7 @@ public sealed class ManageEngagements(ICurrentEngagementsAccount current, IEngag
         var snapshot = new CatalogSnapshot(context.ArtistId, context.Name, context.Studio, context.City, context.StartingPrice, context.Flash);
         var engagement = Engagement.Create(account.Id, context.ArtistAccountId, input.ArtistId, input.FlashId, input.Idea, input.BodyRegion,
             input.ApproximateSizeCm, JsonSerializer.Serialize(snapshot), key, fingerprint, DateTimeOffset.UtcNow);
-        var result = await store.CreateAsync(engagement, cancellationToken);
+        var result = await store.CreateAsync(engagement, PrepareEngagementCreation.Apply, cancellationToken);
         EnsureSame(result.Value.RequestFingerprint, fingerprint);
         return new((await store.ReadAsync(result.Value.Id, account.Id, cancellationToken))!, result.Created);
     }

@@ -13,17 +13,25 @@ public sealed class EfEngagementStore(EngagementsDbContext database) : IEngageme
     public Task<Engagement?> FindRequestAsync(Guid clientId, Guid key, CancellationToken cancellationToken) =>
         database.Engagements.AsNoTracking().SingleOrDefaultAsync(e => e.ClientId == clientId && e.RequestKey == key, cancellationToken);
 
-    public async Task<Creation<Engagement>> CreateAsync(Engagement engagement, CancellationToken cancellationToken)
+    public async Task<Creation<Engagement>> CreateAsync(Engagement engagement, Action<Engagement, IReadOnlyList<EngagementState>> prepare, CancellationToken cancellationToken)
     {
+        var ownsTransaction = database.Database.CurrentTransaction is null;
+        await using var tx = ownsTransaction ? await database.Database.BeginTransactionAsync(cancellationToken) : null;
+        await database.Database.ExecuteSqlInterpolatedAsync($"SELECT pg_advisory_xact_lock(hashtextextended({engagement.ClientId.ToString() + engagement.ArtistAccountId.ToString()}, 0))", cancellationToken);
+        var previousStates = await database.Engagements.Where(x => x.ClientId == engagement.ClientId && x.ArtistAccountId == engagement.ArtistAccountId)
+            .Select(x => x.State).Distinct().ToArrayAsync(cancellationToken);
+        prepare(engagement, previousStates);
         database.Engagements.Add(engagement);
         database.Outbox.Add(OutboxEvent.ForNegotiation(engagement));
         try
         {
             await database.SaveChangesAsync(cancellationToken);
+            if (tx is not null) await tx.CommitAsync(cancellationToken);
             return new(engagement, true);
         }
-        catch (DbUpdateException exception) when (exception.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })
+        catch (DbUpdateException exception) when (ownsTransaction && exception.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })
         {
+            if (tx is not null) await tx.RollbackAsync(cancellationToken);
             database.ChangeTracker.Clear();
             var previous = await FindRequestAsync(engagement.ClientId, engagement.RequestKey, cancellationToken);
             if (previous is null) throw;

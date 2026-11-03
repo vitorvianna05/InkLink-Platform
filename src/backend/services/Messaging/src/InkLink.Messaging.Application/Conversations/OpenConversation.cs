@@ -11,8 +11,9 @@ public sealed class OpenConversation(IConversationStore store)
     {
         if (envelope.MessageId == Guid.Empty || envelope.Type != "engagement.negotiation-opened.v1" || envelope.SchemaVersion != 1
             || envelope.OccurredAt == default || string.IsNullOrWhiteSpace(envelope.CorrelationId) || envelope.Data is null
-            || !envelope.Data.WritingAllowed) throw new InvalidConversationData("event", "Unsupported event.");
+           ) throw new InvalidConversationData("event", "Unsupported event.");
         var opened = Conversation.Open(envelope.Data.EngagementId, envelope.Data.ClientId, envelope.Data.ArtistAccountId, envelope.OccurredAt, envelope.Data.Revision);
+        if (!envelope.Data.WritingAllowed) opened.AwaitReservation();
         var fingerprint = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(envelope))));
         return store.ApplyOpeningAsync(new(envelope.MessageId, fingerprint, opened), state =>
         {

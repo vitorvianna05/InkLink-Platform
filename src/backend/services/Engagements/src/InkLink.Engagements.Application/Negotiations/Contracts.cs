@@ -22,7 +22,7 @@ public interface ICatalogDirectory
 public interface IEngagementStore
 {
     Task<Engagement?> FindRequestAsync(Guid clientId, Guid key, CancellationToken cancellationToken);
-    Task<Creation<Engagement>> CreateAsync(Engagement engagement, CancellationToken cancellationToken);
+    Task<Creation<Engagement>> CreateAsync(Engagement engagement, Action<Engagement, IReadOnlyList<EngagementState>> prepare, CancellationToken cancellationToken);
     Task<EngagementView?> ReadAsync(Guid id, Guid participant, CancellationToken cancellationToken);
     Task<Page<EngagementView>> ListAsync(Guid participant, string perspective, int limit, Guid? after, CancellationToken cancellationToken);
     Task<ProposalView?> ReadProposalAsync(Guid id, Guid proposalId, Guid participant, CancellationToken cancellationToken);

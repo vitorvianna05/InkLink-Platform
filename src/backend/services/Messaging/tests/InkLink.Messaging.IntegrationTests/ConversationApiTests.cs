@@ -25,7 +25,7 @@ public sealed class ConversationApiTests(MessagingFixture fixture)
         var engagement = InkLink.Engagements.Domain.Engagement.Create(fixture.Base.Accounts["alice"], fixture.Base.Accounts["bob"], snapshot.ArtistId,
             null, "Ideia", "Braço", 10, System.Text.Json.JsonSerializer.Serialize(snapshot), key, "fixture", DateTimeOffset.UtcNow);
         await using var database = fixture.Base.CreateOwnerContext();
-        await new InkLink.Engagements.Infrastructure.Persistence.EfEngagementStore(database).CreateAsync(engagement, default);
+        await new InkLink.Engagements.Infrastructure.Persistence.EfEngagementStore(database).CreateAsync(engagement, InkLink.Engagements.Application.Negotiations.PrepareEngagementCreation.Apply, default);
         return new(Guid.NewGuid(), "engagement.negotiation-opened.v1", 1, DateTimeOffset.UtcNow, Guid.NewGuid().ToString("N"), null,
             new(engagement.Id, engagement.ClientId, engagement.ArtistAccountId, 1, true));
     }
@@ -118,12 +118,12 @@ public sealed class ConversationApiTests(MessagingFixture fixture)
         var engagement = InkLink.Engagements.Domain.Engagement.Create(account, fixture.Base.Accounts["bob"], sourceArtist, null,
             "Ideia", "Braço", 10, snapshot, Guid.NewGuid(), "fixture", DateTimeOffset.UtcNow);
         var transaction = await db.Database.BeginTransactionAsync();
-        await new InkLink.Engagements.Infrastructure.Persistence.EfEngagementStore(db).CreateAsync(engagement, default);
+        await new InkLink.Engagements.Infrastructure.Persistence.EfEngagementStore(db).CreateAsync(engagement, InkLink.Engagements.Application.Negotiations.PrepareEngagementCreation.Apply, default);
         Assert.True(await db.Outbox.AnyAsync(e => e.EngagementId == engagement.Id));
         await transaction.RollbackAsync(); await transaction.DisposeAsync(); db.ChangeTracker.Clear();
         Assert.False(await db.Outbox.AnyAsync(e => e.EngagementId == engagement.Id));
         Assert.False(await db.Engagements.AnyAsync(e => e.Id == engagement.Id));
-        await new InkLink.Engagements.Infrastructure.Persistence.EfEngagementStore(db).CreateAsync(engagement, default);
+        await new InkLink.Engagements.Infrastructure.Persistence.EfEngagementStore(db).CreateAsync(engagement, InkLink.Engagements.Application.Negotiations.PrepareEngagementCreation.Apply, default);
         Assert.True(await db.Engagements.AnyAsync(e => e.Id == engagement.Id));
         Assert.Equal(1, await db.Outbox.CountAsync(e => e.EngagementId == engagement.Id));
     }
