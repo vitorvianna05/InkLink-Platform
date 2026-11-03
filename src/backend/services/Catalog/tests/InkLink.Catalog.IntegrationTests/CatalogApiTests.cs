@@ -208,4 +208,50 @@ public sealed class CatalogApiTests(CatalogFixture fixture)
         Assert.Equal(2, (await scenario.Http.GetFromJsonAsync<JsonObject>("/api/v1/artists"))!["total"]!.GetValue<int>());
     }
 
+
+    [Fact]
+    public async Task Suggestions_cover_prefix_accents_typo_categories_deduplication_and_update()
+    {
+        using var scenario = await fixture.CreateAsync();
+        await scenario.PublishAsync("alice");
+        await scenario.PublishAsync("bob", "Camila", studio: "São Paulo");
+        Assert.Empty((await scenario.Http.GetFromJsonAsync<JsonArray>("/api/v1/artists/suggestions"))!);
+        Assert.Empty((await scenario.Http.GetFromJsonAsync<JsonArray>("/api/v1/artists/suggestions?term=zzzzzzzzzz"))!);
+        var cities = (await scenario.Http.GetFromJsonAsync<JsonArray>("/api/v1/artists/suggestions?term=sao"))!;
+        Assert.Single(cities, value => value!["category"]!.GetValue<string>() == "city");
+        Assert.Contains(cities, value => value!["category"]!.GetValue<string>() == "studio");
+        var typo = (await scenario.Http.GetFromJsonAsync<JsonArray>("/api/v1/artists/suggestions?term=blakwork"))!;
+        Assert.Single(typo, value => value!["value"]!.GetValue<string>() == "Blackwork");
+        var name = (await scenario.Http.GetFromJsonAsync<JsonArray>("/api/v1/artists/suggestions?term=rafa"))!;
+        Assert.Contains(name, value => value!["category"]!.GetValue<string>() == "artist");
+        await scenario.PublishAsync("alice", "Nome novo", "Curitiba", styles: ["Realismo"], studio: "Novo estúdio");
+        Assert.Empty((await scenario.Http.GetFromJsonAsync<JsonArray>("/api/v1/artists/suggestions?term=rafa"))!);
+        var fresh = (await scenario.Http.GetFromJsonAsync<JsonArray>("/api/v1/artists/suggestions?term=curi"))!;
+        Assert.Contains(fresh, value => value!["category"]!.GetValue<string>() == "city");
+    }
+
+
+    [Fact]
+    public async Task Overlapping_profile_updates_keep_source_and_search_projection_consistent()
+    {
+        using var scenario = await fixture.CreateAsync();
+        var artistId = await scenario.PublishAsync();
+        using var scopeA = scenario.Host.Services.CreateScope();
+        using var scopeB = scenario.Host.Services.CreateScope();
+        var ownerId = await scopeA.ServiceProvider.GetRequiredService<CatalogDbContext>().Artists.Where(artist => artist.Id == artistId).Select(artist => artist.OwnerId).SingleAsync();
+        var storeA = scopeA.ServiceProvider.GetRequiredService<IArtistStore>();
+        var storeB = scopeB.ServiceProvider.GetRequiredService<IArtistStore>();
+        var a = (await storeA.FindByOwnerAsync(ownerId, default))!;
+        var b = (await storeB.FindByOwnerAsync(ownerId, default))!;
+        a.Update("Nome A", "Estúdio A", "Recife", "Biografia A", ["Aquarela"], 500);
+        b.Update("Nome B", b.Studio, b.City, "Biografia B", b.Styles, b.StartingPrice);
+        await storeA.SaveArtistAsync(a, false, default);
+        await storeB.SaveArtistAsync(b, false, default);
+        var current = (await scenario.Http.GetFromJsonAsync<JsonObject>("/api/v1/artists/" + artistId))!;
+        Assert.Equal("São Paulo", current["city"]!.GetValue<string>());
+        Assert.Equal(300, current["startingPrice"]!.GetValue<decimal>());
+        Assert.Empty((await scenario.Http.GetFromJsonAsync<JsonArray>("/api/v1/artists/suggestions?term=recife"))!);
+        Assert.NotEmpty((await scenario.Http.GetFromJsonAsync<JsonArray>("/api/v1/artists/suggestions?term=sao"))!);
+    }
+
 }
