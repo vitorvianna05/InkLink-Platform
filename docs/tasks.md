@@ -87,19 +87,21 @@ Cada linha abaixo é uma tarefa com ID estável, dependências diretas, entregá
 
 ### P03 — Catálogo, pesquisa e favoritos
 
-**Referências:** RF02–RF08 e RF21; RNF04–RNF08. **Marco:** M2. **Situação inicial:** pendente.
+**Referências:** RF02–RF08 e RF21; RNF04–RNF08. **Marco:** M2. **Situação:** concluída; [verificação P03](verification/p03.md).
 
 | ID / tarefa | Dependências | Entregável | Aceite e verificação |
 | --- | --- | --- | --- |
-| T03.01 — [ ] Criar Catálogo e sua persistência | T02.06 | Serviço independente, modelo público inicial, migrações e rota no Gateway. | Build e migração passam sem referência à implementação ou banco de Identidade; vínculos de usuário usam identificadores. |
-| T03.02 — [ ] Definir alimentação e mídia do catálogo | T03.01 | Contrato mínimo autorizado de perfil, trabalhos e flashes e tratamento das referências de mídia. | Define obrigatoriedade e quem publica, sem presumir painel administrativo completo. Dados sintéticos permanecem separados de produção. |
-| T03.03 — [ ] Implementar dados públicos e consultas de perfil | T03.02 | Operações mínimas de gravação aprovadas e consultas de artista, tatuagens e flashes. | Outro artista não altera a publicação; identificador inexistente não retorna outro perfil; dados privados não aparecem nas consultas públicas. |
-| T03.04 — [ ] Implementar listagem de descoberta | T03.03, T00.06 | Consulta paginada de artistas, com ordenação estável. | Limites e páginas são respeitados; catálogo vazio retorna situação explícita sem conteúdo fictício automático. |
-| T03.05 — [ ] Escolher pesquisa e implementar filtros | T03.04 | Decisão do mecanismo e consulta por termo, estilo, cidade e preço inicial. | Testes combinam critérios e verificam limite de preço e ausência de resultados; índice, se adotado, tem fonte oficial e reconstrução definidas. |
-| T03.06 — [ ] Implementar sugestões aproximadas | T03.05 | Consulta de autocompletar por nome, estúdio, estilo e cidade com categoria e relevância. | Testes cobrem prefixos, acentos, pequenas diferenças de escrita, ausência de resultado e duplicação. Não há sugestões privadas ou automáticas com termo vazio. |
-| T03.07 — [ ] Implementar favoritos persistentes | T03.03, T02.06 | Inclusão, remoção e listagem de favoritos por cliente. | Repetir inclusão não duplica; limpar pesquisa não remove; duas contas comprovam isolamento e persistência após novo acesso. |
+| T03.01 — [x] Criar Catálogo e sua persistência | T02.06 | Serviço independente, modelo público inicial, migrações e rota no Gateway. | Build e migração passam sem referência à implementação ou banco de Identidade; vínculos de usuário usam identificadores. |
+| T03.02 — [x] Definir alimentação e mídia do catálogo | T03.01 | Contrato mínimo autorizado de perfil, trabalhos e flashes e tratamento das referências de mídia. | Define obrigatoriedade e quem publica, sem presumir painel administrativo completo. Dados sintéticos permanecem separados de produção. |
+| T03.03 — [x] Implementar dados públicos e consultas de perfil | T03.02 | Operações mínimas de gravação aprovadas e consultas de artista, tatuagens e flashes. | Outro artista não altera a publicação; identificador inexistente não retorna outro perfil; dados privados não aparecem nas consultas públicas. |
+| T03.04 — [x] Implementar listagem de descoberta | T03.03, T00.06 | Consulta paginada de artistas, com ordenação estável. | Limites e páginas são respeitados; catálogo vazio retorna situação explícita sem conteúdo fictício automático. |
+| T03.05 — [x] Escolher pesquisa e implementar filtros | T03.04 | Decisão do mecanismo e consulta por termo, estilo, cidade e preço inicial. | Testes combinam critérios e verificam limite de preço e ausência de resultados; índice, se adotado, tem fonte oficial e reconstrução definidas. |
+| T03.06 — [x] Implementar sugestões aproximadas | T03.05 | Consulta de autocompletar por nome, estúdio, estilo e cidade com categoria e relevância. | Testes cobrem prefixos, acentos, pequenas diferenças de escrita, ausência de resultado e duplicação. Não há sugestões privadas ou automáticas com termo vazio. |
+| T03.07 — [x] Implementar favoritos persistentes | T03.03, T02.06 | Inclusão, remoção e listagem de favoritos por cliente. | Repetir inclusão não duplica; limpar pesquisa não remove; duas contas comprovam isolamento e persistência após novo acesso. |
 
 **Conclusão de P03:** catálogo e favoritos utilizáveis por API sem interface gráfica.
+
+**Evidência:** [verificação por tarefa](verification/p03.md), [decisão 0008](decisions/0008-p03-catalog-and-search.md) e [execução e contratos](development/catalog.md). Catalog: 39 cenários aprovados; suíte atual: 110 cenários aprovados. Build Release sem avisos/erros, migração e conferência HTTP local concluídas. M2 ainda depende de P04.
 
 ### P04 — Solicitações, propostas e aceite
 
@@ -256,9 +258,9 @@ Cada linha abaixo é uma tarefa com ID estável, dependências diretas, entregá
 
 ## 4. Próximo lote e acompanhamento
 
-P00 foi concluída no nível de decisões e revisão. A [revisão T00.07](decisions/0006-p00-review.md) consolida os registros de T00.01 a T00.06 e o escopo do primeiro incremento. P01 foi implementada e verificada conforme [evidências](verification/p01.md), incluindo Docker e PostgreSQL real. P02 foi concluída conforme [evidências](verification/p02.md). O próximo passo é T03.01. As tarefas de P03 em diante permanecem pendentes.
+P00 foi concluída no nível de decisões e revisão. A [revisão T00.07](decisions/0006-p00-review.md) consolida os registros de T00.01 a T00.06 e o escopo do primeiro incremento. P01 foi implementada e verificada conforme [evidências](verification/p01.md), incluindo Docker e PostgreSQL real. P02 foi concluída conforme [evidências](verification/p02.md). P03 foi concluída conforme [evidências](verification/p03.md). O próximo passo é T04.01. As tarefas de P04 em diante permanecem pendentes.
 
-Broker, pesquisa e stack móvel têm tarefas próprias quando se tornam necessários. Não precisam ser decididos no primeiro incremento de Identity.
+Broker e stack móvel têm tarefas próprias quando se tornam necessários. A pesquisa inicial foi definida em P03, conforme decisão 0008. Essas escolhas não eram pré-requisitos do primeiro incremento de Identity.
 
 Ao concluir uma tarefa, manter referência à evidência e atualizar o marco do plano apenas quando seus critérios estiverem demonstrados. Bloqueios devem identificar a dependência concreta e a ação necessária, sem marcar tarefas incompletas como concluídas.
 

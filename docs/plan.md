@@ -142,25 +142,27 @@ Não é necessário esperar a etapa de validação integrada para criar testes, 
 
 ### P03 — Implementar Catálogo e o primeiro fluxo de pesquisa
 
-**Prioridade:** backend. **Dependências:** P02. **Situação:** pendente.
+**Prioridade:** backend. **Dependências:** P02. **Situação:** concluída; [evidências P03](verification/p03.md).
 
 **Objetivo:** disponibilizar informações públicas reais da nova aplicação e favoritos privados, verificáveis por API.
 
-- [ ] Criar Catálogo com persistência e migrações próprias e acesso pelo Gateway.
-- [ ] Modelar perfil público, estilos, localização, trabalhos, flashes e preço de referência.
-- [ ] Definir o mecanismo mínimo autorizado de alimentação do catálogo para a entrega, sem presumir uma interface administrativa completa.
-- [ ] Implementar consulta de perfil e listagem de artistas para Descobrir.
-- [ ] Implementar pesquisa livre e filtros combinados com tratamento de ausência de resultados.
-- [ ] Implementar sugestões aproximadas e testes de acentos, prefixos, relevância e pequenas diferenças de escrita.
-- [ ] Definir a tecnologia de pesquisa conforme a necessidade desta entrega, sem presumir Elasticsearch obrigatório.
-- [ ] Implementar inclusão, remoção e consulta de favoritos por cliente.
-- [ ] Definir o tratamento inicial de metadados e referências de mídia do portfólio, com acesso apropriado.
-- [ ] Documentar os contratos com seleção de campos e paginação apropriadas às listagens.
-- [ ] Verificar isolamento entre favoritos de usuários e proteção das alterações do catálogo.
+- [x] Criar Catálogo com persistência e migrações próprias e acesso pelo Gateway.
+- [x] Modelar perfil público, estilos, localização, trabalhos, flashes e preço de referência.
+- [x] Definir o mecanismo mínimo autorizado de alimentação do catálogo para a entrega, sem presumir uma interface administrativa completa.
+- [x] Implementar consulta de perfil e listagem de artistas para Descobrir.
+- [x] Implementar pesquisa livre e filtros combinados com tratamento de ausência de resultados.
+- [x] Implementar sugestões aproximadas e testes de acentos, prefixos, relevância e pequenas diferenças de escrita.
+- [x] Definir a tecnologia de pesquisa conforme a necessidade desta entrega, sem presumir Elasticsearch obrigatório.
+- [x] Implementar inclusão, remoção e consulta de favoritos por cliente.
+- [x] Definir o tratamento inicial de metadados e referências de mídia do portfólio, com acesso apropriado.
+- [x] Documentar os contratos com seleção de campos e paginação apropriadas às listagens.
+- [x] Verificar isolamento entre favoritos de usuários e proteção das alterações do catálogo.
 
 **Critério de conclusão:** uma coleção de testes consegue pesquisar artistas, consultar portfólio e flashes e persistir favoritos sem interface gráfica. Dados são obtidos do serviço e não de arrays de demonstração do frontend.
 
 **Rastreabilidade:** RF02–RF08 e RF21; RNF04–RNF08.
+
+**Evidência:** 39 cenários de Catalog aprovados, com 110 cenários na suíte atual, build Release sem avisos/erros e migração/conferência HTTP locais. [Decisão e política de publicação](decisions/0008-p03-catalog-and-search.md); [execução](development/catalog.md). M2 ainda depende de P04.
 
 ### P04 — Implementar solicitações, propostas e aceite
 
@@ -395,6 +397,6 @@ A conclusão de uma etapa não significa a conclusão automática das etapas dep
 
 ## 8. Próxima ação
 
-Iniciar T03.01: criar Catálogo com persistência própria e rota no Gateway. P00, P01 e P02 estão concluídas em seus respectivos escopos; a [verificação P02](verification/p02.md) consolida a integração de identidade e o marco M1.
+Iniciar T04.01: especificar estados de atendimento e habilitação inicial do chat antes dos casos de solicitação e proposta. P00–P03 estão concluídas em seus respectivos escopos; a [verificação P03](verification/p03.md) consolida Catálogo, pesquisa e favoritos. M1 está concluído; M2 ainda depende de P04.
 
 GetMyProfile possui transporte autenticado, atualização controlada de nome, vínculo externo/interno e funções locais. Keycloak, Gateway e BFF estão integrados e verificados em P02. Os próximos fluxos continuam priorizando backend, com autorização própria em cada serviço.

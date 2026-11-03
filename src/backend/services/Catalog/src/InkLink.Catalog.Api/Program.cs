@@ -19,6 +19,7 @@ app.MapCatalogHealth();
 app.MapCatalogDocumentation();
 app.MapPublicCatalog();
 app.MapCatalogPublishing();
+app.MapCatalogFavorites();
 app.Run();
 
 public partial class CatalogProgram;

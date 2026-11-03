@@ -94,7 +94,7 @@ Responsável pela descoberta dos artistas e sua apresentação pública.
 - É responsável por atualizar e reconstruir um eventual índice de pesquisa.
 - Não decide disponibilidade de horários, aceite de propostas ou autorização de envio de mensagens.
 
-Um mecanismo de busca é um detalhe de infraestrutura deste contexto. Elasticsearch não está definido como obrigatório nesta versão.
+Um mecanismo de busca é um detalhe de infraestrutura deste contexto. Em P03, Catalog utiliza PostgreSQL com pg_trgm, projeção transacional de termos e reconstrução administrativa a partir dos perfis oficiais. A alimentação por API autenticada do próprio Artist, a integração delegada com Identity, os contratos de mídia, os filtros, os cursores e os favoritos estão detalhados na [decisão 0008](decisions/0008-p03-catalog-and-search.md). Não há referência de código ou acesso ao banco de Identity. Elasticsearch não é obrigatório nesta versão.
 
 ### 4.3 Atendimentos
 
@@ -241,7 +241,7 @@ Projeções não são autoridade para confirmar reservas, permitir envio de mens
 
 O catálogo mantém a fonte dos dados pesquisáveis. Um índice de pesquisa deve poder ser reconstruído a partir dessa origem e não será usado como banco principal das regras de negócio.
 
-Arquivos de portfólio e flashes poderão ser mantidos em armazenamento próprio para mídia, com metadados sob responsabilidade de Catálogo. Provedor e políticas serão definidos posteriormente; o frontend não receberá credenciais administrativas desse armazenamento.
+Arquivos de portfólio e flashes poderão ser mantidos em armazenamento próprio para mídia, com metadados sob responsabilidade de Catálogo. Em P03, apenas referências públicas HTTPS e metadados são persistidos, conforme decisão 0008; não há upload nem processamento de binários. Provedor e políticas do armazenamento de arquivos serão definidos em incremento próprio; o frontend não receberá credenciais administrativas desse armazenamento.
 
 ## 7. Comunicação e contratos
 
@@ -446,7 +446,7 @@ Continuam abertas, sem bloquear esta fundação:
 - Contratos específicos de recursos e eventos. As convenções HTTP e de versionamento público já estão aprovadas na decisão 0005.
 - Protocolo concreto de encerramento e habilitação de conversa por novo atendimento.
 - Tecnologia de atualização de mensagens e escala das conexões.
-- Mecanismo de pesquisa e armazenamento de mídia.
+- Evolução da pesquisa conforme volume e qualidade observados, a partir de PostgreSQL/pg_trgm definido na decisão 0008; provedor de armazenamento, upload e tratamento de arquivos de mídia.
 - Registro financeiro, composição do dashboard e políticas de atualização das projeções.
 - Infraestrutura, automação de entrega, observabilidade e metas de operação.
 

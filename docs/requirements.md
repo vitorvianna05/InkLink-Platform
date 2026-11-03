@@ -74,7 +74,7 @@ O campo de pesquisa livre deve apresentar opções próximas ao texto digitado, 
 
 **Critérios de aceite:** a digitação apresenta sugestões ordenadas por proximidade e identificadas por categoria. A pesquisa ignora diferenças de maiúsculas, minúsculas e acentos e tolera pequenos erros de escrita. Por exemplo, “sao” encontra “São Paulo” e “blakwork” encontra “Blackwork”, quando esses valores existem no catálogo. Não há repetição da mesma opção na mesma categoria. Campo vazio não apresenta sugestões. Sem correspondências, a interface informa essa condição. Selecionar uma sugestão preenche o campo; o botão de busca aplica a pesquisa. Os filtros de seleção não recebem esse comportamento de autocompletar.
 
-A tecnologia de pesquisa será definida no desenho técnico. O algoritmo local do protótipo não determina a implementação da nova aplicação.
+A escolha inicial de P03 é PostgreSQL com pg_trgm, conforme a [decisão 0008](decisions/0008-p03-catalog-and-search.md), mantendo o mecanismo na infraestrutura de Catálogo. O algoritmo local do protótipo não determina a implementação da nova aplicação.
 
 ### RF05 — Aplicar pesquisa e filtros combinados
 
@@ -188,7 +188,7 @@ A especificação de disponibilidade, dias de atendimento, duração, antecedên
 
 O artista deve acessar os atendimentos de seus clientes pelo dashboard e consultar seu perfil público.
 
-**Critérios de aceite:** o resumo identifica cliente, projeto e situação do atendimento. Cada ação abre o histórico correspondente. O acesso ao perfil público apresenta a identidade, os trabalhos e os flashes do artista conectado. Gestão de cadastro, edição e publicação de trabalhos e flashes será detalhada em especificação própria; não deve ser substituída por conteúdo fixo do protótipo.
+**Critérios de aceite:** o resumo identifica cliente, projeto e situação do atendimento. Cada ação abre o histórico correspondente. O acesso ao perfil público apresenta a identidade, os trabalhos e os flashes do artista conectado. A alimentação mínima de P03 permite ao próprio usuário com Artist publicar e editar seu perfil, trabalhos e flashes por API autenticada, com referências públicas de imagem HTTPS e texto alternativo; a publicação é imediata. A [decisão 0008](decisions/0008-p03-catalog-and-search.md) detalha campos, autorização e limites. Painel de gestão, upload e moderação serão refinados em incrementos próprios; conteúdo fixo do protótipo não substitui esses dados.
 
 ### RF21 — Preservar dados entre acessos
 

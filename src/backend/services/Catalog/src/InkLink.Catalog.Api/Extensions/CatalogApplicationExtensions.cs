@@ -1,4 +1,5 @@
 using InkLink.Catalog.Application.Accounts;
+using InkLink.Catalog.Application.Favorites;
 using InkLink.Catalog.Application.Publishing;
 using InkLink.Catalog.Application.Queries;
 
@@ -11,6 +12,7 @@ internal static class CatalogApplicationExtensions
         services.AddScoped<ReadCatalog>();
         services.AddScoped<PublishArtist>();
         services.AddScoped<ManageArtworks>();
+        services.AddScoped<ManageFavorites>();
         services.AddScoped<ResolveCatalogAccount>();
         return services;
     }

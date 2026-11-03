@@ -47,6 +47,7 @@ public static class DependencyInjection
             provider.GetRequiredService<IOptions<CatalogDatabaseOptions>>().Value.ConnectionString));
         services.AddScoped<Application.Queries.ICatalogQueries, EfCatalogQueries>();
         services.AddScoped<Application.Publishing.IArtistStore, EfArtistStore>();
+        services.AddScoped<Application.Favorites.IFavoriteStore, EfFavoriteStore>();
         services.AddHealthChecks().AddCheck<CatalogReadinessCheck>("catalog-database", tags: ["ready"]);
         return services;
     }
