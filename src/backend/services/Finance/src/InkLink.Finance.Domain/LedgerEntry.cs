@@ -75,3 +75,8 @@ public sealed class LedgerEntry
     }
     private static DateTimeOffset Instant(DateTimeOffset value) => new(value.UtcTicks - value.UtcTicks % 10, TimeSpan.Zero);
 }
+public sealed record FinancialIndicators(decimal Received, decimal Costs, decimal EstimatedProfit, decimal EstimatedMargin)
+{
+    public static FinancialIndicators Calculate(decimal received, decimal costs) =>
+        new(received, costs, received - costs, received == 0 ? 0 : decimal.Round((received - costs) / received * 100, 2, MidpointRounding.AwayFromZero));
+}

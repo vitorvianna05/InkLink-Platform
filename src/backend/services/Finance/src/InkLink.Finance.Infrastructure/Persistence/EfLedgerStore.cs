@@ -46,4 +46,10 @@ public sealed class EfLedgerStore(FinanceDbContext db) : ILedgerStore
         var rows = await query.OrderBy(x => x.Id).Take(limit + 1).ToArrayAsync(ct);
         return new(rows.Take(limit).ToArray(), null, rows.Length > limit, total);
     }
+    public async Task<LedgerTotals> TotalsAsync(Guid artist, DateOnly from, DateOnly to, CancellationToken ct)
+    {
+        var rows = await db.Entries.AsNoTracking().Where(x => x.ArtistId == artist && x.EffectiveDate >= from && x.EffectiveDate < to)
+            .GroupBy(x => x.Kind).Select(g => new { Kind = g.Key, Value = g.Sum(x => x.OriginalEntryId == null ? x.Amount : -x.Amount) }).ToArrayAsync(ct);
+        return new(rows.SingleOrDefault(x => x.Kind == EntryKind.Receipt)?.Value ?? 0, rows.SingleOrDefault(x => x.Kind == EntryKind.Cost)?.Value ?? 0);
+    }
 }
