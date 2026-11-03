@@ -85,6 +85,20 @@
       },
       "protocol": "openid-connect",
       "description": "Read minimal engagement context for scheduling"
+    },
+    {
+      "name": "scheduling.engagement.freeze",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "true"
+      }
+    },
+    {
+      "name": "messaging.conversation.lifecycle",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "true"
+      }
     }
   ],
   "clients": [
@@ -268,7 +282,9 @@
       "serviceAccountsEnabled": true,
       "optionalClientScopes": [
         "catalog.engagement-context.read",
-        "messaging.conversation.block"
+        "messaging.conversation.block",
+        "scheduling.engagement.freeze",
+        "messaging.conversation.lifecycle"
       ],
       "protocolMappers": [
         {

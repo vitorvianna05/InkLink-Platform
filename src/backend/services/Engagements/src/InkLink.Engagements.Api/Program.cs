@@ -15,6 +15,8 @@ builder.Services.AddEngagementsHttpContracts();
 builder.Services.AddEngagementsDocumentation();
 builder.Services.AddEngagementsOutbox(builder.Configuration, builder.Environment);
 
+builder.Services.AddEngagementLifecycle(builder.Configuration, builder.Environment);
+
 var app = builder.Build();
 app.UseCorrelatedRequestLogging();
 app.UseEngagementsHttpErrors();
@@ -23,6 +25,7 @@ app.MapEngagementsHealth();
 app.MapEngagementsDocumentation();
 app.MapNegotiations();
 app.MapSchedulingContext();
+app.MapEngagementLifecycle();
 app.Run();
 
 public partial class EngagementsProgram;
