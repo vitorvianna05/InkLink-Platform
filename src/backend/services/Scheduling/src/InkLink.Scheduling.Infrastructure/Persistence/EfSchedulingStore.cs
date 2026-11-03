@@ -7,7 +7,7 @@ using Npgsql;
 
 namespace InkLink.Scheduling.Infrastructure.Persistence;
 
-public sealed class EfSchedulingStore(SchedulingDbContext db) : ISchedulingStore
+public sealed class EfSchedulingStore(SchedulingDbContext db) : ISchedulingStore, IEngagementFreezeStore
 {
     public async Task<ReservationView?> FindOperationAsync(Guid artist, Guid operation, CancellationToken ct)
     {
@@ -67,11 +67,31 @@ public sealed class EfSchedulingStore(SchedulingDbContext db) : ISchedulingStore
         var previous = await FindOperationAsync(artist, operation, ct);
         if (previous is not null) { var response = repeat(previous); await transaction.CommitAsync(ct); return new(response, false); }
         var reservation = create(await SnapshotAsync(calendar, date, ct));
+        if (await db.FrozenEngagements.AnyAsync(x => x.Id == reservation.EngagementId, ct))
+            throw new SchedulingFailure(SchedulingError.Conflict, "scheduling.engagement_frozen");
         db.Reservations.Add(reservation); db.Outbox.Add(OutboxEvent.ForReservation(reservation));
         try { await db.SaveChangesAsync(ct); await transaction.CommitAsync(ct); }
         catch (DbUpdateException e) when (e.InnerException is PostgresException { SqlState: "23P01" })
         { throw new SchedulingFailure(SchedulingError.Conflict, "scheduling.overlap"); }
         return new(View(reservation), true);
+    }
+    public async Task FreezeAsync(Guid engagement, FreezeInput input, DateTimeOffset now, Action<bool, bool> validate, CancellationToken ct)
+    {
+        await using var tx = await db.Database.BeginTransactionAsync(ct);
+        await LockAsync(input.ArtistAccountId, InkLink.Scheduling.Domain.ArtistCalendar.DefaultTimeZone, ct);
+        var previous = await db.FrozenEngagements.SingleOrDefaultAsync(x => x.Id == engagement, ct);
+        if (previous is not null)
+        {
+            validate(false, previous.ClientId != input.ClientId || previous.ArtistAccountId != input.ArtistAccountId);
+        }
+        else
+        {
+            validate(await db.Reservations.AnyAsync(x => x.EngagementId == engagement && x.End > now, ct),
+                await db.Reservations.AnyAsync(x => x.EngagementId == engagement && (x.ClientId != input.ClientId || x.ArtistId != input.ArtistAccountId), ct));
+            db.FrozenEngagements.Add(new() { Id = engagement, ClientId = input.ClientId, ArtistAccountId = input.ArtistAccountId });
+            await db.SaveChangesAsync(ct);
+        }
+        await tx.CommitAsync(ct);
     }
     public static ReservationView View(Reservation r) => new(r.Id, r.OperationId, r.EngagementId, r.ClientId, r.ArtistId, r.Start, r.End, r.LocalDate, r.TimeZoneId, r.ClientName, r.ArtistName, r.Project, r.ProposalId, r.ReferenceAmount, r.ConfirmedAt);
 }

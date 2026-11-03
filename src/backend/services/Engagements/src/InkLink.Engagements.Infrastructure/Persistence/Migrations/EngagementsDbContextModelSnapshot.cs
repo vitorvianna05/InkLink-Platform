@@ -28,6 +28,9 @@ namespace InkLink.Engagements.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("ActivationRequested")
+                        .HasColumnType("boolean");
+
                     b.Property<decimal>("ApproximateSizeCm")
                         .HasPrecision(5, 2)
                         .HasColumnType("numeric(5,2)");
@@ -72,6 +75,9 @@ namespace InkLink.Engagements.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("RequestKey")
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("RequiresReservation")
+                        .HasColumnType("boolean");
+
                     b.Property<long>("Revision")
                         .HasColumnType("bigint");
 
@@ -95,6 +101,58 @@ namespace InkLink.Engagements.Infrastructure.Persistence.Migrations
 
                             t.HasCheckConstraint("ck_size", "\"ApproximateSizeCm\" > 0 AND \"ApproximateSizeCm\" <= 300");
                         });
+                });
+
+            modelBuilder.Entity("InkLink.Engagements.Domain.LifecycleOperation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Attempts")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("CorrelationId")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("EngagementId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Error")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTimeOffset?>("NextAttemptAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PreviousState")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("TraceParent")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EngagementId", "Kind")
+                        .IsUnique();
+
+                    b.HasIndex("Status", "NextAttemptAt");
+
+                    b.ToTable("lifecycle_operations", "engagements");
                 });
 
             modelBuilder.Entity("InkLink.Engagements.Domain.Proposal", b =>

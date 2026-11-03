@@ -9,9 +9,15 @@ internal static class ConversationEndpoints
 {
     private const string Technical = "messaging-block-writer";
     public static IServiceCollection AddMessagingTechnicalAuthorization(this IServiceCollection services) => services.AddAuthorization(options =>
+    {
+        options.AddPolicy("messaging-lifecycle", policy => policy.RequireAuthenticatedUser().RequireAssertion(context =>
+            context.User.FindFirstValue("inklink_actor") == "service" && context.User.FindFirstValue("azp") == "inklink-engagements"
+            && (context.User.FindFirstValue("scope") ?? "").Split(' ').Contains("messaging.conversation.lifecycle", StringComparer.Ordinal)));
+
         options.AddPolicy(Technical, policy => policy.RequireAuthenticatedUser().RequireAssertion(context =>
             context.User.FindFirstValue("inklink_actor") == "service" && context.User.FindFirstValue("azp") == "inklink-engagements"
-            && (context.User.FindFirstValue("scope") ?? "").Split(' ').Contains("messaging.conversation.block", StringComparer.Ordinal))));
+            && (context.User.FindFirstValue("scope") ?? "").Split(' ').Contains("messaging.conversation.block", StringComparer.Ordinal)));
+    });
 
     public static IEndpointRouteBuilder MapConversations(this IEndpointRouteBuilder endpoints)
     {
@@ -35,6 +41,11 @@ internal static class ConversationEndpoints
         {
             await command.ExecuteAsync(engagementId, ct); return Results.NoContent();
         }).RequireAuthorization(Technical).Produces(204).ProducesProblem(401).ProducesProblem(403).ProducesProblem(404).ProducesProblem(500);
+        endpoints.MapPut("/api/v1/internal/engagements/{id:guid}/lifecycle",
+            async (Guid id, LifecycleInput input, ApplyLifecycle command, CancellationToken ct) =>
+            { await command.ExecuteAsync(id, input, ct); return Results.NoContent(); })
+            .RequireAuthorization("messaging-lifecycle").Produces(204).ProducesValidationProblem()
+            .ProducesProblem(401).ProducesProblem(403).ProducesProblem(409).ProducesProblem(500);
         return endpoints;
     }
 

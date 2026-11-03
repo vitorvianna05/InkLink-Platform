@@ -5,6 +5,7 @@ namespace InkLink.Engagements.Infrastructure.Persistence;
 
 public sealed class EngagementsDbContext(DbContextOptions<EngagementsDbContext> options) : DbContext(options)
 {
+    public DbSet<LifecycleOperation> LifecycleOperations => Set<LifecycleOperation>();
     public DbSet<Engagement> Engagements => Set<Engagement>();
     public DbSet<Proposal> Proposals => Set<Proposal>();
     public DbSet<OutboxEvent> Outbox => Set<OutboxEvent>();
@@ -15,6 +16,13 @@ public sealed class EngagementsDbContext(DbContextOptions<EngagementsDbContext> 
     protected override void OnModelCreating(ModelBuilder model)
     {
         model.HasDefaultSchema("engagements");
+        model.Entity<LifecycleOperation>(e =>
+        {
+            e.ToTable("lifecycle_operations"); e.HasKey(x => x.Id); e.Property(x => x.Id).ValueGeneratedNever();
+            e.HasIndex(x => new { x.EngagementId, x.Kind }).IsUnique(); e.HasIndex(x => new { x.Status, x.NextAttemptAt });
+            e.Property(x => x.Kind).HasMaxLength(20); e.Property(x => x.Status).HasMaxLength(20);
+            e.Property(x => x.Error).HasMaxLength(200); e.Property(x => x.PreviousState).HasConversion<string>().HasMaxLength(20);
+        });
         model.Entity<ReservationInbox>(e => { e.ToTable("reservation_inbox"); e.HasKey(x => x.Id); e.Property(x => x.Id).ValueGeneratedNever(); e.Property(x => x.Fingerprint).HasMaxLength(64); });
         model.Entity<ReservationReceipt>(e => { e.ToTable("reservation_receipts"); e.HasKey(x => x.Id); e.Property(x => x.Id).ValueGeneratedNever(); e.Property(x => x.Payload).HasColumnType("jsonb"); e.HasIndex(x => x.EngagementId); });
         model.Entity<Engagement>(entity =>

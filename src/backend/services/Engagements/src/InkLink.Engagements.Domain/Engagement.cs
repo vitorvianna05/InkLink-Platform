@@ -1,6 +1,6 @@
 namespace InkLink.Engagements.Domain;
 
-public enum EngagementState { Negotiating, Agreed }
+public enum EngagementState { Negotiating, Agreed, Closing, Closed }
 public enum ProposalState { Pending, Superseded, Accepted }
 
 public sealed class InvalidEngagementData(string field, string message) : Exception(message)
@@ -52,6 +52,31 @@ public sealed class Engagement
     public EngagementState State { get; private set; }
     public Guid? CurrentProposalId { get; private set; }
     public long Revision { get; private set; }
+    public bool RequiresReservation { get; private set; }
+    public bool ActivationRequested { get; private set; }
+    public void ReservationConfirmed()
+    {
+        if (RequiresReservation && State == EngagementState.Agreed) ActivationRequested = true;
+    }
+    public void RequireReservation() => RequiresReservation = true;
+    public void BeginClosing()
+    {
+        if (State is EngagementState.Closing or EngagementState.Closed) return;
+        State = EngagementState.Closing; Revision++;
+    }
+    public void RejectClosing(EngagementState previous)
+    {
+        if (State != EngagementState.Closing || previous is not (EngagementState.Negotiating or EngagementState.Agreed))
+            throw new InvalidOperationException("engagements.invalid_closure");
+        State = previous; Revision++;
+    }
+    public void CompleteClosing()
+    {
+        if (State == EngagementState.Closed) return;
+        if (State != EngagementState.Closing) throw new InvalidOperationException("engagements.invalid_closure");
+        State = EngagementState.Closed; Revision++;
+    }
+
 
     public static Engagement Create(Guid client, Guid artistAccount, Guid artist, Guid? flash, string idea, string bodyRegion,
         decimal size, string snapshot, Guid requestKey, string fingerprint, DateTimeOffset now)

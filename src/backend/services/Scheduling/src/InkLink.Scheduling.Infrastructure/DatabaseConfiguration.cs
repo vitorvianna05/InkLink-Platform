@@ -78,6 +78,7 @@ internal sealed class SchedulingReadinessCheck(SchedulingDbContext database) : I
         {
             await database.Reservations.Take(1).ToListAsync(cancellationToken);
             await database.Windows.Take(1).ToListAsync(cancellationToken);
+            await database.FrozenEngagements.Take(1).ToListAsync(cancellationToken);
             return HealthCheckResult.Healthy();
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }

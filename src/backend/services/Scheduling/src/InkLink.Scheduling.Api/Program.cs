@@ -13,6 +13,8 @@ builder.Services.AddSchedulingHttpContracts();
 builder.Services.AddSchedulingDocumentation();
 builder.Services.AddSchedulingOutbox(builder.Configuration, builder.Environment);
 
+builder.Services.AddSchedulingClosure();
+
 var app = builder.Build();
 app.UseCorrelatedRequestLogging();
 app.UseSchedulingHttpErrors();
@@ -20,6 +22,7 @@ app.UseSchedulingAuthentication();
 app.MapSchedulingHealth();
 app.MapSchedulingDocumentation();
 app.MapScheduling();
+app.MapSchedulingClosure();
 app.Run();
 
 public partial class SchedulingProgram;

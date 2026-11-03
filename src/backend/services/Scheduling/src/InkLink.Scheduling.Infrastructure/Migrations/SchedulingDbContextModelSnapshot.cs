@@ -136,6 +136,22 @@ namespace InkLink.Scheduling.Infrastructure.Migrations
                         });
                 });
 
+            modelBuilder.Entity("InkLink.Scheduling.Infrastructure.Persistence.FrozenEngagement", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ArtistAccountId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ClientId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("frozen_engagements", "scheduling");
+                });
+
             modelBuilder.Entity("InkLink.Scheduling.Infrastructure.Persistence.OutboxEvent", b =>
                 {
                     b.Property<Guid>("Id")

@@ -14,6 +14,7 @@ public sealed class MessagingDbContext(DbContextOptions<MessagingDbContext> opti
         model.Entity<Conversation>(entity =>
         {
             entity.ToTable("conversations", table => table.HasCheckConstraint("ck_distinct_participants", "\"ClientId\" <> \"ArtistAccountId\""));
+            entity.Property(c => c.Closed).HasDefaultValue(false);
             entity.HasKey(c => c.Id); entity.Property(c => c.Id).ValueGeneratedNever();
             entity.HasIndex(c => c.EngagementId).IsUnique();
             entity.HasIndex(c => new { c.ClientId, c.Id }); entity.HasIndex(c => new { c.ArtistAccountId, c.Id });

@@ -46,6 +46,8 @@ public static class DependencyInjection
         services.AddDbContext<MessagingDbContext>((provider, options) => Configure(options,
             provider.GetRequiredService<IOptions<MessagingDatabaseOptions>>().Value.ConnectionString));
         services.AddScoped<IConversationStore, EfConversationStore>();
+        services.AddScoped<IConversationLifecycleStore, EfConversationLifecycleStore>();
+        services.AddScoped<ApplyLifecycle>();
         services.AddHealthChecks().AddCheck<MessagingReadinessCheck>("messaging-database", tags: ["ready"]);
         return services;
     }

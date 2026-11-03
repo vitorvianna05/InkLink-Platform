@@ -14,6 +14,7 @@ public sealed class Conversation
     public Guid ArtistAccountId { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
     public bool WritingBlocked { get; private set; }
+    public bool Closed { get; private set; }
     public long Revision { get; private set; }
     public long LastMessageSequence { get; private set; }
 
@@ -37,7 +38,13 @@ public sealed class Conversation
         if (client != ClientId || artist != ArtistAccountId) throw new InvalidConversationData("participants", "Participants cannot change.");
     }
 
-    public void Block() => WritingBlocked = true;
+    public void Block() { WritingBlocked = true; Closed = true; }
+    public void AwaitReservation() => WritingBlocked = true;
+    public void Activate()
+    {
+        if (Closed) throw new InvalidOperationException("messaging.closed");
+        WritingBlocked = false;
+    }
     public void EnsureWritable() { if (WritingBlocked) throw new InvalidOperationException("messaging.writing_blocked"); }
     public long AllocateMessageSequence()
     {

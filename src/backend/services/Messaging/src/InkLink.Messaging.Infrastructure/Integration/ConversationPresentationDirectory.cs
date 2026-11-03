@@ -14,7 +14,7 @@ public sealed class ConversationPresentationDirectory(HttpClient engagements, Pa
             if (!response.IsSuccessStatusCode) throw Unavailable();
             var context = await response.Content.ReadFromJsonAsync<EngagementContext>(cancellationToken);
             if (context is null || context.Id != conversation.EngagementId || context.ClientId != conversation.ClientId
-                || context.ArtistAccountId != conversation.ArtistAccountId || context.State is not ("Negotiating" or "Agreed")
+                || context.ArtistAccountId != conversation.ArtistAccountId || context.State is not ("Negotiating" or "Agreed" or "Closing" or "Closed")
                 || string.IsNullOrWhiteSpace(context.Catalog?.Name) || (participant != context.ClientId && participant != context.ArtistAccountId)) throw Unavailable();
             var counterpart = participant == context.ClientId
                 ? new Counterpart(context.ArtistAccountId, context.Catalog.Name)

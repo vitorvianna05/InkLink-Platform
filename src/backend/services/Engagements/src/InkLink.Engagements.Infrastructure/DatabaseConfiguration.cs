@@ -80,6 +80,7 @@ internal sealed class EngagementsReadinessCheck(EngagementsDbContext database) :
         {
             await database.Engagements.Take(1).ToListAsync(cancellationToken);
             await database.Proposals.Take(1).ToListAsync(cancellationToken);
+            await database.LifecycleOperations.Take(1).ToListAsync(cancellationToken);
             return HealthCheckResult.Healthy();
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
