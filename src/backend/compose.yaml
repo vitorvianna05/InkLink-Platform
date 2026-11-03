@@ -65,6 +65,7 @@ services:
       timeout: 3s
       retries: 30
   rabbitmq:
+    hostname: inklink-broker
     image: rabbitmq:3.13.7-alpine
     environment:
       RABBITMQ_DEFAULT_USER: inklink
@@ -76,8 +77,9 @@ services:
     volumes:
       - broker-data:/var/lib/rabbitmq
       - ./scripts/configure-broker.sh:/opt/inklink/configure-broker.sh:ro
+      - ./scripts/broker-definitions.json:/opt/inklink/broker-definitions.json:ro
     healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "check_running"]
       interval: 5s
       timeout: 5s
       retries: 30

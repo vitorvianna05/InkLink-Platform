@@ -1,0 +1,64 @@
+{
+  "vhosts": [
+    {
+      "name": "/"
+    }
+  ],
+  "queues": [
+    {
+      "name": "inklink.messaging.invalid.v1",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "inklink.messaging.opened.v1",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "",
+        "x-dead-letter-routing-key": "inklink.messaging.invalid.v1"
+      }
+    }
+  ],
+  "exchanges": [
+    {
+      "name": "inklink.engagements.events.v1",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "inklink.messaging.retry.v1",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    }
+  ],
+  "bindings": [
+    {
+      "source": "inklink.engagements.events.v1",
+      "vhost": "/",
+      "destination": "inklink.messaging.opened.v1",
+      "destination_type": "queue",
+      "routing_key": "engagement.negotiation-opened.v1",
+      "arguments": {}
+    },
+    {
+      "source": "inklink.messaging.retry.v1",
+      "vhost": "/",
+      "destination": "inklink.messaging.opened.v1",
+      "destination_type": "queue",
+      "routing_key": "retry",
+      "arguments": {}
+    }
+  ]
+}
