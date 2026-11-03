@@ -6,6 +6,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Logging.AddEngagementsLogging();
 builder.Services.AddEngagementsInfrastructure(builder.Configuration);
 builder.Services.AddEngagementsUseCases();
+builder.Services.AddSchedulingContext();
+builder.Services.AddReservationConsumer(builder.Configuration, builder.Environment);
 builder.Services.AddEngagementsAuthentication(builder.Configuration, builder.Environment);
 builder.Services.AddIdentityIntegration(builder.Configuration, builder.Environment);
 builder.Services.AddCatalogIntegration(builder.Configuration, builder.Environment);
@@ -20,6 +22,7 @@ app.UseEngagementsAuthentication();
 app.MapEngagementsHealth();
 app.MapEngagementsDocumentation();
 app.MapNegotiations();
+app.MapSchedulingContext();
 app.Run();
 
 public partial class EngagementsProgram;

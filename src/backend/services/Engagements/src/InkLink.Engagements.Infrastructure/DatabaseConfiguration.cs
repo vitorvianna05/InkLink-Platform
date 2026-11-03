@@ -46,6 +46,8 @@ public static class DependencyInjection
         services.AddDbContext<EngagementsDbContext>((provider, options) => Configure(options,
             provider.GetRequiredService<IOptions<EngagementsDatabaseOptions>>().Value.ConnectionString));
         services.AddScoped<IEngagementStore, EfEngagementStore>();
+        services.AddScoped<InkLink.Engagements.Application.Scheduling.ISchedulingContextStore, EfSchedulingContextStore>();
+        services.AddScoped<InkLink.Engagements.Application.Scheduling.IReservationReceiptStore, EfReservationReceiptStore>();
         services.AddHealthChecks().AddCheck<EngagementsReadinessCheck>("engagements-database", tags: ["ready"]);
         return services;
     }

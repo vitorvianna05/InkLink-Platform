@@ -190,6 +190,43 @@ namespace InkLink.Engagements.Infrastructure.Persistence.Migrations
                     b.ToTable("outbox", "engagements");
                 });
 
+            modelBuilder.Entity("InkLink.Engagements.Infrastructure.Persistence.ReservationInbox", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Fingerprint")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTimeOffset>("ProcessedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("reservation_inbox", "engagements");
+                });
+
+            modelBuilder.Entity("InkLink.Engagements.Infrastructure.Persistence.ReservationReceipt", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("EngagementId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Payload")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EngagementId");
+
+                    b.ToTable("reservation_receipts", "engagements");
+                });
+
             modelBuilder.Entity("InkLink.Engagements.Domain.Proposal", b =>
                 {
                     b.HasOne("InkLink.Engagements.Domain.Engagement", null)

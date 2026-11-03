@@ -21,6 +21,23 @@
         "x-dead-letter-exchange": "",
         "x-dead-letter-routing-key": "inklink.messaging.invalid.v1"
       }
+    },
+    {
+      "name": "inklink.engagements.reservations.invalid.v1",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "inklink.engagements.reservations.v1",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "",
+        "x-dead-letter-routing-key": "inklink.engagements.reservations.invalid.v1"
+      }
     }
   ],
   "exchanges": [
@@ -35,6 +52,24 @@
     },
     {
       "name": "inklink.messaging.retry.v1",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "inklink.scheduling.events.v1",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "inklink.engagements.reservations.retry.v1",
       "vhost": "/",
       "type": "direct",
       "durable": true,
@@ -56,6 +91,22 @@
       "source": "inklink.messaging.retry.v1",
       "vhost": "/",
       "destination": "inklink.messaging.opened.v1",
+      "destination_type": "queue",
+      "routing_key": "retry",
+      "arguments": {}
+    },
+    {
+      "source": "inklink.scheduling.events.v1",
+      "vhost": "/",
+      "destination": "inklink.engagements.reservations.v1",
+      "destination_type": "queue",
+      "routing_key": "scheduling.reservation-confirmed.v1",
+      "arguments": {}
+    },
+    {
+      "source": "inklink.engagements.reservations.retry.v1",
+      "vhost": "/",
+      "destination": "inklink.engagements.reservations.v1",
       "destination_type": "queue",
       "routing_key": "retry",
       "arguments": {}

@@ -9,9 +9,14 @@ public sealed class EngagementsDbContext(DbContextOptions<EngagementsDbContext> 
     public DbSet<Proposal> Proposals => Set<Proposal>();
     public DbSet<OutboxEvent> Outbox => Set<OutboxEvent>();
 
+    public DbSet<ReservationInbox> ReservationInbox => Set<ReservationInbox>();
+    public DbSet<ReservationReceipt> ReservationReceipts => Set<ReservationReceipt>();
+
     protected override void OnModelCreating(ModelBuilder model)
     {
         model.HasDefaultSchema("engagements");
+        model.Entity<ReservationInbox>(e => { e.ToTable("reservation_inbox"); e.HasKey(x => x.Id); e.Property(x => x.Id).ValueGeneratedNever(); e.Property(x => x.Fingerprint).HasMaxLength(64); });
+        model.Entity<ReservationReceipt>(e => { e.ToTable("reservation_receipts"); e.HasKey(x => x.Id); e.Property(x => x.Id).ValueGeneratedNever(); e.Property(x => x.Payload).HasColumnType("jsonb"); e.HasIndex(x => x.EngagementId); });
         model.Entity<Engagement>(entity =>
         {
             entity.ToTable("engagements", table =>
