@@ -1,11 +1,16 @@
+using System.Diagnostics;
 using System.Text;
 using InkLink.Engagements.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 
-namespace InkLink.Engagements.Api.Extensions;
+namespace InkLink.Engagements.Infrastructure.Messaging;
 
-internal sealed class OutboxWorker(IServiceScopeFactory scopes, IConfiguration configuration, IHostEnvironment environment, ILogger<OutboxWorker> logger) : BackgroundService
+public sealed class OutboxWorker(IServiceScopeFactory scopes, IConfiguration configuration, IHostEnvironment environment, ILogger<OutboxWorker> logger) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -39,6 +44,9 @@ internal sealed class OutboxWorker(IServiceScopeFactory scopes, IConfiguration c
         await using var transaction = await database.Database.BeginTransactionAsync(ct);
         var pending = await new OutboxQueue(database).LockNextAsync(ct);
         if (pending is null) { await transaction.CommitAsync(ct); return; }
+        var started = Stopwatch.GetTimestamp();
+        using var activity = EventTelemetry.Start(pending.Payload);
+        activity?.SetTag("messaging.message.id", pending.Id.ToString());
         try
         {
             var uri = configuration["Broker:Uri"] ?? throw new InvalidOperationException("Broker URI missing.");
@@ -48,23 +56,24 @@ internal sealed class OutboxWorker(IServiceScopeFactory scopes, IConfiguration c
             var factory = new ConnectionFactory { Uri = broker, RequestedConnectionTimeout = TimeSpan.FromSeconds(5), AutomaticRecoveryEnabled = false };
             using var connection = factory.CreateConnection("inklink-engagements-outbox");
             using var channel = connection.CreateModel();
-            channel.QueueDeclare("inklink.messaging.invalid.v1", durable: true, exclusive: false, autoDelete: false);
-            channel.QueueDeclare("inklink.messaging.opened.v1", durable: true, exclusive: false, autoDelete: false,
-                arguments: new Dictionary<string, object> { ["x-dead-letter-exchange"] = "", ["x-dead-letter-routing-key"] = "inklink.messaging.invalid.v1" });
             channel.ConfirmSelect();
             var properties = channel.CreateBasicProperties(); properties.Persistent = true; properties.ContentType = "application/json"; properties.MessageId = pending.Id.ToString();
+            if (activity?.Id is { } traceParent) properties.Headers = new Dictionary<string, object> { ["traceparent"] = traceParent };
             var returned = false;
             channel.BasicReturn += (_, _) => returned = true;
-            channel.BasicPublish("", "inklink.messaging.opened.v1", mandatory: true, properties, Encoding.UTF8.GetBytes(pending.Payload));
+            channel.BasicPublish("inklink.engagements.events.v1", pending.Type, mandatory: true, properties, Encoding.UTF8.GetBytes(pending.Payload));
             channel.WaitForConfirmsOrDie(TimeSpan.FromSeconds(5));
             if (returned) throw new InvalidOperationException("Broker returned an unroutable event.");
+            activity?.SetStatus(ActivityStatusCode.Ok);
             pending.PublishedAt = DateTimeOffset.UtcNow; pending.LastError = null; pending.NextAttemptAt = null;
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
+            activity?.SetStatus(ActivityStatusCode.Error, exception.GetType().Name);
             pending.RecordFailure(exception.GetType().Name, DateTimeOffset.UtcNow);
             logger.LogWarning("Outbox publish failed for {EventId}: {FailureType}; attempts {Attempts}; quarantined {Quarantined}", pending.Id, pending.LastError, pending.Attempts, pending.QuarantinedAt.HasValue);
         }
         await database.SaveChangesAsync(ct); await transaction.CommitAsync(ct);
+        EventTelemetry.Record(pending.PublishedAt.HasValue ? "published" : pending.QuarantinedAt.HasValue ? "quarantined" : "retry", started, pending.CreatedAt);
     }
 }

@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><IsTestProject>true</IsTestProject><IsPackable>false</IsPackable></PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="../../../Identity/tests/InkLink.Identity.IntegrationTests/InkLink.Identity.IntegrationTests.csproj" />
     <ProjectReference Include="../../src/InkLink.Engagements.Api/InkLink.Engagements.Api.csproj" />
     <ProjectReference Include="../../../Identity/src/InkLink.Identity.Api/InkLink.Identity.Api.csproj" />
     <ProjectReference Include="../../../Catalog/src/InkLink.Catalog.Api/InkLink.Catalog.Api.csproj" />

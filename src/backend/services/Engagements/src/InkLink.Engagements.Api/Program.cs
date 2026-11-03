@@ -11,7 +11,7 @@ builder.Services.AddIdentityIntegration(builder.Configuration, builder.Environme
 builder.Services.AddCatalogIntegration(builder.Configuration, builder.Environment);
 builder.Services.AddEngagementsHttpContracts();
 builder.Services.AddEngagementsDocumentation();
-if (!builder.Environment.IsEnvironment("Testing") || builder.Configuration.GetValue<bool>("Broker:EnableWorkers")) builder.Services.AddHostedService<OutboxWorker>();
+builder.Services.AddEngagementsOutbox(builder.Configuration, builder.Environment);
 
 var app = builder.Build();
 app.UseCorrelatedRequestLogging();

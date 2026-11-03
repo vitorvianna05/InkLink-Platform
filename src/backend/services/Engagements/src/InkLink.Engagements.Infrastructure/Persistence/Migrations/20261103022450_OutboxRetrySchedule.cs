@@ -3,7 +3,8 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace InkLink.Engagements.Infrastructure.Persistence.Migrations; 
+namespace InkLink.Engagements.Infrastructure.Persistence.Migrations;
+
 /// <inheritdoc />
 public partial class OutboxRetrySchedule : Migration
 {

@@ -33,12 +33,29 @@ public sealed class OutboxEvent
         var correlation = Activity.Current?.TraceId.ToString() ?? Guid.NewGuid().ToString("N");
         var payload = new
         {
-            messageId = id, type = "engagement.negotiation-opened.v1", schemaVersion = 1,
-            occurredAt = engagement.CreatedAt, correlationId = correlation, causationId = (string?)null,
-            data = new { engagementId = engagement.Id, clientId = engagement.ClientId,
-                artistAccountId = engagement.ArtistAccountId, revision = 1, writingAllowed = true }
+            messageId = id,
+            type = "engagement.negotiation-opened.v1",
+            schemaVersion = 1,
+            occurredAt = engagement.CreatedAt,
+            correlationId = correlation,
+            traceParent = Activity.Current?.Id,
+            causationId = (string?)null,
+            data = new
+            {
+                engagementId = engagement.Id,
+                clientId = engagement.ClientId,
+                artistAccountId = engagement.ArtistAccountId,
+                revision = 1,
+                writingAllowed = true
+            }
         };
-        return new OutboxEvent { Id = id, EngagementId = engagement.Id, Type = "engagement.negotiation-opened.v1",
-            Payload = JsonSerializer.Serialize(payload), CreatedAt = DateTimeOffset.UtcNow };
+        return new OutboxEvent
+        {
+            Id = id,
+            EngagementId = engagement.Id,
+            Type = "engagement.negotiation-opened.v1",
+            Payload = JsonSerializer.Serialize(payload),
+            CreatedAt = DateTimeOffset.UtcNow
+        };
     }
 }
