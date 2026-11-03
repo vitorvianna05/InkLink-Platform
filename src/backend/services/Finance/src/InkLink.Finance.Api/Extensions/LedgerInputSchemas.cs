@@ -9,7 +9,7 @@ internal sealed class LedgerInputSchemas : IOpenApiSchemaTransformer
     {
         var type = context.JsonTypeInfo.Type;
         var required = type == typeof(EntryInput) ? new[] { "kind", "description", "amount", "effectiveDate" }
-            : [];
+            : type == typeof(ReversalInput) ? new[] { "reason" } : [];
         if (required.Length == 0) return Task.CompletedTask;
         schema.Required ??= new HashSet<string>(); schema.Required.UnionWith(required);
         foreach (var field in required)

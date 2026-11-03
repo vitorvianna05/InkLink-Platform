@@ -53,5 +53,25 @@ public sealed class LedgerEntry
             CreatedAt = Instant(now)
         };
     }
+    public LedgerEntry Reverse(Guid key, string fingerprint, string reason, DateTimeOffset now)
+    {
+        if (OriginalEntryId is not null) throw new InvalidFinanceData("entryId", "A reversal cannot be reversed.");
+        if (key == Guid.Empty) throw new InvalidFinanceData("idempotencyKey", "Nonempty UUID required.");
+        return new()
+        {
+            Id = Guid.CreateVersion7(),
+            ArtistId = ArtistId,
+            Kind = Kind,
+            Description = Text(reason, "reason"),
+            Amount = Amount,
+            EffectiveDate = EffectiveDate,
+            EngagementId = EngagementId,
+            OriginalEntryId = Id,
+            RequestKey = key,
+            Fingerprint = fingerprint,
+            TimeZoneId = TimeZoneId,
+            CreatedAt = Instant(now)
+        };
+    }
     private static DateTimeOffset Instant(DateTimeOffset value) => new(value.UtcTicks - value.UtcTicks % 10, TimeSpan.Zero);
 }

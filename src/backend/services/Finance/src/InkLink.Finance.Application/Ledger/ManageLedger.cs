@@ -12,7 +12,7 @@ public sealed class ManageLedger(ICurrentFinanceAccount current, ILedgerStore st
     {
         var artist = AccountAccess.Require(current, artist: true).Id;
         Key(key);
-        if (input.Kind != "Receipt") throw FinanceFailure.Invalid("kind", "Use Receipt.");
+        if (input.Kind is not ("Receipt" or "Cost")) throw FinanceFailure.Invalid("kind", "Use Receipt or Cost.");
         var kind = Enum.Parse<EntryKind>(input.Kind);
         var description = LedgerEntry.Text(input.Description, "description"); LedgerEntry.Money(input.Amount);
         if (input.EngagementId == Guid.Empty || (kind == EntryKind.Receipt && input.EngagementId is null))
@@ -40,8 +40,49 @@ public sealed class ManageLedger(ICurrentFinanceAccount current, ILedgerStore st
         var result = await store.CreateAsync(entry, ct); Same(result.Value, fingerprint);
         return new(View(result.Value), result.Created);
     }
+    public async Task<Creation<EntryView>> ReverseAsync(Guid id, ReversalInput input, Guid key, CancellationToken ct)
+    {
+        var artist = AccountAccess.Require(current, artist: true).Id;
+        Key(key); var reason = LedgerEntry.Text(input.Reason, "reason");
+        var fingerprint = Fingerprint(new { Operation = "reverse", Id = id, Reason = reason });
+        var previous = await store.FindOperationAsync(artist, key, ct);
+        if (previous is not null) { Same(previous, fingerprint); return new(View(previous), false); }
+        var result = await store.ReverseAsync(artist, id, key, (original, reversal) =>
+        {
+            if (reversal is not null)
+            {
+                if (reversal.RequestKey != key) throw new FinanceFailure(FinanceError.Conflict, "finance.already_reversed");
+                Same(reversal, fingerprint); return new(reversal, false);
+            }
+            return new(original.Reverse(key, fingerprint, reason, clock.GetUtcNow()), true);
+        }, ct);
+        Same(result.Value, fingerprint); return new(View(result.Value), result.Created);
+    }
     public async Task<EntryView> ReadAsync(Guid id, CancellationToken ct) =>
         View(await store.ReadAsync(AccountAccess.Require(current, artist: true).Id, id, ct) ?? throw NotFound());
+    public async Task<Page<EntryView>> ListAsync(DateOnly from, DateOnly to, string? kind, int limit, string? cursor, CancellationToken ct)
+    {
+        var artist = AccountAccess.Require(current, artist: true).Id; Range(from, to);
+        if (limit is < 1 or > 100 || kind is not (null or "Receipt" or "Cost")) throw FinanceFailure.Invalid("query", "Use limit 1..100 and Receipt/Cost.");
+        var prefix = $"v1|{artist}|{from:yyyy-MM-dd}|{to:yyyy-MM-dd}|{kind}|"; Guid? after = null;
+        if (cursor is not null)
+        {
+            try
+            {
+                if (cursor.Length > 500) throw new FormatException();
+                var value = Encoding.UTF8.GetString(Convert.FromBase64String(cursor));
+                if (!value.StartsWith(prefix, StringComparison.Ordinal) || !Guid.TryParse(value[prefix.Length..], out var id) || id == Guid.Empty) throw new FormatException();
+                after = id;
+            }
+            catch (FormatException) { throw FinanceFailure.Invalid("cursor", "Cursor does not match query."); }
+        }
+        var page = await store.ListAsync(artist, from, to, kind is null ? null : Enum.Parse<EntryKind>(kind), limit, after, ct);
+        return new(page.Items.Select(View).ToArray(), page.HasMore ? Convert.ToBase64String(Encoding.UTF8.GetBytes(prefix + page.Items[^1].Id)) : null, page.HasMore, page.Total);
+    }
+    public static void Range(DateOnly from, DateOnly to)
+    {
+        if (from == default || to <= from || to.DayNumber - from.DayNumber > 366) throw FinanceFailure.Invalid("period", "Use a [from,to) period of 1..366 days.");
+    }
     public static EntryView View(LedgerEntry e) => new(e.Id, e.ArtistId, e.Kind.ToString(), e.Description, e.Amount,
         e.OriginalEntryId.HasValue ? -e.Amount : e.Amount, e.EffectiveDate, e.EngagementId, e.OriginalEntryId, e.TimeZoneId, e.CreatedAt);
     public static FinanceFailure NotFound() => new(FinanceError.NotFound, "finance.not_found");

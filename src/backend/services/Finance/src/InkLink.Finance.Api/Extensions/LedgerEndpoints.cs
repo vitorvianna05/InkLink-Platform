@@ -14,6 +14,13 @@ internal static class LedgerEndpoints
         }).RequireFinanceAccount().Produces<EntryView>(201).Produces<EntryView>().WithErrors();
         group.MapGet("/entries/{id:guid}", (Guid id, ManageLedger manage, CancellationToken ct) => manage.ReadAsync(id, ct))
             .RequireFinanceAccount().Produces<EntryView>().WithErrors();
+        group.MapGet("/entries", (DateOnly from, DateOnly to, ManageLedger manage, CancellationToken ct, int limit = 20, string? cursor = null, string? kind = null) =>
+            manage.ListAsync(from, to, kind, limit, cursor, ct)).RequireFinanceAccount().Produces<Page<EntryView>>().WithErrors();
+        group.MapPost("/entries/{id:guid}/reversal", async (Guid id, ReversalInput input, HttpContext http, ManageLedger manage, CancellationToken ct) =>
+        {
+            var result = await manage.ReverseAsync(id, input, Key(http), ct);
+            return result.Created ? Results.Created($"/api/v1/finance/entries/{result.Value.Id}", result.Value) : Results.Ok(result.Value);
+        }).RequireFinanceAccount().Produces<EntryView>(201).Produces<EntryView>().WithErrors();
         return endpoints;
     }
     private static Guid Key(HttpContext http) => Guid.TryParse(http.Request.Headers["Idempotency-Key"], out var value) && value != Guid.Empty
