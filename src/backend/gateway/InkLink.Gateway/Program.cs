@@ -6,13 +6,16 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Logging.AddGatewayLogging();
 builder.Services.AddInkLinkAccessTokens(builder.Configuration, builder.Environment);
 builder.Services.AddBackendProxy(builder.Configuration, builder.Environment);
+builder.Services.AddGatewayDocumentation(builder.Configuration, builder.Environment);
 
 var app = builder.Build();
 app.UseCorrelatedRequestLogging();
 app.UseGatewayHttpPolicies();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseGatewayDocumentation();
 app.MapGatewayHealth();
+app.MapGatewayDocumentation(app.Environment);
 app.MapReverseProxy();
 app.Run();
 

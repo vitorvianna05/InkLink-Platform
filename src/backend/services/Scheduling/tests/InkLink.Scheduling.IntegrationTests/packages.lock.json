@@ -704,6 +704,7 @@
         "dependencies": {
           "InkLink.Authentication": "[1.0.0, )",
           "InkLink.Observability": "[1.0.0, )",
+          "Swashbuckle.AspNetCore.SwaggerUI": "[10.3.1, )",
           "Yarp.ReverseProxy": "[2.3.0, )"
         }
       },
@@ -906,6 +907,12 @@
         "requested": "[6.8.1, )",
         "resolved": "6.8.1",
         "contentHash": "jNsmGgmCNw2S/NzskeN2ijtGywtH4Sk/G6jWUTD5sY9SrC27Xz6BsLIiB8hdsfjeyWCa4j4GvCIGkpE8wrjU1Q=="
+      },
+      "Swashbuckle.AspNetCore.SwaggerUI": {
+        "type": "CentralTransitive",
+        "requested": "[10.3.1, )",
+        "resolved": "10.3.1",
+        "contentHash": "kXuMIVJBDD6qMwG78VUrKy4x5Ke98HU0Q023Sf2iSBO/x45c5BuByYPAExIs9UeVsjdGGgvLWU5jK8l6MO2Z0Q=="
       },
       "Testcontainers": {
         "type": "CentralTransitive",
