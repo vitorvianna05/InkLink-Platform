@@ -58,6 +58,12 @@ public sealed class ManageConversations(ICurrentMessagingAccount current, IConve
             return new MessageChange<Creation<MessageView>>(new(View(message), true), message);
         }, ct);
     }
+    public async Task<MessageView> ReadMessageAsync(Guid id, Guid messageId, CancellationToken ct)
+    {
+        var account = AccountAccess.Require(current);
+        return await store.ReadMessageAsync(id, messageId, account.Id, ct) ?? throw NotFound();
+    }
+
     public static MessagingFailure NotFound() => new(MessagingError.NotFound, "messaging.not_found");
     private static int Limit(int value) => value is >= 1 and <= 100 ? value : throw MessagingFailure.Invalid("limit", "Use 1 to 100.");
     private static string Cursor(string prefix, Guid id) => Convert.ToBase64String(Encoding.UTF8.GetBytes(prefix + id));

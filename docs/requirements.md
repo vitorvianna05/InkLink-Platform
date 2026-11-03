@@ -130,7 +130,7 @@ O usuário deve consultar a conversa selecionada em uma página com endereço pr
 
 Cliente e artista devem trocar mensagens vinculadas à conversa e ao atendimento corretos.
 
-**Critérios de aceite:** mensagens vazias ou compostas apenas por espaços não são enviadas. Mensagens válidas registram conteúdo, autor e data/hora e ficam disponíveis aos dois participantes. A interface distingue mensagens próprias das recebidas. Mensagens permanecem após recarregar a aplicação e não se misturam às de outro atendimento. Usuários sem participação na conversa não conseguem consultar ou enviar mensagens nela. A tecnologia de entrega e atualização das mensagens será definida posteriormente.
+**Critérios de aceite:** mensagens vazias ou compostas apenas por espaços não são enviadas. Mensagens válidas registram conteúdo, autor e data/hora e ficam disponíveis aos dois participantes. A interface distingue mensagens próprias das recebidas. Mensagens permanecem após recarregar a aplicação e não se misturam às de outro atendimento. Usuários sem participação na conversa não conseguem consultar ou enviar mensagens nela. A entrega inicial de P05 usa APIs e histórico incremental por cursor/seqüência monotônica, conforme [decisão 0010](decisions/0010-p05-messaging.md). Transporte em tempo real poderá ser refinado em incremento próprio.
 
 ### RF14 — Encerrar serviço e preservar histórico
 

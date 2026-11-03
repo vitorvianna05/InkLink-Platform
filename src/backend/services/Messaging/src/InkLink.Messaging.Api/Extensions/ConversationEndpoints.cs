@@ -29,12 +29,8 @@ internal static class ConversationEndpoints
             var result = await manage.SendAsync(id, key, input, ct);
             return result.Created ? Results.Created($"/api/v1/conversations/{id}/messages/{result.Value.Id}", result.Value) : Results.Ok(result.Value);
         }).RequireMessagingAccount().Produces<MessageView>(201).Produces<MessageView>().WithErrors();
-        group.MapGet("/{id:guid}/messages/{messageId:guid}", async (Guid id, Guid messageId, IConversationStore store, InkLink.Messaging.Application.Accounts.ICurrentMessagingAccount current, CancellationToken ct) =>
-        {
-            var account = current.Account ?? throw new MessagingFailure(MessagingError.Unauthenticated, "authentication.required");
-            var message = await store.ReadMessageAsync(id, messageId, account.Id, ct);
-            return message ?? throw ManageConversations.NotFound();
-        }).RequireMessagingAccount().Produces<MessageView>().WithErrors();
+        group.MapGet("/{id:guid}/messages/{messageId:guid}", (Guid id, Guid messageId, ManageConversations manage, CancellationToken ct) => manage.ReadMessageAsync(id, messageId, ct))
+            .RequireMessagingAccount().Produces<MessageView>().WithErrors();
         endpoints.MapPut("/api/v1/internal/engagements/{engagementId:guid}/writing-block", async (Guid engagementId, IConversationStore store, CancellationToken ct) =>
         {
             await store.BlockAsync(engagementId, ct); return Results.NoContent();
