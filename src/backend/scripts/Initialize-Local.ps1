@@ -53,7 +53,7 @@ $realm = $realm.Replace(([string][char]36 + '{INKLINK_ENGAGEMENTS_SECRET}'), $se
 $realm = $realm.Replace(([string][char]36 + '{INKLINK_MESSAGING_SECRET}'), $settings.INKLINK_MESSAGING_SECRET)
 $realm = $realm.Replace(([string][char]36 + '{INKLINK_SCHEDULING_SECRET}'), $settings.INKLINK_SCHEDULING_SECRET)
 [IO.File]::WriteAllText((Join-Path $localDirectory 'inklink-realm.json'), $realm)
-$authentication = @{ Authority = 'https://localhost:5189/realms/inklink'; Audience = 'inklink-api'; UserClients = @('inklink-bff', 'inklink-ios', 'inklink-android'); TechnicalClients = @('inklink-catalog', 'inklink-messaging', 'inklink-scheduling'); AllowHttpMetadata = $false }
+$authentication = @{ Authority = 'https://localhost:5189/realms/inklink'; Audience = 'inklink-api'; UserClients = @('inklink-bff', 'inklink-ios', 'inklink-android', 'inklink-swagger'); TechnicalClients = @('inklink-catalog', 'inklink-messaging', 'inklink-scheduling'); AllowHttpMetadata = $false }
 @{ Authentication = $authentication } | ConvertTo-Json -Depth 5 | dotnet user-secrets set --project $apiProject
 if ($LASTEXITCODE -ne 0) { throw 'Unable to configure Identity authentication.' }
 @{ Authentication = $authentication; Gateway = @{ IdentityAddress = 'http://127.0.0.1:5180/'; CatalogAddress = 'http://127.0.0.1:5193/'; EngagementsAddress = 'http://127.0.0.1:5194/'; MessagingAddress = 'http://127.0.0.1:5195/'; SchedulingAddress = 'http://127.0.0.1:5196/' } } | ConvertTo-Json -Depth 5 | dotnet user-secrets set --project "$repoRoot/src/backend/gateway/InkLink.Gateway"

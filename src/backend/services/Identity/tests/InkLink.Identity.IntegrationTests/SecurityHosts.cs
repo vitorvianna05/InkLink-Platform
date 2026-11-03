@@ -73,6 +73,7 @@ internal static class SecurityConfiguration
         ["Authentication:UserClients:1"] = "inklink-test-users",
         ["Authentication:UserClients:2"] = "inklink-test-short",
         ["Authentication:UserClients:3"] = "inklink-test-other-audience",
+        ["Authentication:UserClients:4"] = "inklink-swagger",
         ["Authentication:TechnicalClients:0"] = "inklink-catalog"
     };
 }

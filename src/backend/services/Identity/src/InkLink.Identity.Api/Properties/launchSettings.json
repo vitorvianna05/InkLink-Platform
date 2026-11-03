@@ -2,11 +2,11 @@
   "profiles": {
     "InkLink.Identity.Api": {
       "commandName": "Project",
-      "launchBrowser": true,
+      "launchBrowser": false,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
-      "applicationUrl": "https://localhost:52082;http://localhost:52086"
+      "applicationUrl": "http://127.0.0.1:5180"
     }
   }
 }

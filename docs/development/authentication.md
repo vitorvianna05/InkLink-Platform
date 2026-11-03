@@ -105,3 +105,7 @@ Cenários incluem duas contas, funções, vínculo concorrente, emissor, ID toke
 ProvisionAccount, ActivateArtist e UpdateMyProfile coordenam as alterações em Application; o repositório fica restrito às consultas, escrita atômica e tradução de conflito de chave. GetMyProfile permanece somente leitura, após o bootstrap explícito de primeiro acesso. Nenhum endpoint administrativo foi adicionado.
 
 Os três processos .NET registram cada requisição com Method, Path (sem query), StatusCode e ElapsedMs. O escopo JSON inclui service e traceId. Use X-Trace-Id ou o traceId do Problem Details para localizar o evento, inclusive em rejeições de autenticação e erros tratados. Não habilite logs de URL completa, headers de credenciais ou conteúdo de tickets para obter correlação.
+
+## Cliente da documentação interativa
+
+A decisão 0012 acrescenta inklink-swagger à lista de chamadores humanos aprovados em desenvolvimento. Cliente público, Authorization Code/PKCE S256, escopos openid/profile, sem segredo, password grant ou Client Credentials. Initialize-Local e Configure-Keycloak configuram o ambiente local preservando contas. A ferramenta usa access token em memória; o fluxo do website via BFF continua com tokens no servidor. Guia: gateway-documentation.md.
