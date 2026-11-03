@@ -189,7 +189,7 @@ Não é necessário esperar a etapa de validação integrada para criar testes, 
 
 ### P05 — Implementar Conversas e a primeira integração confiável
 
-**Prioridade:** backend. **Dependências:** P02 e P04. **Situação:** pendente.
+**Prioridade:** backend. **Dependências:** P02 e P04. **Situação:** em andamento; [verificação parcial](verification/p05.md).
 
 **Objetivo:** permitir histórico e envio autorizado nas duas perspectivas, já com integração confiável ao contexto de atendimento.
 
