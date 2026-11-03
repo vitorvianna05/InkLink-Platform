@@ -19,6 +19,11 @@
     <Project Path="src/backend/services/Catalog/src/InkLink.Catalog.Domain/InkLink.Catalog.Domain.csproj" />
     <Project Path="src/backend/services/Catalog/src/InkLink.Catalog.Infrastructure/InkLink.Catalog.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/src/backend/services/Catalog/tests/">
+    <Project Path="src/backend/services/Catalog/tests/InkLink.Catalog.ArchitectureTests/InkLink.Catalog.ArchitectureTests.csproj" />
+    <Project Path="src/backend/services/Catalog/tests/InkLink.Catalog.IntegrationTests/InkLink.Catalog.IntegrationTests.csproj" />
+    <Project Path="src/backend/services/Catalog/tests/InkLink.Catalog.UnitTests/InkLink.Catalog.UnitTests.csproj" />
+  </Folder>
   <Folder Name="/src/backend/services/Identity/" />
   <Folder Name="/src/backend/services/Identity/src/">
     <Project Path="src/backend/services/Identity/src/InkLink.Identity.Api/InkLink.Identity.Api.csproj" />

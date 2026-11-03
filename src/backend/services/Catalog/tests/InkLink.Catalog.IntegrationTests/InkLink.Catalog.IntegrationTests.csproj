@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><IsTestProject>true</IsTestProject><IsPackable>false</IsPackable></PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/InkLink.Catalog.Api/InkLink.Catalog.Api.csproj" />
+    <ProjectReference Include="../../src/InkLink.Catalog.Infrastructure/InkLink.Catalog.Infrastructure.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+    <PackageReference Include="Testcontainers.PostgreSql" />
+    <PackageReference Include="Testcontainers" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../../Identity/src/InkLink.Identity.Api/InkLink.Identity.Api.csproj" />
+    <ProjectReference Include="../../../../bff/InkLink.Bff/InkLink.Bff.csproj" />
+    <ProjectReference Include="../../../../gateway/InkLink.Gateway/InkLink.Gateway.csproj" />
+    <Compile Include="../../../Identity/tests/InkLink.Identity.IntegrationTests/SecurityFixture.cs" Link="Support/SecurityFixture.cs" />
+    <Compile Include="../../../Identity/tests/InkLink.Identity.IntegrationTests/SecurityHosts.cs" Link="Support/SecurityHosts.cs" />
+    <Compile Include="../../../Identity/tests/InkLink.Identity.IntegrationTests/PostgresFixture.cs" Link="Support/PostgresFixture.cs" />
+    <Compile Include="../../../Identity/tests/InkLink.Identity.IntegrationTests/RecordedLogs.cs" Link="Support/RecordedLogs.cs" />
+    <Content Include="../../../../identity-provider/inklink-realm.json" Link="inklink-realm.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup><Using Include="Xunit" /></ItemGroup>
+</Project>

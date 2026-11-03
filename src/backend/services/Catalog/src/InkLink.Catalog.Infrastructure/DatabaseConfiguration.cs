@@ -1,4 +1,5 @@
 using InkLink.Catalog.Infrastructure.Persistence;
+using InkLink.Catalog.Infrastructure.Queries;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
@@ -44,6 +45,8 @@ public static class DependencyInjection
         services.AddOptions<CatalogDatabaseOptions>().Bind(configuration.GetSection(CatalogDatabaseOptions.Section)).ValidateOnStart();
         services.AddDbContext<CatalogDbContext>((provider, options) => Configure(options,
             provider.GetRequiredService<IOptions<CatalogDatabaseOptions>>().Value.ConnectionString));
+        services.AddScoped<Application.Queries.ICatalogQueries, EfCatalogQueries>();
+        services.AddScoped<Application.Publishing.IArtistStore, EfArtistStore>();
         services.AddHealthChecks().AddCheck<CatalogReadinessCheck>("catalog-database", tags: ["ready"]);
         return services;
     }
