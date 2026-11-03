@@ -7,6 +7,9 @@ internal static class PublicCatalogEndpointExtensions
     public static IEndpointRouteBuilder MapPublicCatalog(this IEndpointRouteBuilder endpoints)
     {
         var artists = endpoints.MapGroup("/api/v1/artists").WithTags("Public catalog");
+        artists.MapGet("", (ReadCatalog read, CancellationToken cancellationToken, int limit = 20, string? cursor = null) =>
+            read.SearchAsync(new ArtistSearch(Limit: limit, Cursor: cursor), cancellationToken))
+            .Produces<Page<ArtistCard>>().WithCatalogErrors();
         artists.MapGet("/{id:guid}", (Guid id, ReadCatalog read, CancellationToken cancellationToken) => read.ArtistAsync(id, cancellationToken))
             .Produces<ArtistProfile>().ProducesProblem(404).WithCatalogErrors();
         foreach (var flashes in new[] { false, true })
