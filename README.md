@@ -34,3 +34,7 @@ Consulte [CONTRIBUTING.md](CONTRIBUTING.md) para ativar o hook e o template de c
 P05 possui implementação inicial de conversas, Outbox e Inbox em validação. Consulte [pendências e evidências](docs/verification/p05.md) antes de considerar a etapa concluída.
 
 P06: Agenda backend concluída, com disponibilidade por data/fuso IANA, reservas autorizadas/idempotentes, exclusão concorrente em PostgreSQL e Outbox com recibo técnico. [Execução](docs/development/scheduling.md) e [evidências](docs/verification/p06.md): 192 casos com resultado final aprovado, incluindo reexecução direcionada da expectativa de esquema. Próxima etapa: P07.
+
+Documentação interativa antecipada: [guia do Gateway](docs/development/gateway-documentation.md), com seleção dos serviços em http://127.0.0.1:5191/swagger e autenticação Code/PKCE em desenvolvimento/testes.
+
+Incremento GW concluído: documentação interativa dos serviços pelo Gateway, com login Code/PKCE. [Evidências](docs/verification/gateway-documentation.md): 49 testes finais aprovados e conferência dos cinco documentos reais. Próximo passo: T07.01.
