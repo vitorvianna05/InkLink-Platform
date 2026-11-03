@@ -38,3 +38,9 @@ P06: Agenda backend concluída, com disponibilidade por data/fuso IANA, reservas
 Documentação interativa antecipada: [guia do Gateway](docs/development/gateway-documentation.md), com seleção dos serviços em http://127.0.0.1:5191/swagger e autenticação Code/PKCE em desenvolvimento/testes.
 
 Incremento GW concluído: documentação interativa dos serviços pelo Gateway, com login Code/PKCE. [Evidências](docs/verification/gateway-documentation.md): 49 testes finais aprovados e conferência dos cinco documentos reais. Próximo passo: T07.01.
+
+## Ciclo integrado de atendimento — P07
+
+Encerramento, barreiras de escrita e reserva e retorno por novo agendamento: [execução e diagnóstico](docs/development/lifecycle.md), [decisão 0013](docs/decisions/0013-p07-lifecycle.md) e [evidências P07](docs/verification/p07.md). São 215 casos com resultado final aprovado nos recortes/reexecuções documentados. Próximo incremento: P08.
+
+Revisão P07: corrigidas recuperação de ativação, coordenação em Application e propagação de correlação; 59 testes do recorte aprovados conforme as evidências. Aplicar também LifecycleCorrelationAndRecovery em Engagements.

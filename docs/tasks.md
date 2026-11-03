@@ -174,18 +174,22 @@ Após P06 e antes de P07, conforme decisão 0012. Referências RNF06–RNF08 e c
 
 ### P07 — Ciclo integrado e recuperação
 
-**Referências:** RF09–RF15, RF18, RF19 e RF21; RNF04–RNF06. **Marco:** M4. **Situação inicial:** pendente.
+**Referências:** RF09–RF15, RF18, RF19 e RF21; RNF04–RNF06. **Marco:** M4. **Situação:** concluída no recorte backend; [evidências P07](verification/p07.md).
 
 | ID / tarefa | Dependências | Entregável | Aceite e verificação |
 | --- | --- | --- | --- |
-| T07.01 — [ ] Especificar encerramento e suas permissões | T05.08, T06.06 | Decisão de quem encerra, protocolo de bloqueio, estados técnicos e confirmação final. | Timeout ou pendência não equivalem a encerramento concluído; confirmação depende do bloqueio durável em Conversas. |
-| T07.02 — [ ] Implementar coordenação durável de encerramento | T07.01 | Processo em Atendimentos com solicitação autorizada e comando idempotente de bloqueio. | Repetir pedido não cria processos incompatíveis. O estado final só é alcançado após a confirmação de Conversas. |
-| T07.03 — [ ] Implementar retomada e reconciliação | T07.02 | Detecção e recuperação de processos pendentes com diagnóstico de etapas. | Falha entre bloqueio e conclusão não libera escrita; reiniciar o processo permite concluir sem duplicar efeitos ou apagar histórico. |
-| T07.04 — [ ] Definir e integrar novo atendimento | T07.03, T06.05 | Protocolo e implementação da reserva confirmada, novo contexto e habilitação de conversa; decisão de compensação quando necessária. | Consultar perfil ou pedir orçamento não reabre sozinho o chat; contexto antigo permanece rastreável e falha posterior à reserva tem tratamento explícito. |
-| T07.05 — [ ] Testar corridas e eventos atrasados | T07.04 | Cenários de envio simultâneo, confirmação perdida, processo reiniciado e eventos fora de ordem. | Mensagem não é gravada após encerramento confirmado; evento antigo não habilita nem bloqueia outro atendimento; repetição não duplica reserva. |
-| T07.06 — [ ] Demonstrar o fluxo completo via API | T07.05 | Roteiro de solicitação, proposta, conversa, reserva, encerramento e novo atendimento com duas identidades. | As partes autorizadas completam o roteiro; terceiros e transições inválidas são rejeitados; pendências podem ser identificadas e retomadas. |
+| T07.01 — [x] Especificar encerramento e suas permissões | T05.08, T06.06 | Decisão de quem encerra, protocolo de bloqueio, estados técnicos e confirmação final. | Timeout ou pendência não equivalem a encerramento concluído; confirmação depende do bloqueio durável em Conversas. |
+| T07.02 — [x] Implementar coordenação durável de encerramento | T07.01 | Processo em Atendimentos com solicitação autorizada e comando idempotente de bloqueio. | Repetir pedido não cria processos incompatíveis. O estado final só é alcançado após a confirmação de Conversas. |
+| T07.03 — [x] Implementar retomada e reconciliação | T07.02 | Detecção e recuperação de processos pendentes com diagnóstico de etapas. | Falha entre bloqueio e conclusão não libera escrita; reiniciar o processo permite concluir sem duplicar efeitos ou apagar histórico. |
+| T07.04 — [x] Definir e integrar novo atendimento | T07.03, T06.05 | Protocolo e implementação da reserva confirmada, novo contexto e habilitação de conversa; decisão de compensação quando necessária. | Consultar perfil ou pedir orçamento não reabre sozinho o chat; contexto antigo permanece rastreável e falha posterior à reserva tem tratamento explícito. |
+| T07.05 — [x] Testar corridas e eventos atrasados | T07.04 | Cenários de envio simultâneo, confirmação perdida, processo reiniciado e eventos fora de ordem. | Mensagem não é gravada após encerramento confirmado; evento antigo não habilita nem bloqueia outro atendimento; repetição não duplica reserva. |
+| T07.06 — [x] Demonstrar o fluxo completo via API | T07.05 | Roteiro de solicitação, proposta, conversa, reserva, encerramento e novo atendimento com duas identidades. | As partes autorizadas completam o roteiro; terceiros e transições inválidas são rejeitados; pendências podem ser identificadas e retomadas. |
+
+**Política aprovada:** [decisão 0013](decisions/0013-p07-lifecycle.md). 215 casos com resultado final aprovado; evidências detalham as duas reexecuções direcionadas e os sete cenários novos.
 
 **Conclusão de P07:** ciclo integrado com bloqueio seguro e comportamento definido diante de falhas parciais.
+
+**Revisão de conformidade P07:** ativação aguarda encerramento provisório; coordenação em Application; correlação persistida até o worker. 59 testes do recorte aprovados; [evidências](verification/p07.md) e decisão 0013 atualizadas. Migração aditiva LifecycleCorrelationAndRecovery.
 
 ### P08 — Gestão financeira e dashboard
 
@@ -280,7 +284,7 @@ Após P06 e antes de P07, conforme decisão 0012. Referências RNF06–RNF08 e c
 
 ## 4. Próximo lote e acompanhamento
 
-P00 foi concluída no nível de decisões e revisão. A [revisão T00.07](decisions/0006-p00-review.md) consolida os registros de T00.01 a T00.06 e o escopo do primeiro incremento. P01 foi implementada e verificada conforme [evidências](verification/p01.md), incluindo Docker e PostgreSQL real. P02 foi concluída conforme [evidências](verification/p02.md). P03 foi concluída conforme [evidências](verification/p03.md). P04 foi concluída conforme [evidências](verification/p04.md), com o fluxo aprovado pelo responsável. P05 foi concluída conforme [evidências](verification/p05.md). P06 foi concluída conforme [evidências](verification/p06.md). O incremento GW foi concluído conforme [evidências](verification/gateway-documentation.md). O próximo passo é T07.01; tarefas de P07 em diante permanecem pendentes.
+P00 foi concluída no nível de decisões e revisão. A [revisão T00.07](decisions/0006-p00-review.md) consolida os registros de T00.01 a T00.06 e o escopo do primeiro incremento. P01 foi implementada e verificada conforme [evidências](verification/p01.md), incluindo Docker e PostgreSQL real. P02 foi concluída conforme [evidências](verification/p02.md). P03 foi concluída conforme [evidências](verification/p03.md). P04 foi concluída conforme [evidências](verification/p04.md), com o fluxo aprovado pelo responsável. P05 foi concluída conforme [evidências](verification/p05.md). P06 foi concluída conforme [evidências](verification/p06.md). O incremento GW foi concluído conforme [evidências](verification/gateway-documentation.md). P07 foi concluída conforme [evidências](verification/p07.md). O próximo passo é T08.01; tarefas de P08 em diante permanecem pendentes.
 
 O broker e a primeira integração confiável foram definidos/verificados em P05; stack móvel mantém tarefas próprias. A pesquisa inicial foi definida em P03, conforme decisão 0008. Essas escolhas não eram pré-requisitos do primeiro incremento de Identity.
 

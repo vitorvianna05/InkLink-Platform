@@ -4,7 +4,7 @@
 
 Este documento consolida, por engenharia reversa documental, a especificação funcional e técnica já estabelecida para o InkLink. Sua finalidade principal é reunir comportamentos, responsabilidades, contratos e limites do produto, sem introduzir decisões novas ou substituir os documentos existentes.
 
-**Data de referência:** 03/11/2026. **Recorte:** P00–P06 e incremento GW concluídos; P07–P13 planejados. A consolidação utiliza as versões locais dos documentos, incluindo o incremento do Gateway, e não representa uma nova auditoria de código ou execução de testes.
+**Data de referência:** 03/11/2026. **Recorte:** P00–P06 e incremento GW concluídos; P07 concluída no recorte backend; P08–P13 planejados. A consolidação utiliza as versões locais dos documentos, incluindo o incremento do Gateway, e não representa uma nova auditoria de código ou execução de testes.
 
 | Fonte | Responsabilidade |
 | --- | --- |
@@ -167,22 +167,19 @@ A interface mensal, seleção do dia, ordenação dos horários e navegação pa
 
 ### 5.7 Encerramento e novo atendimento
 
-**Referências:** RF14, RF15; arquitetura 8.3–8.4; T07.01–T07.06. **Situação:** coordenação distribuída pendente.
+**Referências:** RF14, RF15; T07.01–T07.06; [decisão 0013](decisions/0013-p07-lifecycle.md).
 
-O comportamento requerido preserva o histórico e rejeita novas mensagens para ambas as partes após confirmação definitiva do encerramento.
+Qualquer participante pode solicitar encerramento com confirmação explícita, sem aprovação da outra parte. A operação Close e o estado Closing são duráveis. Scheduling congela novas reservas sob o bloqueio de calendário, verificando que não existe sessão com término futuro. Uma sessão futura rejeita a operação e restaura a situação anterior, sem cancelar a reserva.
 
-A ordem definida na arquitetura é:
+Após o congelamento, Messaging confirma bloqueio definitivo de escrita. Só então Engagements conclui Closed. Timeout ou falha após etapa remota mantém pendência recuperável; repetição não desbloqueia o histórico. Uma conversa bloqueada pode ser criada antes do evento inicial para preservar a barreira diante de eventos atrasados.
 
-1. Engagements registra duravelmente uma solicitação autorizada de encerramento.
-2. Messaging aplica bloqueio idempotente, serializado com a gravação de mensagens.
-3. Messaging confirma a barreira persistida.
-4. Só então Engagements confirma o encerramento definitivo.
+Depois de Closed/Closing, um novo pedido para o mesmo par recebe RequiresReservation. Pedido e proposta não permitem escrever no novo chat. A confirmação do novo agendamento gera recibo e operação Activate atomicamente em Engagements. A reserva permanece confirmada se Messaging falhar; a habilitação continua pendente até recuperação. A ativação não altera o chat anterior nem supera Closing/Closed do próprio atendimento.
 
-Timeout ou falha intermediária não significa encerramento concluído. Se a barreira existir e a conclusão falhar, o processo deve ser retomado ou reconciliado; não se desbloqueia automaticamente por ausência de resposta. Mensagens aceitas antes da barreira permanecem no histórico.
+Conversas são separadas por atendimento. Mensagens aceitas antes da barreira permanecem consultáveis. Encerramento não registra conclusão financeira de sessão nem receita.
 
-Consultar perfil, ler histórico ou criar outro pedido não habilita escrita após encerramento. Novo agendamento confirmado deve coordenar um novo contexto de atendimento/conversa, preservando o anterior. Eventos atrasados de um contexto não podem alterar a permissão de outro.
+Operações possuem situação Pending, Completed, Rejected ou Quarantined, tentativas e erro estável. Falhas recebem espera progressiva e quarentena após dez tentativas. Participantes consultam lifecycle e podem retomar operações em quarentena. Rejected por reservas futuras exige nova solicitação depois do fim das sessões.
 
-**Aceite futuro:** nenhum envio é aceito depois do encerramento confirmado; repetição e recuperação não duplicam efeitos nem apagam histórico. Quem pode encerrar, confirmações adicionais, estados técnicos e compensações serão definidos em P07. O bloqueio local entregue em P05 e o recibo técnico de P06 não representam este fluxo completo.
+**Aceite:** nenhum envio é aceito depois do encerramento confirmado; concorrência com reserva não atravessa a barreira; falhas parciais não duplicam efeitos nem apagam histórico. Consulte [execução e diagnóstico](development/lifecycle.md).
 
 ### 5.8 Finanças e dashboard
 
@@ -315,7 +312,7 @@ P09 consolida regressão integrada, recuperação, ambiente e implantação inde
 | P05 / T05.01–T05.08 | Conversas e bloqueio local | RF11–RF14, RF21 | Recorte local concluído; [evidências P05](verification/p05.md). |
 | P06 / T06.01–T06.06 | Agenda e concorrência | RF15, RF18–RF19, RF21 | Reserva/recibo técnico concluídos; [evidências P06](verification/p06.md). |
 | GW / TGW.01–TGW.04 | Swagger interativo | RNF06–RNF08 | Concluído; [evidências GW](verification/gateway-documentation.md). |
-| P07 / T07.01–T07.06 | Encerramento e novo atendimento | RF09–RF15, RF18–RF19, RF21 | Pendente; próximo passo T07.01. |
+| P07 / T07.01–T07.06 | Encerramento e novo atendimento | RF09–RF15, RF18–RF19, RF21 | Concluído; [evidências P07](verification/p07.md). |
 | P08 / T08.01–T08.06 | Finance e dashboard | RF16–RF17, RF20–RF21 | Pendente. |
 | P09 / T09.01–T09.06 | Consolidação/aceite backend | RF01–RF21 no backend; RNF01, RNF04–RNF08 | Pendente; condição para P10. |
 | P10 / T10.01–T10.10 | Website React | RF01–RF21; RNF01–RNF08 | Pendente. |
@@ -323,22 +320,28 @@ P09 consolida regressão integrada, recuperação, ambiente e implantação inde
 | P12 / T12.01–T12.04 | iOS | Recorte móvel aprovado | Pendente; depende de P11. |
 | P13 / T13.01–T13.04 | Android | Recorte móvel aprovado | Pendente; depende de P11, não de P12. |
 
-M0–M3 estão atendidos nos recortes documentados. Encerramento integrado (M4), aceite do backend (M5) e interfaces não são antecipados pela existência do spec. As evidências vinculadas mantêm os resultados e limites de cada execução; contagens históricas não são somadas como se fossem uma nova suíte completa.
+M0–M4 estão atendidos nos recortes documentados. O aceite integrado do backend (M5) e as interfaces permanecem pendentes. As evidências vinculadas mantêm os resultados e limites de cada execução; contagens históricas não são somadas como se fossem uma nova suíte completa.
 
 ## 10. Limites e decisões futuras
 
 Permanecem para refinamento explícito:
 
-- P07: quem encerra, confirmações, estados técnicos, recuperação, novo atendimento e compensações após reserva.
+- Evolução do ciclo P07: cancelamento/reagendamento e novas políticas além da decisão 0013.
 - P08: contratos de lançamentos e sessões, composição e atualização dos indicadores.
 - P09: consolidação de contratos, compatibilidade, evidências integradas e aceite operacional do backend.
 - P10: ferramentas de build, rotas, cache e composição da experiência web.
 - P11–P13: Expo ou configuração nativa, compartilhamento de código, recorte funcional, testes e distribuição móvel.
 - Upload, tratamento e armazenamento de mídia, moderação e exclusividade/reutilização de flashes.
 - Cancelamento, reagendamento e passagem por meia-noite fora do recorte P06.
-- Agrupamento visual de históricos entre atendimentos e eventual transporte em tempo real.
+- Evolução da apresentação dos históricos, mantendo a separação por atendimento aprovada em P07, e eventual transporte em tempo real.
 - Nuvem, orquestração, metas e observabilidade de produção.
 
 Não há compromisso inicial com Kubernetes, microfrontends, event sourcing, Elasticsearch, notificações push ou funcionamento offline. Prever mobile e escalabilidade não inclui automaticamente essas capacidades. A hospedagem do protótipo no Cloudflare Pages não determina a infraestrutura do produto.
 
 A evolução continua por incrementos pequenos, com requisitos identificados, serviço responsável, contrato mínimo, aceite e evidência proporcional. Esta edição documenta a fundação existente e seus limites, sem iniciar tarefas pendentes ou alterar sua situação.
+
+## Complemento da revisão P07
+
+Enquanto o encerramento está em Closing, a ativação do novo chat aguarda em Pending, sem consumir tentativas de falha. Se a Agenda impedir o encerramento e o atendimento voltar a Agreed, a ativação continua; Closed mantém a proibição definitiva.
+
+Application decide a política de retorno, criação e retomada de operações e a intenção de ativação no consumo de reserva. Infrastructure oferece snapshots bloqueados e atomicidade, sem escolher essas transições. As operações preservam o contexto de correlação até o worker, inclusive após reinício, conforme a atualização da decisão 0013.

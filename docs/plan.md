@@ -252,25 +252,29 @@ T09.01 revisará a consolidação final, exemplos e compatibilidade de todos os 
 
 ### P07 — Integrar o ciclo de atendimento, encerramento e novo agendamento
 
-**Prioridade:** backend; marco crítico antes do frontend. **Dependências:** P04–P06. **Situação:** pendente.
+**Prioridade:** backend; marco crítico antes do frontend. **Dependências:** P04–P06. **Situação:** concluída no recorte backend; [evidências P07](verification/p07.md).
 
 **Objetivo:** cumprir as regras que atravessam Atendimentos, Conversas e Agenda com tratamento de falhas parciais.
 
-- [ ] Definir quem pode encerrar um atendimento e as confirmações exigidas para a primeira entrega.
-- [ ] Especificar o protocolo de encerramento descrito em architecture.md, com identificadores, ordem e confirmações.
-- [ ] Implementar o processo durável em Atendimentos e a confirmação idempotente de bloqueio em Conversas.
-- [ ] Não concluir o encerramento antes do bloqueio efetivo de novas mensagens.
-- [ ] Representar coordenação pendente, falha temporária e conclusão por contratos claros, sem atribuir sucesso definitivo antes da hora.
-- [ ] Implementar retomada e reconciliação de operações que falham entre o bloqueio e a conclusão do atendimento.
-- [ ] Integrar novo agendamento confirmado à habilitação de um novo contexto de atendimento e conversa.
-- [ ] Preservar o histórico e distinguir os contextos antigos e novos, independentemente da organização visual futura.
-- [ ] Definir tratamento de reserva confirmada quando uma etapa posterior de coordenação falha, incluindo eventual compensação se aprovada.
-- [ ] Testar envio concorrente com encerramento, confirmação perdida, processo reiniciado e mensagens repetidas ou fora de ordem.
-- [ ] Garantir que um evento atrasado de atendimento anterior não reabra ou bloqueie outro serviço.
+- [x] Definir quem pode encerrar um atendimento e as confirmações exigidas para a primeira entrega.
+- [x] Especificar o protocolo de encerramento descrito em architecture.md, com identificadores, ordem e confirmações.
+- [x] Implementar o processo durável em Atendimentos e a confirmação idempotente de bloqueio em Conversas.
+- [x] Não concluir o encerramento antes do bloqueio efetivo de novas mensagens.
+- [x] Representar coordenação pendente, falha temporária e conclusão por contratos claros, sem atribuir sucesso definitivo antes da hora.
+- [x] Implementar retomada e reconciliação de operações que falham entre o bloqueio e a conclusão do atendimento.
+- [x] Integrar novo agendamento confirmado à habilitação de um novo contexto de atendimento e conversa.
+- [x] Preservar o histórico e distinguir os contextos antigos e novos, independentemente da organização visual futura.
+- [x] Definir tratamento de reserva confirmada quando uma etapa posterior de coordenação falha, incluindo eventual compensação se aprovada.
+- [x] Testar envio concorrente com encerramento, confirmação perdida, processo reiniciado e mensagens repetidas ou fora de ordem.
+- [x] Garantir que um evento atrasado de atendimento anterior não reabra ou bloqueie outro serviço.
 
 **Critério de conclusão:** o roteiro completo via API demonstra negociação, conversa, reserva, encerramento, histórico bloqueado e novo atendimento. Falhas parciais não permitem mensagens depois da confirmação de encerramento, não duplicam reservas e não apagam históricos. Processos pendentes podem ser encontrados e retomados.
 
 **Rastreabilidade:** RF09–RF15, RF18, RF19 e RF21; RNF04–RNF06.
+
+**Evidência:** políticas da [decisão 0013](decisions/0013-p07-lifecycle.md), sete cenários novos e 215 casos com resultado final aprovado após reexecuções descritas na verificação. M4 concluído no recorte backend. Próximo incremento: T08.01.
+
+**Revisão de conformidade P07:** ativação aguarda encerramento provisório; coordenação em Application; correlação persistida até o worker. 59 testes do recorte aprovados; [evidências](verification/p07.md) e decisão 0013 atualizadas. Migração aditiva LifecycleCorrelationAndRecovery.
 
 ### P08 — Implementar Gestão financeira e dados do dashboard
 
@@ -419,6 +423,6 @@ A conclusão de uma etapa não significa a conclusão automática das etapas dep
 
 ## 8. Próxima ação
 
-Incremento GW de documentação interativa concluído. Iniciar T07.01: especificar encerramento e permissões, com coordenação durável entre Atendimentos e Conversas. P00–P06 estão concluídas em seus recortes; a [verificação P06](verification/p06.md) consolida Agenda e concorrência. M1/M2/M3 concluídos no backend; encerramento distribuído e novo contexto de atendimento permanecem em P07.
+P00–P07 e o incremento GW estão concluídos nos recortes documentados. M1–M4 atingidos no backend; a [verificação P07](verification/p07.md) consolida encerramento seguro, recuperação e novo atendimento. Próximo passo: T08.01, especificar lançamentos financeiros e sessões antes da implementação de Finance. P09 continua responsável pelo aceite integrado do backend antes dos frontends.
 
 GetMyProfile possui transporte autenticado, atualização controlada de nome, vínculo externo/interno e funções locais. Keycloak, Gateway e BFF estão integrados e verificados em P02. Os próximos fluxos continuam priorizando backend, com autorização própria em cada serviço.
