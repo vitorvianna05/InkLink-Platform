@@ -16,6 +16,7 @@ public sealed class EfEngagementStore(EngagementsDbContext database) : IEngageme
     public async Task<Creation<Engagement>> CreateAsync(Engagement engagement, CancellationToken cancellationToken)
     {
         database.Engagements.Add(engagement);
+        database.Outbox.Add(OutboxEvent.ForNegotiation(engagement));
         try
         {
             await database.SaveChangesAsync(cancellationToken);

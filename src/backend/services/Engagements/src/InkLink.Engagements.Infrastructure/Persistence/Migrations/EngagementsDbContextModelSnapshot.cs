@@ -144,6 +144,52 @@ namespace InkLink.Engagements.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("InkLink.Engagements.Infrastructure.Persistence.OutboxEvent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Attempts")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("EngagementId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("LastError")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTimeOffset?>("NextAttemptAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Payload")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<DateTimeOffset?>("PublishedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("QuarantinedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EngagementId", "Type")
+                        .IsUnique();
+
+                    b.HasIndex("PublishedAt", "CreatedAt");
+
+                    b.ToTable("outbox", "engagements");
+                });
+
             modelBuilder.Entity("InkLink.Engagements.Domain.Proposal", b =>
                 {
                     b.HasOne("InkLink.Engagements.Domain.Engagement", null)

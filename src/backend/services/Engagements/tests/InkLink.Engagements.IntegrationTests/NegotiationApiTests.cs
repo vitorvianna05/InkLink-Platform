@@ -65,7 +65,7 @@ public sealed class NegotiationApiTests(EngagementFixture fixture)
         var location = await artist.GetAsync($"/api/v2/engagements/{e.Id}/proposals/{p.Id}"); Assert.Equal(HttpStatusCode.OK, location.StatusCode);
         await using var database = fixture.CreateOwnerContext();
         Assert.Equal(1, await database.Proposals.CountAsync(x => x.EngagementId == e.Id));
-        Assert.Equal(new[] { "engagements", "proposals", "__ef_migrations_history" }.Order(), database.Model.GetEntityTypes().Select(t => t.GetTableName()!).Append("__ef_migrations_history").Order());
+        Assert.Equal(new[] { "engagements", "proposals", "outbox", "__ef_migrations_history" }.Order(), database.Model.GetEntityTypes().Select(t => t.GetTableName()!).Append("__ef_migrations_history").Order());
     }
 
     [Fact]

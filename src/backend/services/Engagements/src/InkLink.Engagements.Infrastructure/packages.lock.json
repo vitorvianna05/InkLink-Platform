@@ -82,6 +82,12 @@
           "Npgsql": "10.0.3"
         }
       },
+      "RabbitMQ.Client": {
+        "type": "Direct",
+        "requested": "[6.8.1, )",
+        "resolved": "6.8.1",
+        "contentHash": "jNsmGgmCNw2S/NzskeN2ijtGywtH4Sk/G6jWUTD5sY9SrC27Xz6BsLIiB8hdsfjeyWCa4j4GvCIGkpE8wrjU1Q=="
+      },
       "Humanizer.Core": {
         "type": "Transitive",
         "resolved": "2.14.1",

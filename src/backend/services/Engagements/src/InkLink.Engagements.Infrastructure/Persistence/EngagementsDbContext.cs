@@ -7,6 +7,7 @@ public sealed class EngagementsDbContext(DbContextOptions<EngagementsDbContext> 
 {
     public DbSet<Engagement> Engagements => Set<Engagement>();
     public DbSet<Proposal> Proposals => Set<Proposal>();
+    public DbSet<OutboxEvent> Outbox => Set<OutboxEvent>();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
@@ -41,6 +42,17 @@ public sealed class EngagementsDbContext(DbContextOptions<EngagementsDbContext> 
             entity.Property(p => p.Amount).HasPrecision(9, 2);
             entity.Property(p => p.RequestFingerprint).HasMaxLength(64).IsRequired();
             entity.Property(p => p.State).HasConversion<string>().HasMaxLength(20);
+        });
+        model.Entity<OutboxEvent>(entity =>
+        {
+            entity.ToTable("outbox");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).ValueGeneratedNever();
+            entity.Property(e => e.Type).HasMaxLength(120).IsRequired();
+            entity.Property(e => e.Payload).HasColumnType("jsonb").IsRequired();
+            entity.Property(e => e.LastError).HasMaxLength(200);
+            entity.HasIndex(e => new { e.EngagementId, e.Type }).IsUnique();
+            entity.HasIndex(e => new { e.PublishedAt, e.CreatedAt });
         });
     }
 }
