@@ -80,6 +80,22 @@ services:
       interval: 2s
       timeout: 3s
       retries: 30
+  finance-db:
+    image: postgres:17.7-alpine
+    environment:
+      POSTGRES_PASSWORD: ${FINANCE_POSTGRES_PASSWORD:?Run Initialize-Local.ps1}
+      FINANCE_OWNER_PASSWORD: ${FINANCE_OWNER_PASSWORD:?Run Initialize-Local.ps1}
+      FINANCE_APP_PASSWORD: ${FINANCE_APP_PASSWORD:?Run Initialize-Local.ps1}
+    ports:
+      - "127.0.0.1:54335:5432"
+    volumes:
+      - finance-data:/var/lib/postgresql/data
+      - ./scripts/db/init-finance.sh:/docker-entrypoint-initdb.d/10-finance.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d inklink_finance"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
   rabbitmq:
     hostname: inklink-broker
     image: rabbitmq:3.13.7-alpine
@@ -154,6 +170,7 @@ services:
         condition: service_healthy
 volumes:
   scheduling-data:
+  finance-data:
   identity-data:
   catalog-data:
   engagements-data:

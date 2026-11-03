@@ -34,6 +34,13 @@
   <Folder Name="/src/backend/services/Catalog/tools/">
     <Project Path="src/backend/services/Catalog/tools/InkLink.Catalog.Admin/InkLink.Catalog.Admin.csproj" />
   </Folder>
+  <Folder Name="/src/backend/services/Finance/" />
+  <Folder Name="/src/backend/services/Finance/src/">
+    <Project Path="src/backend/services/Finance/src/InkLink.Finance.Api/InkLink.Finance.Api.csproj" />
+    <Project Path="src/backend/services/Finance/src/InkLink.Finance.Application/InkLink.Finance.Application.csproj" />
+    <Project Path="src/backend/services/Finance/src/InkLink.Finance.Domain/InkLink.Finance.Domain.csproj" />
+    <Project Path="src/backend/services/Finance/src/InkLink.Finance.Infrastructure/InkLink.Finance.Infrastructure.csproj" />
+  </Folder>
   <Folder Name="/src/backend/services/Identity/" />
   <Folder Name="/src/backend/services/Identity/src/">
     <Project Path="src/backend/services/Identity/src/InkLink.Identity.Api/InkLink.Identity.Api.csproj" />

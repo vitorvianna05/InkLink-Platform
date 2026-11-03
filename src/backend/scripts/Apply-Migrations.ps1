@@ -65,3 +65,13 @@ try {
         if ($LASTEXITCODE -ne 0) { throw 'Scheduling migration failed.' }
     } finally { Pop-Location }
 } finally { $env:SchedulingDatabase__ConnectionString = $previousSchedulingConnection }
+
+$previousFinanceConnection = $env:FinanceDatabase__ConnectionString
+try {
+    $env:FinanceDatabase__ConnectionString = 'Host=127.0.0.1;Port=54335;Database=inklink_finance;Username=inklink_finance_owner;Password=' + $settings.FINANCE_OWNER_PASSWORD
+    Push-Location $repoRoot
+    try {
+        dotnet ef database update --project src/backend/services/Finance/src/InkLink.Finance.Infrastructure --startup-project src/backend/services/Finance/src/InkLink.Finance.Infrastructure
+        if ($LASTEXITCODE -ne 0) { throw 'Finance migration failed.' }
+    } finally { Pop-Location }
+} finally { $env:FinanceDatabase__ConnectionString = $previousFinanceConnection }
