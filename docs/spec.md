@@ -4,7 +4,7 @@
 
 Este documento consolida, por engenharia reversa documental, a especificação funcional e técnica já estabelecida para o InkLink. Sua finalidade principal é reunir comportamentos, responsabilidades, contratos e limites do produto, sem introduzir decisões novas ou substituir os documentos existentes.
 
-**Data de referência:** 03/11/2026. **Recorte:** P00–P06 e incremento GW concluídos; P07 concluída no recorte backend; P08–P13 planejados. A consolidação utiliza as versões locais dos documentos, incluindo o incremento do Gateway, e não representa uma nova auditoria de código ou execução de testes.
+**Data de referência:** 03/11/2026. **Recorte:** P00–P06 e incremento GW concluídos; P07 concluída no recorte backend; P08 concluída no recorte backend; P09–P13 planejados. A consolidação utiliza as versões locais dos documentos, incluindo o incremento do Gateway, e não representa uma nova auditoria de código ou execução de testes.
 
 | Fonte | Responsabilidade |
 | --- | --- |
@@ -34,7 +34,7 @@ Idioma de referência: português do Brasil. Moeda: reais. Processamento de paga
 | --- | --- |
 | Visitante | Consulta informações públicas do catálogo, sem acesso a registros privados. |
 | Cliente / Client | Mantém favoritos, solicita orçamento, acompanha e aceita sua proposta, participa das próprias conversas e consulta suas reservas. |
-| Artista / Artist | Publica seu catálogo, apresenta propostas nos seus atendimentos, conversa com seus clientes, configura disponibilidade e confirma suas reservas. Gestão financeira está prevista em P08. |
+| Artista / Artist | Publica seu catálogo, apresenta propostas nos seus atendimentos, conversa com seus clientes, configura disponibilidade e confirma suas reservas. Registra seus lançamentos e conclusões de sessões, consultando indicadores próprios. |
 | Operação administrativa | Cria contas no Keycloak e ativa Artist conforme a política inicial; não pressupõe painel administrativo completo. |
 | Chamador técnico | Usa identidade e escopos específicos para integrações autorizadas, sem herdar automaticamente permissões de usuário. |
 
@@ -55,7 +55,7 @@ A perspectiva cliente/artista altera apresentação e consultas permitidas, mas 
 | Proposta | Engagements | Versão imutável, descrição, valor BRL e situação vinculada ao atendimento. |
 | Conversa e mensagem | Messaging | Participantes, atendimento, autoria, conteúdo, data/hora, sequência e barreira local de escrita. |
 | Calendário, disponibilidade e reserva | Scheduling | Artista, fuso, intervalos, participantes e atendimento; reserva confirmada ocupa tempo sem sobreposição. |
-| Receita, custo e indicadores | Finance, previsto | Registros gerenciais e resultados por artista/período, separados de pagamento e reserva. |
+| Receita, custo e indicadores | Finance | Registros gerenciais e resultados por artista/período, separados de pagamento e reserva. |
 
 Relações entre contextos utilizam identificadores e contratos, sem acesso a bancos alheios ou entidades de domínio compartilhadas. Projeções têm origem e atualização identificadas. Snapshots preservam o contexto histórico; não substituem autorização nem prometem disponibilidade futura.
 
@@ -183,7 +183,7 @@ Operações possuem situação Pending, Completed, Rejected ou Quarantined, tent
 
 ### 5.8 Finanças e dashboard
 
-**Referências:** RF16, RF17, RF20; T08.01–T08.06. **Situação:** planejado.
+**Referências:** RF16, RF17, RF20; T08.01–T08.06. **Situação:** implementado no backend; [evidências](verification/p08.md).
 
 O dashboard reúne informações do próprio artista por período explícito: recebimentos, custos, lucro e margem estimados, clientes atendidos, sessões, ticket médio, quantidade/valor de reservas e conversas ativas. Permite acessar clientes/atendimentos e o perfil público do artista.
 
@@ -195,13 +195,19 @@ O dashboard reúne informações do próprio artista por período explícito: re
 | Margem estimada | Lucro estimado / receita recebida × 100; zero sem receita. |
 | Clientes atendidos | Clientes distintos com sessões concluídas no período. |
 | Ticket médio por sessão | Valores de sessões concluídas / quantidade dessas sessões; zero sem sessões. |
-| Valor agendado | Valores previstos de serviços reservados no período, separados dos recebimentos. |
+| Valor agendado | Referências por reserva ainda sem conclusão no período local, sem rateio automático e separadas dos recebimentos. |
 
 Conclusão de sessão, encerramento de chat, reserva e recebimento são fatos distintos. Os primeiros não geram receita automaticamente. Dados usam suas respectivas datas e origem.
 
-**Aceite futuro:** R$ 4.000,00 de receitas e R$ 940,00 de custos geram R$ 3.060,00 de lucro e margem de 76,5%. Período vazio não divide por zero. Defasagem ou falha de origem não aparece como zero real sem indicação. Reconstrução de projeções não duplica lançamentos.
+**Aceite verificado:** R$ 4.000,00 de receitas e R$ 940,00 de custos geram R$ 3.060,00 de lucro e margem de 76,5%. Período vazio não divide por zero. Defasagem ou falha de origem não aparece como zero real sem indicação. Reconstrução de projeções não duplica lançamentos.
 
 Dashboard é uma composição por contratos/projeções, sem acesso a bancos alheios e sem exigir um microsserviço próprio.
+
+Políticas aprovadas na [decisão 0014](decisions/0014-p08-finance.md): ledger manual BRL, Artist proprietário, recebimentos parceláveis vinculados ao atendimento e custos gerais ou vinculados. Valores positivos com até duas casas; data efetiva não futura no fuso do artista. Sem edição/exclusão: estorno integral único preserva original e recompõe sua data efetiva. Chave idempotente por artista em criação/estorno; divergência retorna 409. Consultas paginadas e períodos [from,to) de 1–366 dias.
+
+Só o artista conclui sua sessão após o término previsto, com completedAt explícito e valor (padrão referência da reserva). Repetir os mesmos dados é idempotente; alterar gera conflito. A reserva permanece Confirmed em seu contrato e a conclusão é recurso separado. Clientes distintos e ticket usam conclusões dentro do período; conversas com escrita permitida são quantidade atual independente do período.
+
+Finance compõe Scheduling e Messaging via token delegado, valida atendimento em Engagements e preserva observação por fonte. Não há projeção operacional nova nem snapshot distribuído; indisponibilidade ou contrato inválido retorna 503. Recompor não grava o ledger. O Gateway inclui Finance em seu catálogo OpenAPI e proxy protegido. Navegação e interface permanecem para os frontends; a consulta de atendimentos do artista já existe em Engagements.
 
 ## 6. Arquitetura e contratos transversais
 
@@ -313,7 +319,7 @@ P09 consolida regressão integrada, recuperação, ambiente e implantação inde
 | P06 / T06.01–T06.06 | Agenda e concorrência | RF15, RF18–RF19, RF21 | Reserva/recibo técnico concluídos; [evidências P06](verification/p06.md). |
 | GW / TGW.01–TGW.04 | Swagger interativo | RNF06–RNF08 | Concluído; [evidências GW](verification/gateway-documentation.md). |
 | P07 / T07.01–T07.06 | Encerramento e novo atendimento | RF09–RF15, RF18–RF19, RF21 | Concluído; [evidências P07](verification/p07.md). |
-| P08 / T08.01–T08.06 | Finance e dashboard | RF16–RF17, RF20–RF21 | Pendente. |
+| P08 / T08.01–T08.06 | Finance e dashboard | RF16–RF17, RF20–RF21 | Concluído no backend; [evidências P08](verification/p08.md). |
 | P09 / T09.01–T09.06 | Consolidação/aceite backend | RF01–RF21 no backend; RNF01, RNF04–RNF08 | Pendente; condição para P10. |
 | P10 / T10.01–T10.10 | Website React | RF01–RF21; RNF01–RNF08 | Pendente. |
 | P11 / T11.01–T11.05 | Base React Native | Capacidades do primeiro incremento móvel | Pendente. |
@@ -327,7 +333,7 @@ M0–M4 estão atendidos nos recortes documentados. O aceite integrado do backen
 Permanecem para refinamento explícito:
 
 - Evolução do ciclo P07: cancelamento/reagendamento e novas políticas além da decisão 0013.
-- P08: contratos de lançamentos e sessões, composição e atualização dos indicadores.
+- Evolução financeira além da decisão 0014: correções de sessões, estornos parciais e eventual projeção mediante necessidade.
 - P09: consolidação de contratos, compatibilidade, evidências integradas e aceite operacional do backend.
 - P10: ferramentas de build, rotas, cache e composição da experiência web.
 - P11–P13: Expo ou configuração nativa, compartilhamento de código, recorte funcional, testes e distribuição móvel.
@@ -345,3 +351,9 @@ A evolução continua por incrementos pequenos, com requisitos identificados, se
 Enquanto o encerramento está em Closing, a ativação do novo chat aguarda em Pending, sem consumir tentativas de falha. Se a Agenda impedir o encerramento e o atendimento voltar a Agreed, a ativação continua; Closed mantém a proibição definitiva.
 
 Application decide a política de retorno, criação e retomada de operações e a intenção de ativação no consumo de reserva. Infrastructure oferece snapshots bloqueados e atomicidade, sem escolher essas transições. As operações preservam o contexto de correlação até o worker, inclusive após reinício, conforme a atualização da decisão 0013.
+
+### Revisão P08 — contratos e limites civis de período
+
+Respostas operacionais precisam conter todos os campos obrigatórios, inclusive contadores e valores. Ausência ou null não equivale a zero; Finance rejeita o contrato com 503 e code finance.source_unavailable. Um resumo completo com contadores explicitamente zerados permanece válido. A exigência fica no adaptador de integração, sem introduzir serialização em Domain/Application.
+
+Períodos por data usam o primeiro instante existente do dia no fuso do artista. Meia-noite inexistente avança até o primeiro minuto válido, conforme a precisão da Agenda; meia-noite repetida utiliza sua primeira ocorrência em UTC. A regra também se aplica ao limite exclusivo, mantendo períodos adjacentes sem lacunas ou sobreposição. Não altera a rejeição de horários de reserva ambíguos/inexistentes.

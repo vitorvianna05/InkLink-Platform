@@ -27,6 +27,7 @@ internal static class GatewayDocumentationExtensions
         Add("engagements", "Gateway:EngagementsAddress", "/api/v2/engagements");
         Add("messaging", "Gateway:MessagingAddress", "/api/v1/conversations");
         Add("scheduling", "Gateway:SchedulingAddress", "/api/v1/scheduling");
+        Add("finance", "Gateway:FinanceAddress", "/api/v1/finance");
         services.AddSingleton(new GatewayDocumentationOptions(authority!, documents));
         services.AddHttpClient<GatewayDocuments>(http => http.Timeout = TimeSpan.FromSeconds(10))
             .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler { AllowAutoRedirect = false, UseCookies = false });

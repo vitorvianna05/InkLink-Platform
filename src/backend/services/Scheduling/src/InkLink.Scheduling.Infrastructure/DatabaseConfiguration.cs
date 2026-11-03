@@ -46,6 +46,7 @@ public static class DependencyInjection
         services.AddDbContext<SchedulingDbContext>((provider, options) => Configure(options,
             provider.GetRequiredService<IOptions<SchedulingDatabaseOptions>>().Value.ConnectionString));
         services.AddScoped<ISchedulingStore, EfSchedulingStore>();
+        services.AddScoped<ISessionStore, EfSessionStore>();
         services.AddHealthChecks().AddCheck<SchedulingReadinessCheck>("scheduling-database", tags: ["ready"]);
         return services;
     }
@@ -78,6 +79,7 @@ internal sealed class SchedulingReadinessCheck(SchedulingDbContext database) : I
         {
             await database.Reservations.Take(1).ToListAsync(cancellationToken);
             await database.Windows.Take(1).ToListAsync(cancellationToken);
+            await database.CompletedSessions.Take(1).ToListAsync(cancellationToken);
             await database.FrozenEngagements.Take(1).ToListAsync(cancellationToken);
             return HealthCheckResult.Healthy();
         }

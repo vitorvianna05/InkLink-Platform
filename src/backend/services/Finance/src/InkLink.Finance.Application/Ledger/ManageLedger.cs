@@ -79,6 +79,19 @@ public sealed class ManageLedger(ICurrentFinanceAccount current, ILedgerStore st
         var page = await store.ListAsync(artist, from, to, kind is null ? null : Enum.Parse<EntryKind>(kind), limit, after, ct);
         return new(page.Items.Select(View).ToArray(), page.HasMore ? Convert.ToBase64String(Encoding.UTF8.GetBytes(prefix + page.Items[^1].Id)) : null, page.HasMore, page.Total);
     }
+    public async Task<Dashboard> DashboardAsync(DateOnly from, DateOnly to, CancellationToken ct)
+    {
+        var artist = AccountAccess.Require(current, artist: true).Id; Range(from, to);
+        var scheduleTask = sources.ScheduleAsync(from, to, ct);
+        var conversationsTask = sources.ConversationsAsync(ct);
+        await Task.WhenAll(scheduleTask, conversationsTask);
+        var schedule = await scheduleTask; var conversations = await conversationsTask;
+        VerifyArtist(schedule.ArtistId, artist); VerifyArtist(conversations.ArtistId, artist);
+        var totals = await store.TotalsAsync(artist, from, to, ct);
+        return new(from, to, schedule.TimeZoneId, FinancialIndicators.Calculate(totals.Received, totals.Costs), schedule.CompletedSessions,
+            schedule.ClientsServed, schedule.CompletedSessions == 0 ? 0 : decimal.Round(schedule.CompletedValue / schedule.CompletedSessions, 2, MidpointRounding.AwayFromZero),
+            schedule.ScheduledReservations, schedule.ScheduledValue, conversations.ActiveConversations, schedule.ObservedAt, conversations.ObservedAt, clock.GetUtcNow());
+    }
     public static void Range(DateOnly from, DateOnly to)
     {
         if (from == default || to <= from || to.DayNumber - from.DayNumber > 366) throw FinanceFailure.Invalid("period", "Use a [from,to) period of 1..366 days.");

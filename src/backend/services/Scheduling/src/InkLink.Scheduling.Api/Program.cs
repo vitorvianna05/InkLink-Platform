@@ -14,6 +14,7 @@ builder.Services.AddSchedulingDocumentation();
 builder.Services.AddSchedulingOutbox(builder.Configuration, builder.Environment);
 
 builder.Services.AddSchedulingClosure();
+builder.Services.AddSchedulingSessions();
 
 var app = builder.Build();
 app.UseCorrelatedRequestLogging();
@@ -23,6 +24,7 @@ app.MapSchedulingHealth();
 app.MapSchedulingDocumentation();
 app.MapScheduling();
 app.MapSchedulingClosure();
+app.MapSchedulingSessions();
 app.Run();
 
 public partial class SchedulingProgram;

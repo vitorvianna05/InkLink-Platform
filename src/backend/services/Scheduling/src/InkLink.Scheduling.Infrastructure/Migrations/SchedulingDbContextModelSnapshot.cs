@@ -136,6 +136,37 @@ namespace InkLink.Scheduling.Infrastructure.Migrations
                         });
                 });
 
+            modelBuilder.Entity("InkLink.Scheduling.Domain.SessionCompletion", b =>
+                {
+                    b.Property<Guid>("ReservationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(9, 2)
+                        .HasColumnType("numeric(9,2)");
+
+                    b.Property<Guid>("ArtistId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ClientId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("EngagementId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("ReservationId");
+
+                    b.HasIndex("ArtistId", "CompletedAt");
+
+                    b.ToTable("completed_sessions", "scheduling", t =>
+                        {
+                            t.HasCheckConstraint("ck_session_amount", "\"Amount\" > 0 AND \"Amount\" <= 9999999.99");
+                        });
+                });
+
             modelBuilder.Entity("InkLink.Scheduling.Infrastructure.Persistence.FrozenEngagement", b =>
                 {
                     b.Property<Guid>("Id")
@@ -207,6 +238,15 @@ namespace InkLink.Scheduling.Infrastructure.Migrations
                     b.HasOne("InkLink.Scheduling.Domain.ArtistCalendar", null)
                         .WithMany()
                         .HasForeignKey("ArtistId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("InkLink.Scheduling.Domain.SessionCompletion", b =>
+                {
+                    b.HasOne("InkLink.Scheduling.Domain.Reservation", null)
+                        .WithOne()
+                        .HasForeignKey("InkLink.Scheduling.Domain.SessionCompletion", "ReservationId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

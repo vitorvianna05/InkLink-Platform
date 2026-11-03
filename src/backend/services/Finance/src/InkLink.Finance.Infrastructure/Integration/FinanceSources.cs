@@ -21,6 +21,22 @@ public sealed class FinanceSources(HttpClient http, FinanceAddresses addresses, 
             || !TimeZoneInfo.TryConvertIanaIdToWindowsId(result.TimeZoneId, out _)) throw ManageLedger.Unavailable();
         return result;
     }
+    public async Task<ScheduleSummary> ScheduleAsync(DateOnly from, DateOnly to, CancellationToken ct)
+    {
+        var result = await GetAsync<ScheduleSummary>(new(addresses.Scheduling, $"api/v1/scheduling/artist-summary?from={from:yyyy-MM-dd}&to={to:yyyy-MM-dd}"), ct);
+        if (result.ArtistId == Guid.Empty || result.CompletedSessions < 0 || result.ClientsServed < 0 || result.CompletedValue < 0
+            || result.ScheduledReservations < 0 || result.ScheduledValue < 0 || result.ObservedAt == default || string.IsNullOrWhiteSpace(result.TimeZoneId))
+            throw ManageLedger.Unavailable();
+        try { if (!TimeZoneInfo.TryConvertIanaIdToWindowsId(result.TimeZoneId, out _)) throw ManageLedger.Unavailable(); }
+        catch (TimeZoneNotFoundException) { throw ManageLedger.Unavailable(); }
+        return result;
+    }
+    public async Task<ConversationSummary> ConversationsAsync(CancellationToken ct)
+    {
+        var result = await GetAsync<ConversationSummary>(new(addresses.Messaging, "api/v1/conversations/artist-summary"), ct);
+        if (result.ArtistId == Guid.Empty || result.ActiveConversations < 0 || result.ObservedAt == default) throw ManageLedger.Unavailable();
+        return result;
+    }
     public async Task VerifyEngagementAsync(Guid id, Guid artist, CancellationToken ct)
     {
         var context = await GetAsync<EngagementContext>(new(addresses.Engagements, $"api/v2/engagements/{id}"), ct, privateResource: true);

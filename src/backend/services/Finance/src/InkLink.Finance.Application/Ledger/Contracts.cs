@@ -17,9 +17,18 @@ public interface ILedgerStore
     Task<Page<LedgerEntry>> ListAsync(Guid artist, DateOnly from, DateOnly to, EntryKind? kind, int limit, Guid? after, CancellationToken ct);
     Task<LedgerTotals> TotalsAsync(Guid artist, DateOnly from, DateOnly to, CancellationToken ct);
 }
+public sealed record ScheduleSummary(Guid ArtistId, string TimeZoneId, int CompletedSessions, int ClientsServed, decimal CompletedValue,
+    int ScheduledReservations, decimal ScheduledValue, DateTimeOffset ObservedAt);
+public sealed record ConversationSummary(Guid ArtistId, int ActiveConversations, DateTimeOffset ObservedAt);
 public sealed record ArtistCalendarContext(Guid ArtistId, string TimeZoneId, DateTimeOffset ObservedAt);
 public interface IFinanceSources
 {
     Task<ArtistCalendarContext> CalendarAsync(CancellationToken ct);
+    Task<ScheduleSummary> ScheduleAsync(DateOnly from, DateOnly to, CancellationToken ct);
+    Task<ConversationSummary> ConversationsAsync(CancellationToken ct);
     Task VerifyEngagementAsync(Guid id, Guid artist, CancellationToken ct);
 }
+public sealed record Dashboard(DateOnly From, DateOnly To, string TimeZoneId, FinancialIndicators Financial, int CompletedSessions,
+    int ClientsServed, decimal AverageSessionValue, int ScheduledReservations, decimal ScheduledValue,
+    int CurrentActiveConversations, DateTimeOffset ScheduleObservedAt, DateTimeOffset ConversationsObservedAt, DateTimeOffset GeneratedAt,
+    string Currency = "BRL", string ConversationBasis = "Current, independent of financial period");

@@ -469,7 +469,7 @@ Continuam abertas, sem bloquear esta fundação:
 - Evolução do protocolo de encerramento e habilitação definido na decisão 0013, incluindo futuras políticas de cancelamento.
 - Tecnologia de atualização de mensagens e escala das conexões.
 - Evolução da pesquisa conforme volume e qualidade observados, a partir de PostgreSQL/pg_trgm definido na decisão 0008; provedor de armazenamento, upload e tratamento de arquivos de mídia.
-- Registro financeiro, composição do dashboard e políticas de atualização das projeções.
+- Evolução financeira além da decisão 0014: correção de sessões, estornos parciais e eventual projeção operacional, mediante novo refinamento.
 - Infraestrutura, automação de entrega, observabilidade e metas de operação.
 
 As escolhas serão registradas conforme surgirem, preferencialmente com contexto, decisão, alternativas e consequências. Mudanças que afetem comportamento também devem atualizar os requisitos. Este arquivo não autoriza inferir uma ferramenta ou política de negócio apenas porque ela é comum em determinada arquitetura.
@@ -491,3 +491,19 @@ A ativação durante Closing permanece pendente até a decisão final do encerra
 A preparação de pedidos e as decisões de criação/retomada de operações ficam em Application, executadas sobre snapshots fornecidos sob bloqueio por Infrastructure. O recibo e a intenção de ativação permanecem atômicos. Os repositórios não selecionam transições de negócio.
 
 Operações de lifecycle persistem contexto W3C e correlação de origem. O worker retoma esse pai nas tentativas e propaga a cadeia pelas chamadas HTTP, com identificador de operação separado da correlação. Metadados ausentes em registros anteriores não impedem recuperação.
+
+## Gestão implementada em P08
+
+A [decisão 0014](decisions/0014-p08-finance.md) especifica o ledger BRL privado de Finance: recebimentos e custos manuais, comandos idempotentes, registros imutáveis e estorno integral único. Domain protege valores e regras, Application coordena casos de uso, Infrastructure oferece persistência/transações e adaptadores HTTP, e Api compõe extensões por contexto. Não há integração externa de escrita que demande Outbox em Finance nesta etapa.
+
+Scheduling é proprietário da conclusão de sessões e do fuso IANA do artista. Conclusão é recurso separado da reserva, sem criar recebimento, liberar ocupação ou encerrar conversa. Messaging oferece a quantidade atual de conversas com escrita permitida. Finance usa contratos síncronos com token delegado, sem dependências de implementações ou bancos alheios. A listagem de clientes/atendimentos continua em Engagements, perspectiva artist.
+
+O dashboard financeiro é composto em Finance, por período local [from,to) de até 366 dias. Recebimentos/custos usam data efetiva; sessões usam data de conclusão; reservas ainda sem conclusão usam data reservada; conversas são atuais, independentes do período. Valor agendado soma referências por reserva, sem rateio presumido. Estorno recompõe o período original. Respostas preservam instantes de observação por fonte; não oferecem snapshot distribuído. Falha ou contrato inválido resulta em 503, nunca em zero aparente.
+
+Não se mantém nova projeção operacional: a resposta é reconstruída por consulta às autoridades, sem efeitos no ledger. Gateway encaminha Finance e expõe seu OpenAPI em Development/Testing; BFF preserva a proteção do namespace. Banco, roles owner/runtime, migrações, health, logs correlacionados e testes seguem a fundação existente. [Execução](development/finance.md) e [verificação](verification/p08.md).
+
+### Revisão P08 — contratos e limites civis de período
+
+Respostas operacionais precisam conter todos os campos obrigatórios, inclusive contadores e valores. Ausência ou null não equivale a zero; Finance rejeita o contrato com 503 e code finance.source_unavailable. Um resumo completo com contadores explicitamente zerados permanece válido. A exigência fica no adaptador de integração, sem introduzir serialização em Domain/Application.
+
+Períodos por data usam o primeiro instante existente do dia no fuso do artista. Meia-noite inexistente avança até o primeiro minuto válido, conforme a precisão da Agenda; meia-noite repetida utiliza sua primeira ocorrência em UTC. A regra também se aplica ao limite exclusivo, mantendo períodos adjacentes sem lacunas ou sobreposição. Não altera a rejeição de horários de reserva ambíguos/inexistentes.

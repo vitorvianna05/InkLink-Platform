@@ -6,6 +6,7 @@ namespace InkLink.Scheduling.Infrastructure.Persistence;
 public sealed class SchedulingDbContext(DbContextOptions<SchedulingDbContext> options) : DbContext(options)
 {
     public DbSet<FrozenEngagement> FrozenEngagements => Set<FrozenEngagement>();
+    public DbSet<SessionCompletion> CompletedSessions => Set<SessionCompletion>();
     public DbSet<ArtistCalendar> Calendars => Set<ArtistCalendar>();
     public DbSet<AvailableWindow> Windows => Set<AvailableWindow>();
     public DbSet<Reservation> Reservations => Set<Reservation>();
@@ -13,6 +14,13 @@ public sealed class SchedulingDbContext(DbContextOptions<SchedulingDbContext> op
     protected override void OnModelCreating(ModelBuilder model)
     {
         model.HasDefaultSchema("scheduling");
+        model.Entity<SessionCompletion>(e =>
+        {
+            e.ToTable("completed_sessions", t => t.HasCheckConstraint("ck_session_amount", "\"Amount\" > 0 AND \"Amount\" <= 9999999.99"));
+            e.HasKey(x => x.ReservationId); e.Property(x => x.ReservationId).ValueGeneratedNever();
+            e.HasOne<Reservation>().WithOne().HasForeignKey<SessionCompletion>(x => x.ReservationId).OnDelete(DeleteBehavior.Restrict);
+            e.Property(x => x.Amount).HasPrecision(9, 2); e.HasIndex(x => new { x.ArtistId, x.CompletedAt });
+        });
         model.Entity<FrozenEngagement>(e => { e.ToTable("frozen_engagements"); e.HasKey(x => x.Id); e.Property(x => x.Id).ValueGeneratedNever(); });
         model.Entity<ArtistCalendar>(e => { e.ToTable("calendars"); e.HasKey(x => x.ArtistId); e.Property(x => x.ArtistId).ValueGeneratedNever(); e.Property(x => x.TimeZoneId).HasMaxLength(100); });
         model.Entity<AvailableWindow>(e =>
