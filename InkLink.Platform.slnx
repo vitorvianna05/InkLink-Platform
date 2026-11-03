@@ -3,6 +3,7 @@
     <File Path="docs/architecture.md" />
     <File Path="docs/plan.md" />
     <File Path="docs/requirements.md" />
+    <File Path="docs/spec.md" />
     <File Path="docs/tasks.md" />
   </Folder>
   <Folder Name="/src/" />
