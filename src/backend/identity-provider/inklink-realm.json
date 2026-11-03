@@ -70,6 +70,13 @@
         "include.in.token.scope": "true"
       },
       "protocol": "openid-connect"
+    },
+    {
+      "name": "messaging.conversation.block",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "true"
+      }
     }
   ],
   "clients": [
@@ -252,7 +259,8 @@
       "directAccessGrantsEnabled": false,
       "serviceAccountsEnabled": true,
       "optionalClientScopes": [
-        "catalog.engagement-context.read"
+        "catalog.engagement-context.read",
+        "messaging.conversation.block"
       ],
       "protocolMappers": [
         {

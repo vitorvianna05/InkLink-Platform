@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup><UserSecretsId>inklink-messaging-development</UserSecretsId></PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../InkLink.Messaging.Application/InkLink.Messaging.Application.csproj" />
+    <ProjectReference Include="../InkLink.Messaging.Infrastructure/InkLink.Messaging.Infrastructure.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../../../building-blocks/InkLink.Authentication/InkLink.Authentication.csproj" />
+    <ProjectReference Include="../../../../building-blocks/InkLink.Observability/InkLink.Observability.csproj" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+  </ItemGroup>
+</Project>

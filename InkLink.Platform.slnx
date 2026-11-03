@@ -57,4 +57,12 @@
     <Project Path="src/backend/services/Engagements/tests/InkLink.Engagements.ArchitectureTests/InkLink.Engagements.ArchitectureTests.csproj" />
     <Project Path="src/backend/services/Engagements/tests/InkLink.Engagements.UnitTests/InkLink.Engagements.UnitTests.csproj" />
   </Folder>
+  <Folder Name="/src/backend/services/Messaging/">
+    <Project Path="src/backend/services/Messaging/tests/InkLink.Messaging.IntegrationTests/InkLink.Messaging.IntegrationTests.csproj" />
+    <Project Path="src/backend/services/Messaging/tests/InkLink.Messaging.UnitTests/InkLink.Messaging.UnitTests.csproj" />
+    <Project Path="src/backend/services/Messaging/src/InkLink.Messaging.Api/InkLink.Messaging.Api.csproj" />
+    <Project Path="src/backend/services/Messaging/src/InkLink.Messaging.Application/InkLink.Messaging.Application.csproj" />
+    <Project Path="src/backend/services/Messaging/src/InkLink.Messaging.Domain/InkLink.Messaging.Domain.csproj" />
+    <Project Path="src/backend/services/Messaging/src/InkLink.Messaging.Infrastructure/InkLink.Messaging.Infrastructure.csproj" />
+  </Folder>
 </Solution>

@@ -48,6 +48,39 @@ services:
       interval: 2s
       timeout: 3s
       retries: 30
+  messaging-db:
+    image: postgres:17.7-alpine
+    environment:
+      POSTGRES_PASSWORD: ${MESSAGING_POSTGRES_PASSWORD:?Run Initialize-Local.ps1}
+      MESSAGING_OWNER_PASSWORD: ${MESSAGING_OWNER_PASSWORD:?Run Initialize-Local.ps1}
+      MESSAGING_APP_PASSWORD: ${MESSAGING_APP_PASSWORD:?Run Initialize-Local.ps1}
+    ports:
+      - "127.0.0.1:54333:5432"
+    volumes:
+      - messaging-data:/var/lib/postgresql/data
+      - ./scripts/db/init-messaging.sh:/docker-entrypoint-initdb.d/10-messaging.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d inklink_messaging"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+  rabbitmq:
+    image: rabbitmq:3.13.7-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: inklink
+      RABBITMQ_DEFAULT_PASS: ${INKLINK_BROKER_PASSWORD:?Run Initialize-Local.ps1}
+      RABBITMQ_PUBLISHER_PASS: ${INKLINK_BROKER_PUBLISHER_PASSWORD:?Run Initialize-Local.ps1}
+      RABBITMQ_CONSUMER_PASS: ${INKLINK_BROKER_CONSUMER_PASSWORD:?Run Initialize-Local.ps1}
+    ports:
+      - "127.0.0.1:5673:5672"
+    volumes:
+      - broker-data:/var/lib/rabbitmq
+      - ./scripts/configure-broker.sh:/opt/inklink/configure-broker.sh:ro
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
   bff-db:
     image: postgres:17.7-alpine
     environment:
@@ -103,5 +136,7 @@ volumes:
   identity-data:
   catalog-data:
   engagements-data:
+  messaging-data:
+  broker-data:
   bff-data:
   keycloak-data:

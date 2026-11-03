@@ -130,7 +130,7 @@ public sealed class EngagementFixture : IAsyncLifetime
         return new(options.Options);
     }
 
-    private async Task<(string Owner, string App)> DatabaseAsync(string schema)
+    public async Task<(string Owner, string App)> DatabaseAsync(string schema)
     {
         var suffix = Guid.NewGuid().ToString("N");
         var name = "p04_" + suffix; var owner = "own_" + suffix; var app = "app_" + suffix; var password = Guid.NewGuid().ToString("N");

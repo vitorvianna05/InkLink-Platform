@@ -45,3 +45,13 @@ try {
         if ($LASTEXITCODE -ne 0) { throw 'Engagements migration failed.' }
     } finally { Pop-Location }
 } finally { $env:EngagementsDatabase__ConnectionString = $previousEngagementsConnection }
+
+$previousMessagingConnection = $env:MessagingDatabase__ConnectionString
+try {
+    $env:MessagingDatabase__ConnectionString = 'Host=127.0.0.1;Port=54333;Database=inklink_messaging;Username=inklink_messaging_owner;Password=' + $settings.MESSAGING_OWNER_PASSWORD
+    Push-Location $repoRoot
+    try {
+        dotnet ef database update --project src/backend/services/Messaging/src/InkLink.Messaging.Infrastructure --startup-project src/backend/services/Messaging/src/InkLink.Messaging.Infrastructure
+        if ($LASTEXITCODE -ne 0) { throw 'Messaging migration failed.' }
+    } finally { Pop-Location }
+} finally { $env:MessagingDatabase__ConnectionString = $previousMessagingConnection }

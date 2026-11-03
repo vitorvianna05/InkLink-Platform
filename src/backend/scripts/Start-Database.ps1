@@ -4,3 +4,5 @@ $envFile = Join-Path $repoRoot '.env.local'
 if (-not (Test-Path -LiteralPath $envFile)) { throw 'Run Initialize-Local.ps1 first.' }
 docker compose --env-file $envFile -f "$repoRoot/src/backend/compose.yaml" up -d --wait
 if ($LASTEXITCODE -ne 0) { throw 'Database startup failed.' }
+docker compose --env-file $envFile -f "$repoRoot/src/backend/compose.yaml" exec -T rabbitmq sh /opt/inklink/configure-broker.sh
+if ($LASTEXITCODE -ne 0) { throw 'Broker user configuration failed.' }
