@@ -138,7 +138,7 @@ O encerramento do serviço deve preservar as mensagens e bloquear novos envios p
 
 **Critérios de aceite:** o encerramento exige confirmação de um participante autorizado. Depois de confirmado, o atendimento aparece como encerrado e o histórico continua consultável. O campo e a ação de envio ficam desabilitados, e o backend rejeita tentativas de envio incompatíveis com esse estado. O bloqueio permanece após recarregar a aplicação. Consultar o histórico não reabre o serviço.
 
-A definição de quem pode encerrar o atendimento e de eventuais confirmações adicionais será detalhada em revisão futura.
+A política inicial de P07, aprovada na [decisão 0013](decisions/0013-p07-lifecycle.md), permite encerramento por qualquer participante com confirmação explícita, sem aprovação da outra parte. Reservas com término futuro impedem o encerramento. Confirmação definitiva depende do congelamento de novas reservas e do bloqueio durável da conversa.
 
 ### RF15 — Iniciar novo atendimento após encerramento
 
@@ -146,7 +146,7 @@ Para voltar a conversar após um serviço encerrado, o cliente deve realizar um 
 
 **Critérios de aceite:** consultar o histórico, abrir o perfil ou enviar outro pedido de orçamento não habilita, por si só, novos envios no chat encerrado. Um novo agendamento confirmado permite iniciar a conversa do novo atendimento, preservando o histórico anterior e a identificação de cada contexto de serviço. A reserva aparece na agenda do artista e está sujeita à mesma validação de disponibilidade e conflitos das demais reservas.
 
-A organização visual em um histórico contínuo ou em conversas separadas por atendimento será detalhada posteriormente, mantendo a rastreabilidade dos serviços.
+Na política de P07, as conversas são separadas por atendimento. Após encerramento, novo pedido e proposta não habilitam o novo chat antes de um novo agendamento confirmado. Falhas posteriores preservam a reserva e deixam a habilitação explicitamente pendente para recuperação, conforme decisão 0013.
 
 ### RF16 — Apresentar o dashboard gerencial do artista
 

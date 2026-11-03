@@ -317,7 +317,7 @@ Diretriz de coordenação para a implementação:
 
 A repetição do comando não deve reabrir o chat. Caso o bloqueio tenha ocorrido e a conclusão do atendimento falhe, o processo deve ser reconciliado; não se desbloqueia automaticamente por ausência momentânea de resposta. Mensagens já aceitas antes da barreira de bloqueio permanecem no histórico, ainda que sua entrega visual ocorra depois.
 
-O mecanismo concreto de ordenação, confirmação e recuperação será especificado antes da implementação do fluxo, incluindo testes de corrida e falhas parciais. A garantia de segurança do encerramento tem prioridade sobre permitir envio durante indisponibilidade.
+O mecanismo concreto de ordenação, confirmação e recuperação foi especificado na decisão 0013 e implementado em P07, com testes de corrida e falhas parciais. A garantia de segurança do encerramento tem prioridade sobre permitir envio durante indisponibilidade.
 
 ### 8.4 Novo atendimento após encerramento
 
@@ -325,9 +325,21 @@ O histórico anterior é preservado. Um novo agendamento confirmado inicia a coo
 
 Conversas deve distinguir a autorização do novo atendimento da autorização antiga, mesmo que a interface apresente um histórico contínuo por par cliente/artista. Eventos e comandos atrasados de um atendimento não podem habilitar ou bloquear indevidamente outro.
 
-A forma visual de agrupar conversas continua aberta, conforme os requisitos. A correlação entre reserva, atendimento e mensagens é obrigatória em qualquer alternativa.
+A política inicial de P07 utiliza conversas separadas por atendimento, conforme a decisão 0013. A correlação entre reserva, atendimento e mensagens é obrigatória em qualquer alternativa.
 
-### 8.5 Dashboard e finanças
+### 8.5 Coordenação implementada em P07
+
+A [decisão 0013](decisions/0013-p07-lifecycle.md) concretiza o encerramento e o retorno. Engagements possui operações duráveis Close/Activate e estados Closing/Closed. Qualquer participante pode solicitar encerramento com confirmação explícita; sessões com término futuro impedem sua conclusão.
+
+Antes do bloqueio do chat, Scheduling congela novas reservas do atendimento sob o mesmo bloqueio de calendário usado na confirmação. Se houver sessão futura, o processo é rejeitado e Engagements restaura a situação anterior. Após congelamento, Messaging persiste a barreira definitiva e só então Engagements conclui Closed. Falhas após etapas remotas mantêm o processo recuperável; repetir não remove barreiras.
+
+Messaging pode criar uma conversa bloqueada antes de receber o evento inicial, impedindo que atraso de abertura reverta o encerramento. A flag Closed local distingue bloqueio definitivo de espera por reserva. Uma nova conversa aguardando reserva pode ser ativada; uma conversa definitivamente bloqueada não pode.
+
+Novo pedido criado após Closed/Closing para o mesmo par exige reserva para escrever. A Outbox inicial informa essa restrição e o recibo de reserva cria Activate atomicamente em Engagements. A ativação atua somente sobre o novo atendimento e nunca supera Closing/Closed. Falha de habilitação preserva a reserva e expõe pendência.
+
+Application coordena as portas e transições de Domain; Infrastructure fornece persistência, HTTP, worker e bloqueios. O worker aplica repetição progressiva e quarentena após dez tentativas, com consulta/retomada autorizada. Escopos técnicos distintos protegem congelamento e lifecycle de conversa; não são publicados no Gateway.
+
+### 8.6 Dashboard e finanças
 
 Receitas e custos são registrados em Gestão financeira. Sessões concluídas, reservas e quantidade de conversas podem compor projeções gerenciais ou ser consultadas em seus contextos de origem.
 
@@ -452,9 +464,9 @@ Continuam abertas, sem bloquear esta fundação:
 - Compartilhamento de código entre web, iOS e Android, estrutura React Native, ferramentas e processos de publicação por canal.
 - Operação de produção do Keycloak/BFF e políticas adicionais de conta. A base, o cadastro administrativo, funções e sessão inicial foram definidos na decisão 0007 e implementados em P02.
 - Evolução das versões fixadas nos arquivos de dependências e detalhes da restrição de intervalos de Agenda, conforme a base aprovada na decisão 0002.
-- Evolução operacional de RabbitMQ/Outbox definidos na decisão 0010 e coordenação distribuída de encerramento em P07. O Gateway inicial utiliza YARP, conforme decisão 0007.
+- Evolução operacional de RabbitMQ/Outbox definidos na decisão 0010 e coordenação distribuída de encerramento implementada em P07, conforme decisão 0013. O Gateway inicial utiliza YARP, conforme decisão 0007.
 - Contratos específicos de recursos e eventos. As convenções HTTP e de versionamento público já estão aprovadas na decisão 0005.
-- Protocolo concreto de encerramento e habilitação de conversa por novo atendimento.
+- Evolução do protocolo de encerramento e habilitação definido na decisão 0013, incluindo futuras políticas de cancelamento.
 - Tecnologia de atualização de mensagens e escala das conexões.
 - Evolução da pesquisa conforme volume e qualidade observados, a partir de PostgreSQL/pg_trgm definido na decisão 0008; provedor de armazenamento, upload e tratamento de arquivos de mídia.
 - Registro financeiro, composição do dashboard e políticas de atualização das projeções.
@@ -471,3 +483,11 @@ As referências apoiam o desenho e não impõem provedores ou produtos específi
 - [Autonomia de dados em microsserviços — Microsoft](https://learn.microsoft.com/en-us/dotnet/architecture/microservices/multi-container-microservice-net-applications/microservice-application-design).
 - [Padrões de arquitetura para microsserviços — Microsoft](https://learn.microsoft.com/en-us/azure/architecture/microservices/design/patterns).
 - [Padrão Saga — Microsoft](https://learn.microsoft.com/en-us/azure/architecture/patterns/saga).
+
+## Complemento da revisão P07
+
+A ativação durante Closing permanece pendente até a decisão final do encerramento, sem consumir o orçamento de falhas. Rejeição por sessão futura restaura Agreed e permite continuar a ativação; Closed mantém a barreira definitiva.
+
+A preparação de pedidos e as decisões de criação/retomada de operações ficam em Application, executadas sobre snapshots fornecidos sob bloqueio por Infrastructure. O recibo e a intenção de ativação permanecem atômicos. Os repositórios não selecionam transições de negócio.
+
+Operações de lifecycle persistem contexto W3C e correlação de origem. O worker retoma esse pai nas tentativas e propaga a cadeia pelas chamadas HTTP, com identificador de operação separado da correlação. Metadados ausentes em registros anteriores não impedem recuperação.
