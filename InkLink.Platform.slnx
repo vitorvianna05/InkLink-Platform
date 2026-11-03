@@ -65,4 +65,7 @@
     <Project Path="src/backend/services/Messaging/src/InkLink.Messaging.Domain/InkLink.Messaging.Domain.csproj" />
     <Project Path="src/backend/services/Messaging/src/InkLink.Messaging.Infrastructure/InkLink.Messaging.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/src/backend/services/Messaging/tests/">
+    <Project Path="src/backend/services/Messaging/tests/InkLink.Messaging.ArchitectureTests/InkLink.Messaging.ArchitectureTests.csproj" />
+  </Folder>
 </Solution>

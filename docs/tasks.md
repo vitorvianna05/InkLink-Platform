@@ -123,20 +123,22 @@ Cada linha abaixo é uma tarefa com ID estável, dependências diretas, entregá
 
 ### P05 — Conversas e primeira integração confiável
 
-**Referências:** RF11–RF14 e RF21; RNF04–RNF06. **Marco:** M3. **Situação:** em andamento; [evidência parcial](verification/p05.md).
+**Referências:** RF11–RF14 e RF21; RNF04–RNF06. **Marco:** M3. **Situação:** concluída; [evidências por tarefa](verification/p05.md).
 
 | ID / tarefa | Dependências | Entregável | Aceite e verificação |
 | --- | --- | --- | --- |
 | T05.01 — [x] Escolher mensageria e contrato de eventos | T04.06 | Decisão de broker e ferramentas, envelope com versão e contexto, correlação e política de repetição/ordenação. | Um exemplo válido, duplicado e incompatível tem tratamento definido; não se pressupõe entrega exatamente uma vez ou ordenação global. |
-| T05.02 — [ ] Implementar Outbox no produtor inicial | T05.01 | Evento e dados de atendimento na mesma transação e publicador recuperável. | Rollback não deixa evento de fato inexistente; falha de publicação mantém registro recuperável e repetição não perde o fato original. |
+| T05.02 — [x] Implementar Outbox no produtor inicial | T05.01 | Evento e dados de atendimento na mesma transação e publicador recuperável. | Rollback não deixa evento de fato inexistente; falha de publicação mantém registro recuperável e repetição não perde o fato original. |
 | T05.03 — [x] Criar Conversas com consumo idempotente | T05.01, T02.06 | Persistência privada de conversa/participantes e deduplicação coordenada à gravação local. | Falha antes da confirmação e repetição do evento não duplicam conversa nem registram consumo sem o efeito correspondente. |
-| T05.04 — [ ] Integrar criação e habilitação da conversa | T05.02, T05.03 | Processo que aplica T04.01 e vincula participantes, conversa e atendimento. | Repetição não cria contexto duplicado; falha temporária permite retomada; chamador técnico indevido não habilita escrita. |
-| T05.05 — [ ] Implementar listagem e leitura individual | T05.04 | APIs de lista com interlocutor/última mensagem e detalhe paginado autorizado. | Detalhe não mistura atendimentos; um terceiro não acessa o histórico alterando identificadores. Lista vazia é explícita. |
-| T05.06 — [ ] Implementar envio com autoria e atualização | T05.05 | Comando de mensagem, política de repetição e decisão de transporte para atualização do histórico. | Autor deriva da identidade autenticada; branco é rejeitado; os dois participantes recuperam o mesmo registro após interrupção sem duplicação indevida. |
-| T05.07 — [ ] Implementar bloqueio local da escrita | T05.06, T04.06 | Operação técnica idempotente de bloqueio por atendimento, atômica em relação à aceitação de mensagens. | Corrida entre mensagem e bloqueio tem ordem consistente; depois da confirmação de bloqueio não há nova gravação e repetir comando não reabre escrita. |
-| T05.08 — [ ] Verificar falhas, repetição e acesso | T05.07 | Suíte de broker indisponível, publicação/consumo repetidos, interrupção e tentativa por terceiros. | Histórico não se perde ou duplica nos cenários; falhas são diagnosticáveis e recuperáveis. O encerramento distribuído ainda depende de P07. |
+| T05.04 — [x] Integrar criação e habilitação da conversa | T05.02, T05.03 | Processo que aplica T04.01 e vincula participantes, conversa e atendimento. | Repetição não cria contexto duplicado; falha temporária permite retomada; chamador técnico indevido não habilita escrita. |
+| T05.05 — [x] Implementar listagem e leitura individual | T05.04 | APIs de lista com interlocutor/última mensagem e detalhe paginado autorizado. | Detalhe não mistura atendimentos; um terceiro não acessa o histórico alterando identificadores. Lista vazia é explícita. |
+| T05.06 — [x] Implementar envio com autoria e atualização | T05.05 | Comando de mensagem, política de repetição e decisão de transporte para atualização do histórico. | Autor deriva da identidade autenticada; branco é rejeitado; os dois participantes recuperam o mesmo registro após interrupção sem duplicação indevida. |
+| T05.07 — [x] Implementar bloqueio local da escrita | T05.06, T04.06 | Operação técnica idempotente de bloqueio por atendimento, atômica em relação à aceitação de mensagens. | Corrida entre mensagem e bloqueio tem ordem consistente; depois da confirmação de bloqueio não há nova gravação e repetir comando não reabre escrita. |
+| T05.08 — [x] Verificar falhas, repetição e acesso | T05.07 | Suíte de broker indisponível, publicação/consumo repetidos, interrupção e tentativa por terceiros. | Histórico não se perde ou duplica nos cenários; falhas são diagnosticáveis e recuperáveis. O encerramento distribuído ainda depende de P07. |
 
-**Acompanhamento:** T05.02, T05.04 e T05.08 dependem da validação com RabbitMQ real; T05.05 ainda precisa definir e disponibilizar nomes do interlocutor e situação de negócio; T05.06 e T05.07 têm testes locais, mas aguardam suas dependências. Veja a [verificação parcial](verification/p05.md).
+**Evidência:** suíte completa com 171 aprovados (22 de Messaging), sem falhas/ignorados, build Release sem avisos/erros, RabbitMQ/Keycloak/PostgreSQL reais e Compose local verificados. Nomes e situação oficial integrados; bloqueio é barreira local. M3 ainda depende de P06 e o encerramento distribuído permanece em P07.
+
+**Revisão de conformidade P05 (03/11/2026):** abertura em Application; orçamento durável de dez tentativas no consumidor e diagnóstico/reprocessamento; rastreamento W3C e métricas de eventos. Contratos e operação atualizados na decisão 0010 e na verificação P05. T09.03 continua responsável pela verificação operacional mais ampla.
 
 **Conclusão de P05:** conversas autorizadas, autoria preservada e integração recuperável com bloqueio local verificado.
 
@@ -263,9 +265,9 @@ Cada linha abaixo é uma tarefa com ID estável, dependências diretas, entregá
 
 ## 4. Próximo lote e acompanhamento
 
-P00 foi concluída no nível de decisões e revisão. A [revisão T00.07](decisions/0006-p00-review.md) consolida os registros de T00.01 a T00.06 e o escopo do primeiro incremento. P01 foi implementada e verificada conforme [evidências](verification/p01.md), incluindo Docker e PostgreSQL real. P02 foi concluída conforme [evidências](verification/p02.md). P03 foi concluída conforme [evidências](verification/p03.md). P04 foi concluída conforme [evidências](verification/p04.md), com o fluxo aprovado pelo responsável. P05 está em andamento; a [verificação parcial](verification/p05.md) identifica as entregas e pendências. As tarefas de P06 em diante permanecem pendentes.
+P00 foi concluída no nível de decisões e revisão. A [revisão T00.07](decisions/0006-p00-review.md) consolida os registros de T00.01 a T00.06 e o escopo do primeiro incremento. P01 foi implementada e verificada conforme [evidências](verification/p01.md), incluindo Docker e PostgreSQL real. P02 foi concluída conforme [evidências](verification/p02.md). P03 foi concluída conforme [evidências](verification/p03.md). P04 foi concluída conforme [evidências](verification/p04.md), com o fluxo aprovado pelo responsável. P05 foi concluída conforme [evidências](verification/p05.md). O próximo passo é T06.01. As tarefas de P06 em diante permanecem pendentes.
 
-Broker e stack móvel têm tarefas próprias quando se tornam necessários. A pesquisa inicial foi definida em P03, conforme decisão 0008. Essas escolhas não eram pré-requisitos do primeiro incremento de Identity.
+O broker e a primeira integração confiável foram definidos/verificados em P05; stack móvel mantém tarefas próprias. A pesquisa inicial foi definida em P03, conforme decisão 0008. Essas escolhas não eram pré-requisitos do primeiro incremento de Identity.
 
 Ao concluir uma tarefa, manter referência à evidência e atualizar o marco do plano apenas quando seus critérios estiverem demonstrados. Bloqueios devem identificar a dependência concreta e a ação necessária, sem marcar tarefas incompletas como concluídas.
 

@@ -4,7 +4,7 @@
 
 `Engagements` é a origem do pedido, participantes, propostas, aceite e ciclo de atendimento. `Messaging` controla conversa, histórico e escrita. `Scheduling` controla disponibilidade e reservas. As referências são UUIDs internos; `artistId` público do Catalog é diferente de `artistAccountId`. Não há FK, joins ou acesso cruzado a bancos.
 
-A autenticação do usuário em Engagements usa access token JWT e validação delegada de identidade em Identity. Operações futuras entre serviços precisam de Client Credentials com cliente/escopo próprios, sem reutilizar credenciais de navegador. O escopo `catalog.engagement-context.read` autoriza somente Engagements a consultar o snapshot técnico de Catalog. `identity.profile.read` não concede essa permissão. Messaging/Scheduling ainda não são hosts e seus clientes/escopos serão registrados na implantação correspondente; não há rotas provisórias sem autorização.
+A autenticação do usuário em Engagements usa access token JWT e validação delegada de identidade em Identity. Operações futuras entre serviços precisam de Client Credentials com cliente/escopo próprios, sem reutilizar credenciais de navegador. O escopo `catalog.engagement-context.read` autoriza somente Engagements a consultar o snapshot técnico de Catalog. `identity.profile.read` não concede essa permissão. Messaging tornou-se host em P05; inklink-messaging possui somente identity.profile.read para nomes e o bloqueio aceita inklink-engagements com messaging.conversation.block. Scheduling será configurado em P06. Não há rotas provisórias sem autorização.
 
 ## Consulta de contexto em Catalog
 
@@ -45,9 +45,9 @@ Fato proposto: `engagement.negotiation-opened.v1`. Dados mínimos:
 }
 ```
 
-O pedido persistido autoriza a negociação antes de qualquer proposta/aceite. `writingAllowed` descreve a intenção inicial, não comprova que Messaging já a aplicou. A interface futura deve distinguir conversa pendente de conversa disponível. P04 não publica esse fato, não chama Messaging e não fabrica ID de conversa.
+O pedido persistido autoriza a negociação antes de qualquer proposta/aceite. `writingAllowed` descreve a intenção inicial, não comprova que Messaging já a aplicou. A interface futura deve distinguir conversa pendente de conversa disponível. A entrega P04 não publicava esse fato nem fabricava ID de conversa. P05 acrescenta Outbox transacional e consumo por Messaging, que gera seu UUID na transação local bem-sucedida. Confirmação de publicação não confirma consumo.
 
-P05 definirá broker e envelope com messageId, correlationId/causationId, produtor e versão. Publicação exige Outbox na mesma transação local do fato; ack não equivale a processamento remoto. Consumo deve validar participantes distintos e IDs não vazios, deduplicar evento e criação por atendimento na mesma transação local, impedir mudanças incompatíveis de participantes e não reabrir um atendimento encerrado por evento atrasado. Entrega duplicada tem o mesmo efeito; erro de versão/contrato é diagnosticável, sem repetição infinita. Estado inicial dos atendimentos criados em P04 deverá ser reconciliado a partir da fonte persistida, sem perder os anteriores à introdução da Outbox. Revisão antiga não altera um estado mais recente. Deduplicação não usa traceId como chave.
+P05 definiu RabbitMQ e envelope v1 com messageId, correlationId/causationId, produtor e versão, conforme decisão 0010. Publicação exige Outbox na mesma transação local do fato; ack não equivale a processamento remoto. Consumo deve validar participantes distintos e IDs não vazios, deduplicar evento e criação por atendimento na mesma transação local, impedir mudanças incompatíveis de participantes e não reabrir um atendimento encerrado por evento atrasado. Entrega duplicada tem o mesmo efeito; erro de versão/contrato é diagnosticável, sem repetição infinita. Estado inicial dos atendimentos criados em P04 deverá ser reconciliado a partir da fonte persistida, sem perder os anteriores à introdução da Outbox. Revisão antiga não altera um estado mais recente. Deduplicação não usa traceId como chave.
 
 Encerramento e novo atendimento exigem o protocolo durável de P07: nenhuma confirmação definitiva antes do bloqueio efetivo da escrita em Messaging. Aceite da proposta não bloqueia nem reabre chat.
 
@@ -58,3 +58,9 @@ Engagements já permite às partes consultar `id`, `clientId`, `artistAccountId`
 A confirmação de reserva deverá receber `operationId`, `engagementId`, `clientId`, `artistAccountId`, início e término com fuso explícito. Agenda valida autorização, vínculo, disponibilidade e conflito no seu banco, usando chave idempotente; payload diferente com a mesma chave retorna conflito. O protocolo de consulta do resultado permite resolver timeout sem duplicar a reserva. A confirmação deverá carregar `reservationId`, participantes, atendimento, intervalo e revisão, com Outbox. Repetição de evento não cria outro atendimento nem habilita contexto antigo.
 
 P04 não determina que aceite seja requisito suficiente ou obrigatório para reservar: disponibilidade, regras temporais e transições serão decididas em T06.01/T07.04. Também não cria reserva, recebimento ou compensação. Estados pendentes e indisponibilidade nunca são apresentados como confirmação. Nenhum contrato autoriza compartilhar entidades internas entre serviços.
+
+
+Em P05, a apresentação consulta GET /api/v2/engagements/{id} com token delegado do participante e valida os IDs antes de exibir estado/nome do artista. Não se usa token técnico para uma rota de usuário nem se compartilham entidades internas. O cliente técnico de Messaging consulta separadamente apenas o nome do cliente em Identity.
+
+
+Na revisão P05, o envelope v1 recebe traceParent W3C opcional e compatível com eventos anteriores. O header AMQP traceparent continua a cadeia de publicação/consumo; inklink-processing-attempt é metadado de transporte, não integra o fingerprint. Até dez falhas de processamento usam republicação persistente confirmada antes do ack original, seguida de diagnóstico ao esgotar orçamento. A abertura e compatibilidade ficam no caso de uso OpenConversation; Inbox/conversa continuam atomicamente persistidas.

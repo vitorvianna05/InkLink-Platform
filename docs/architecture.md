@@ -108,7 +108,7 @@ Responsável pelo ciclo de negócio da relação de serviço entre cliente e art
 
 O aceite é específico da proposta e do atendimento. Não há estado global compartilhado entre negociações.
 
-P04 implementa Engagements com persistência privada, snapshots obtidos pelo contrato técnico de Catalog, pedidos idempotentes, histórico de versões e aceite da proposta vigente. Casos de uso em Application coordenam as transições de Domain; Infrastructure oferece transação e bloqueio local da linha do atendimento para serializar apresentação e aceite. A [decisão 0009](decisions/0009-p04-engagements.md) e os [contratos de integração](contracts/p04-integrations.md) delimitam a negociação inicial. Não há publicação de eventos até P05, nem reserva ou recebimento automático.
+P04 implementa Engagements com persistência privada, snapshots obtidos pelo contrato técnico de Catalog, pedidos idempotentes, histórico de versões e aceite da proposta vigente. Casos de uso em Application coordenam as transições de Domain; Infrastructure oferece transação e bloqueio local da linha do atendimento para serializar apresentação e aceite. A [decisão 0009](decisions/0009-p04-engagements.md) e os [contratos de integração](contracts/p04-integrations.md) delimitam a negociação inicial. A primeira publicação confiável foi acrescentada em P05, com Outbox transacional; não há reserva ou recebimento automático.
 
 ### 4.4 Agenda
 
@@ -130,7 +130,7 @@ Responsável pelo histórico, pelos participantes autorizados e pela aceitação
 - Serializa as operações necessárias para impedir que uma mensagem seja aceita depois da confirmação do bloqueio.
 - Preserva o histórico quando a escrita é bloqueada.
 
-Atendimentos é a origem do ciclo de vida do serviço; Conversas é responsável pelo bloqueio efetivo da gravação de mensagens. Uma cópia assíncrona do estado não é suficiente, isoladamente, para garantir o encerramento imediato descrito nos requisitos.
+Atendimentos é a origem do ciclo de vida do serviço; Conversas é responsável pelo bloqueio efetivo da gravação de mensagens. Uma cópia assíncrona do estado não é suficiente, isoladamente, para garantir o encerramento imediato descrito nos requisitos. P05 implementa Messaging com banco próprio, Inbox idempotente, histórico por sequência e envio/bloqueio coordenados em Application sob transação/bloqueio local de Infrastructure. A abertura é coordenada por OpenConversation em Application, com Inbox e persistência atomicamente oferecidas por Infrastructure. O consumidor aplica orçamento durável de dez tentativas e encaminha falhas esgotadas para diagnóstico. A abertura vem da Outbox de Engagements via RabbitMQ; o publicador fica em Infrastructure e os hosts compõem por extensões. A apresentação consulta estado/snapshot de Atendimentos e nomes de Identity por contratos autorizados, sem referências às implementações ou bancos alheios. A [decisão 0010](decisions/0010-p05-messaging.md) delimita a barreira local e a evolução em P07.
 
 ### 4.6 Gestão financeira
 
@@ -392,6 +392,8 @@ Os serviços devem produzir logs estruturados, métricas e rastreamento distribu
 
 A base implementada usa InkLink.Observability em Identity, Gateway e BFF para logs de requisição com escopo de serviço e traceId, sem query strings ou credenciais. O mesmo traceId aparece no cabeçalho e nos problemas HTTP.
 
+P05 acrescenta ActivitySources/Meters próprios para publicação e consumo, propagação W3C no broker, contadores de resultados e histogramas de duração/idade da Outbox. O envelope aceita contexto opcional para manter compatibilidade com fatos anteriores. Instrumentação é verificada por listeners; coletor, exportação e alertas de produção serão configurados na entrega operacional.
+
 A base deve permitir observar falhas de API, latência, conflitos de reserva, atraso de projeções, publicações pendentes e processos distribuídos incompletos. Logs não devem expor credenciais ou conteúdo integral de conversas por padrão.
 
 Health checks e sinais de prontidão devem refletir sua finalidade, evitando transformar indisponibilidade de um contexto em reinício indiscriminado de todos os serviços. Ferramentas, metas e limites serão definidos com o ambiente operacional.
@@ -444,7 +446,7 @@ Continuam abertas, sem bloquear esta fundação:
 - Compartilhamento de código entre web, iOS e Android, estrutura React Native, ferramentas e processos de publicação por canal.
 - Operação de produção do Keycloak/BFF e políticas adicionais de conta. A base, o cadastro administrativo, funções e sessão inicial foram definidos na decisão 0007 e implementados em P02.
 - Evolução das versões fixadas nos arquivos de dependências e detalhes da restrição de intervalos de Agenda, conforme a base aprovada na decisão 0002.
-- Broker, ferramentas de Outbox e coordenação de processos. O Gateway inicial utiliza YARP, conforme decisão 0007.
+- Evolução operacional de RabbitMQ/Outbox definidos na decisão 0010 e coordenação distribuída de encerramento em P07. O Gateway inicial utiliza YARP, conforme decisão 0007.
 - Contratos específicos de recursos e eventos. As convenções HTTP e de versionamento público já estão aprovadas na decisão 0005.
 - Protocolo concreto de encerramento e habilitação de conversa por novo atendimento.
 - Tecnologia de atualização de mensagens e escala das conexões.

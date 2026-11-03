@@ -1,4 +1,4 @@
-name: Backend foundation, identity, catalog and engagements
+name: Backend foundation, identity, catalog, engagements and messaging
 on:
   push:
   pull_request:
@@ -21,7 +21,7 @@ jobs:
         run: dotnet format InkLink.Platform.slnx --no-restore --verify-no-changes
       - name: Build
         run: dotnet build InkLink.Platform.slnx --no-restore --configuration Release --warnaserror
-      - name: Test with real PostgreSQL and Keycloak
+      - name: Test with real PostgreSQL, Keycloak and RabbitMQ
         run: dotnet test InkLink.Platform.slnx --no-build --configuration Release --logger "trx;LogFilePrefix=identity" --results-directory artifacts/test-results
       - uses: actions/upload-artifact@v4
         if: always()

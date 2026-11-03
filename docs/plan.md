@@ -189,26 +189,30 @@ Não é necessário esperar a etapa de validação integrada para criar testes, 
 
 ### P05 — Implementar Conversas e a primeira integração confiável
 
-**Prioridade:** backend. **Dependências:** P02 e P04. **Situação:** em andamento; [verificação parcial](verification/p05.md).
+**Prioridade:** backend. **Dependências:** P02 e P04. **Situação:** concluída; [evidências P05](verification/p05.md).
 
 **Objetivo:** permitir histórico e envio autorizado nas duas perspectivas, já com integração confiável ao contexto de atendimento.
 
-- [ ] Selecionar broker e ferramentas de integração necessários ao primeiro fluxo assíncrono e registrar a decisão.
-- [ ] Definir o envelope inicial de eventos, correlação, versões e política de repetição.
-- [ ] Implementar Outbox no produtor da primeira integração, com gravação na mesma transação dos dados de negócio.
-- [ ] Implementar consumo idempotente, com deduplicação coordenada à alteração local.
-- [ ] Criar Conversas com persistência própria e identificação de participantes e atendimento.
-- [ ] Coordenar criação e habilitação inicial de conversa a partir do fluxo definido em P04.
-- [ ] Implementar listagem, leitura individual e envio com autoria e data/hora preservadas.
-- [ ] Aplicar autorização por conversa e validação de conteúdo em cada operação.
-- [ ] Implementar o bloqueio local de escrita e o contrato idempotente necessário ao encerramento.
-- [ ] Definir e testar a ordem consistente entre gravação de mensagem e bloqueio na persistência de Conversas.
-- [ ] Definir a atualização de mensagens pelos clientes e o contrato de histórico; transporte em tempo real será introduzido se fizer parte da entrega aprovada.
-- [ ] Testar perda temporária de comunicação, repetição de eventos e proteção contra envio por terceiros.
+- [x] Selecionar broker e ferramentas de integração necessários ao primeiro fluxo assíncrono e registrar a decisão.
+- [x] Definir o envelope inicial de eventos, correlação, versões e política de repetição.
+- [x] Implementar Outbox no produtor da primeira integração, com gravação na mesma transação dos dados de negócio.
+- [x] Implementar consumo idempotente, com deduplicação coordenada à alteração local.
+- [x] Criar Conversas com persistência própria e identificação de participantes e atendimento.
+- [x] Coordenar criação e habilitação inicial de conversa a partir do fluxo definido em P04.
+- [x] Implementar listagem, leitura individual e envio com autoria e data/hora preservadas.
+- [x] Aplicar autorização por conversa e validação de conteúdo em cada operação.
+- [x] Implementar o bloqueio local de escrita e o contrato idempotente necessário ao encerramento.
+- [x] Definir e testar a ordem consistente entre gravação de mensagem e bloqueio na persistência de Conversas.
+- [x] Definir a atualização de mensagens pelos clientes e o contrato de histórico; transporte em tempo real será introduzido se fizer parte da entrega aprovada.
+- [x] Testar perda temporária de comunicação, repetição de eventos e proteção contra envio por terceiros.
 
 **Critério de conclusão:** dois participantes de teste trocam mensagens por APIs, consultam o mesmo histórico e não acessam outras conversas. A primeira integração possui entrega recuperável e efeitos idempotentes. O bloqueio local é testado; o encerramento distribuído só estará concluído em P07.
 
 **Rastreabilidade:** RF11–RF14 e RF21; RNF04–RNF06.
+
+**Evidência:** 171 testes aprovados, sem falhas/ignorados; build Release sem avisos/erros; recuperação e permissões com RabbitMQ, Keycloak e PostgreSQL reais, além de Compose e hosts locais. [Decisão 0010](decisions/0010-p05-messaging.md) e [execução](development/messaging.md). M3 depende de P06; encerramento distribuído em P07.
+
+**Revisão de conformidade P05 (03/11/2026):** abertura em Application; orçamento durável de dez tentativas no consumidor e diagnóstico/reprocessamento; rastreamento W3C e métricas de eventos. Contratos e operação atualizados na decisão 0010 e na verificação P05. T09.03 continua responsável pela verificação operacional mais ampla.
 
 ### P06 — Implementar Agenda com proteção de concorrência
 
@@ -399,6 +403,6 @@ A conclusão de uma etapa não significa a conclusão automática das etapas dep
 
 ## 8. Próxima ação
 
-Iniciar T05.01: escolher mensageria e contrato de eventos para a primeira integração confiável. P00–P04 estão concluídas em seus respectivos escopos; a [verificação P04](verification/p04.md) consolida solicitações, propostas e aceite. M1 e M2 estão concluídos. As verificações locais e suas limitações de ambiente estão registradas nas evidências.
+Iniciar T06.01: especificar intervalos, disponibilidade e regras iniciais de Agenda. P00–P05 estão concluídas em seus recortes; a [verificação P05](verification/p05.md) consolida conversas e integração confiável. M1/M2 concluídos; M3 depende também de P06. O encerramento distribuído continua em P07.
 
 GetMyProfile possui transporte autenticado, atualização controlada de nome, vínculo externo/interno e funções locais. Keycloak, Gateway e BFF estão integrados e verificados em P02. Os próximos fluxos continuam priorizando backend, com autorização própria em cada serviço.
