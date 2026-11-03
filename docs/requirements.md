@@ -152,7 +152,7 @@ Na política de P07, as conversas são separadas por atendimento. Após encerram
 
 O artista deve consultar um resumo financeiro e operacional por período.
 
-**Critérios de aceite:** o dashboard apresenta receitas registradas, custos, lucro e margem estimados, clientes atendidos, sessões, ticket médio, quantidade e valor de reservas e conversas ativas. O período está explícito e sua alteração recalcula os indicadores a partir dos dados do artista. Um período sem movimentação apresenta valores zerados ou estado vazio apropriado. Os resultados não incluem dados de outros artistas.
+**Critérios de aceite:** o dashboard apresenta receitas registradas, custos, lucro e margem estimados, clientes atendidos, sessões, ticket médio, quantidade e valor de reservas e conversas ativas. O período está explícito e sua alteração recalcula os indicadores a partir dos dados do artista. Conversas ativas representam a quantidade atual, explicitamente independente do período financeiro, conforme decisão 0014. Um período sem movimentação apresenta valores zerados ou estado vazio apropriado. Os resultados não incluem dados de outros artistas.
 
 ### RF17 — Calcular indicadores de rentabilidade
 
@@ -166,11 +166,11 @@ Os indicadores devem utilizar definições explícitas e separar resultados real
 | Margem estimada | Lucro estimado dividido pela receita recebida, multiplicado por 100. Sem receita, apresentar zero. |
 | Clientes atendidos | Quantidade de clientes distintos com sessões concluídas no período. |
 | Ticket médio por sessão | Soma dos valores das sessões concluídas no período dividida pela quantidade dessas sessões. Sem sessões, apresentar zero. |
-| Valor agendado | Soma dos valores previstos para serviços reservados no período, separada dos recebimentos efetivos. |
+| Valor agendado | Soma das referências das reservas no período ainda sem conclusão registrada, separada dos recebimentos efetivos e sem rateio automático entre sessões. |
 
 **Critérios de aceite:** uma base controlada verifica os cálculos de cada indicador. Recebimentos de R$ 4.000,00 e custos de R$ 940,00, por exemplo, produzem lucro estimado de R$ 3.060,00 e margem de 76,5%. Reservar ou concluir uma sessão não registra automaticamente seu recebimento. Sessões e recebimentos são considerados segundo suas respectivas datas e regras. Períodos vazios não geram divisões por zero. A interface informa a natureza estimada do lucro e os custos abrangidos.
 
-Os indicadores apoiam a gestão do artista. O detalhamento do registro de receitas e despesas será especificado em etapa própria, sem integrar pagamentos diretamente ao site.
+Os indicadores apoiam a gestão do artista. A política inicial de P08 está na [decisão 0014](decisions/0014-p08-finance.md): lançamentos manuais pelo artista, receitas vinculadas ao atendimento, custos gerais ou vinculados, correção por estorno integral e conclusão explícita de sessões por reserva. Não há pagamentos pela plataforma.
 
 ### RF18 — Consultar calendário e horários reservados
 
