@@ -23,7 +23,7 @@ public interface IConversationStore
     Task<Page<MessageView>> HistoryAsync(Guid id, Guid participant, int limit, long? after, CancellationToken cancellationToken);
     Task<MessageView?> ReadMessageAsync(Guid id, Guid messageId, Guid participant, CancellationToken cancellationToken);
     Task<T> ChangeAsync<T>(Guid id, Guid participant, Guid key, Func<Conversation, Message?, MessageChange<T>> change, CancellationToken cancellationToken);
-    Task BlockAsync(Guid engagement, CancellationToken cancellationToken);
+    Task ChangeWritingAsync(Guid engagement, Action<Conversation> change, CancellationToken cancellationToken);
 }
 
 

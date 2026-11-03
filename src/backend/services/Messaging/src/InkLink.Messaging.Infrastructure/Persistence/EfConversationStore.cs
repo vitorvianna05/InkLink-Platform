@@ -79,11 +79,11 @@ public sealed class EfConversationStore(MessagingDbContext database) : IConversa
         return message is null ? null : View(message);
     }
 
-    public async Task BlockAsync(Guid engagement, CancellationToken ct)
+    public async Task ChangeWritingAsync(Guid engagement, Action<Conversation> change, CancellationToken ct)
     {
         await using var transaction = await database.Database.BeginTransactionAsync(ct);
         var conversation = await database.Conversations.FromSqlInterpolated($"SELECT * FROM messaging.conversations WHERE \"EngagementId\" = {engagement} FOR UPDATE").SingleOrDefaultAsync(ct) ?? throw ManageConversations.NotFound();
-        conversation.Block(); await database.SaveChangesAsync(ct); await transaction.CommitAsync(ct);
+        change(conversation); await database.SaveChangesAsync(ct); await transaction.CommitAsync(ct);
     }
     private static ConversationRecord View(Conversation c, Message? last) => new(c.Id, c.EngagementId, c.ClientId, c.ArtistAccountId, c.WritingBlocked, c.CreatedAt, last is null ? null : View(last));
     private static MessageView View(Message m) => new(m.Id, m.ConversationId, m.AuthorId, m.Body, m.CreatedAt, m.Sequence);

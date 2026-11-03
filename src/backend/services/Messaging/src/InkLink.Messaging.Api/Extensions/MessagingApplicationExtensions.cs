@@ -9,6 +9,7 @@ internal static class MessagingApplicationExtensions
     {
         services.AddScoped<ResolveMessagingAccount>();
         services.AddScoped<ManageConversations>();
+        services.AddScoped<BlockConversation>();
         services.AddScoped<OpenConversation>();
         return services;
     }

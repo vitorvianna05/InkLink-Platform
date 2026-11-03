@@ -210,12 +210,12 @@ public sealed class ConversationApiTests(MessagingFixture fixture)
     {
         var envelope = await EventAsync(Guid.NewGuid()); var id = await OpenAsync(envelope); using var alice = Client("alice");
         await using var database = fixture.CreateOwnerContext();
-        var block = new EfConversationStore(database).BlockAsync(envelope.Data.EngagementId, default);
+        var block = new BlockConversation(new EfConversationStore(database)).ExecuteAsync(envelope.Data.EngagementId, default);
         var send = SendAsync(alice, id, Guid.NewGuid(), "Durante o bloqueio");
         await Task.WhenAll(block, send);
         Assert.Contains((await send).StatusCode, new[] { HttpStatusCode.Created, HttpStatusCode.Conflict });
         Assert.Equal(HttpStatusCode.Conflict, (await SendAsync(alice, id, Guid.NewGuid(), "Depois")).StatusCode);
-        await new EfConversationStore(database).BlockAsync(envelope.Data.EngagementId, default);
+        await new BlockConversation(new EfConversationStore(database)).ExecuteAsync(envelope.Data.EngagementId, default);
         await new OpenConversation(new EfConversationStore(database)).ExecuteAsync(envelope with { MessageId = Guid.NewGuid() }, default);
         Assert.True((await database.Conversations.SingleAsync(c => c.Id == id)).WritingBlocked);
         Assert.Equal(HttpStatusCode.Conflict, (await SendAsync(alice, id, Guid.NewGuid(), "Ainda bloqueada")).StatusCode);

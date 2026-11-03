@@ -31,9 +31,9 @@ internal static class ConversationEndpoints
         }).RequireMessagingAccount().Produces<MessageView>(201).Produces<MessageView>().WithErrors();
         group.MapGet("/{id:guid}/messages/{messageId:guid}", (Guid id, Guid messageId, ManageConversations manage, CancellationToken ct) => manage.ReadMessageAsync(id, messageId, ct))
             .RequireMessagingAccount().Produces<MessageView>().WithErrors();
-        endpoints.MapPut("/api/v1/internal/engagements/{engagementId:guid}/writing-block", async (Guid engagementId, IConversationStore store, CancellationToken ct) =>
+        endpoints.MapPut("/api/v1/internal/engagements/{engagementId:guid}/writing-block", async (Guid engagementId, BlockConversation command, CancellationToken ct) =>
         {
-            await store.BlockAsync(engagementId, ct); return Results.NoContent();
+            await command.ExecuteAsync(engagementId, ct); return Results.NoContent();
         }).RequireAuthorization(Technical).Produces(204).ProducesProblem(401).ProducesProblem(403).ProducesProblem(404).ProducesProblem(500);
         return endpoints;
     }
