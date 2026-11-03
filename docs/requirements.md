@@ -184,7 +184,7 @@ As reservas devem estar associadas a cliente, artista, atendimento, data e inter
 
 **Critérios de aceite:** os dados obrigatórios são validados e o término deve ser posterior ao início. Uma reserva é rejeitada quando está fora da disponibilidade do artista ou sobrepõe outra reserva válida dele na mesma data. Intervalos adjacentes são permitidos. A validação considera o intervalo completo e ocorre no backend. Uma reserva confirmada aparece de forma consistente para o cliente e na agenda do artista. Solicitações simultâneas para um mesmo horário não podem resultar em reservas conflitantes.
 
-A especificação de disponibilidade, dias de atendimento, duração, antecedência e fuso horário será detalhada posteriormente. O intervalo fixo utilizado na demonstração não é uma restrição definitiva da aplicação.
+Na política inicial de P06, aprovada na [decisão 0011](decisions/0011-p06-scheduling.md), o artista cadastra intervalos por data em fuso IANA (padrão America/Sao_Paulo) e confirma reservas de seus atendimentos com proposta aceita. Há precisão de minutos, início futuro e início/fim na mesma data local, sem duração comercial mínima ou antecedência adicional. Um atendimento pode ter várias sessões. Cancelamento, reagendamento e passagem por meia-noite ficam para incremento posterior. O intervalo fixo da demonstração não é restrição do produto.
 
 ### RF20 — Consultar clientes e acessar o portfólio do artista
 
