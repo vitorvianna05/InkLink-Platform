@@ -1,4 +1,4 @@
-name: Backend foundation, identity and catalog
+name: Backend foundation, identity, catalog and engagements
 on:
   push:
   pull_request:

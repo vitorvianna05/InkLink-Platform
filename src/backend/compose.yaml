@@ -32,6 +32,22 @@ services:
       interval: 2s
       timeout: 3s
       retries: 30
+  engagements-db:
+    image: postgres:17.7-alpine
+    environment:
+      POSTGRES_PASSWORD: ${ENGAGEMENTS_POSTGRES_PASSWORD:?Run Initialize-Local.ps1}
+      ENGAGEMENTS_OWNER_PASSWORD: ${ENGAGEMENTS_OWNER_PASSWORD:?Run Initialize-Local.ps1}
+      ENGAGEMENTS_APP_PASSWORD: ${ENGAGEMENTS_APP_PASSWORD:?Run Initialize-Local.ps1}
+    ports:
+      - "127.0.0.1:54332:5432"
+    volumes:
+      - engagements-data:/var/lib/postgresql/data
+      - ./scripts/db/init-engagements.sh:/docker-entrypoint-initdb.d/10-engagements.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d inklink_engagements"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
   bff-db:
     image: postgres:17.7-alpine
     environment:
@@ -86,5 +102,6 @@ services:
 volumes:
   identity-data:
   catalog-data:
+  engagements-data:
   bff-data:
   keycloak-data:

@@ -7,6 +7,7 @@ builder.Logging.AddCatalogLogging();
 builder.Services.AddCatalogInfrastructure(builder.Configuration);
 builder.Services.AddCatalogUseCases();
 builder.Services.AddCatalogAuthentication(builder.Configuration, builder.Environment);
+builder.Services.AddEngagementContextAuthorization();
 builder.Services.AddIdentityIntegration(builder.Configuration, builder.Environment);
 builder.Services.AddCatalogHttpContracts();
 builder.Services.AddCatalogDocumentation();
@@ -20,6 +21,7 @@ app.MapCatalogDocumentation();
 app.MapPublicCatalog();
 app.MapCatalogPublishing();
 app.MapCatalogFavorites();
+app.MapEngagementContext();
 app.Run();
 
 public partial class CatalogProgram;

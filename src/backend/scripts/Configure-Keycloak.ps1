@@ -30,11 +30,21 @@ $existingScopes = Invoke-RestMethod "$baseUri/admin/realms/inklink/client-scopes
 foreach ($client in $realm.clients) {
     $clients = Invoke-RestMethod "$baseUri/admin/realms/inklink/clients?clientId=$($client.clientId)" -Headers $headers
     $existing = $clients | Where-Object clientId -eq $client.clientId | Select-Object -First 1
-    if (-not $existing) { throw 'Expected local client is missing; initialize the realm first.' }
+    if (-not $existing) {
+        $null = Invoke-RestMethod "$baseUri/admin/realms/inklink/clients" -Headers $headers -Method Post -ContentType 'application/json' -Body ($client | ConvertTo-Json -Depth 20)
+        $clients = Invoke-RestMethod "$baseUri/admin/realms/inklink/clients?clientId=$($client.clientId)" -Headers $headers
+        $existing = $clients | Where-Object clientId -eq $client.clientId | Select-Object -First 1
+        if (-not $existing) { throw 'Unable to create the local client.' }
+    }
     $null = Invoke-RestMethod "$baseUri/admin/realms/inklink/clients/$($existing.id)" -Headers $headers -Method Put -ContentType 'application/json' -Body ($client | ConvertTo-Json -Depth 20)
     foreach ($name in $client.defaultClientScopes) {
         $scope = $existingScopes | Where-Object name -eq $name | Select-Object -First 1
         $null = Invoke-RestMethod "$baseUri/admin/realms/inklink/clients/$($existing.id)/default-client-scopes/$($scope.id)" -Headers $headers -Method Put
+    }
+    foreach ($name in $client.optionalClientScopes) {
+        $scope = $existingScopes | Where-Object name -eq $name | Select-Object -First 1
+        if (-not $scope) { throw 'Expected optional scope is missing.' }
+        $null = Invoke-RestMethod "$baseUri/admin/realms/inklink/clients/$($existing.id)/optional-client-scopes/$($scope.id)" -Headers $headers -Method Put
     }
 }
 Write-Host 'Local client and scope configuration synchronized. Existing users were preserved.'

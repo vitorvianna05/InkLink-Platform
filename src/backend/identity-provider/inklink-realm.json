@@ -63,6 +63,13 @@
       "attributes": {
         "include.in.token.scope": "true"
       }
+    },
+    {
+      "name": "catalog.engagement-context.read",
+      "attributes": {
+        "include.in.token.scope": "true"
+      },
+      "protocol": "openid-connect"
     }
   ],
   "clients": [
@@ -206,6 +213,46 @@
       "serviceAccountsEnabled": true,
       "optionalClientScopes": [
         "identity.profile.read"
+      ],
+      "protocolMappers": [
+        {
+          "name": "inklink audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.custom.audience": "inklink-api",
+            "access.token.claim": "true",
+            "id.token.claim": "false"
+          }
+        },
+        {
+          "name": "inklink actor",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-hardcoded-claim-mapper",
+          "config": {
+            "claim.name": "inklink_actor",
+            "claim.value": "service",
+            "jsonType.label": "String",
+            "access.token.claim": "true",
+            "id.token.claim": "false"
+          }
+        }
+      ],
+      "defaultClientScopes": [
+        "basic",
+        "profile"
+      ]
+    },
+    {
+      "clientId": "inklink-engagements",
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "${INKLINK_ENGAGEMENTS_SECRET}",
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "optionalClientScopes": [
+        "catalog.engagement-context.read"
       ],
       "protocolMappers": [
         {

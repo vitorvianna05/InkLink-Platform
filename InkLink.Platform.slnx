@@ -1,4 +1,10 @@
 <Solution>
+  <Folder Name="/Itens de Solução/">
+    <File Path="docs/architecture.md" />
+    <File Path="docs/plan.md" />
+    <File Path="docs/requirements.md" />
+    <File Path="docs/tasks.md" />
+  </Folder>
   <Folder Name="/src/" />
   <Folder Name="/src/backend/" />
   <Folder Name="/src/backend/bff/">
@@ -41,5 +47,14 @@
   </Folder>
   <Folder Name="/src/backend/services/Identity/tools/">
     <Project Path="src/backend/services/Identity/tools/InkLink.Identity.Admin/InkLink.Identity.Admin.csproj" />
+  </Folder>
+  <Folder Name="/src/backend/services/Engagements/">
+    <Project Path="src/backend/services/Engagements/tests/InkLink.Engagements.IntegrationTests/InkLink.Engagements.IntegrationTests.csproj" />
+    <Project Path="src/backend/services/Engagements/src/InkLink.Engagements.Api/InkLink.Engagements.Api.csproj" />
+    <Project Path="src/backend/services/Engagements/src/InkLink.Engagements.Application/InkLink.Engagements.Application.csproj" />
+    <Project Path="src/backend/services/Engagements/src/InkLink.Engagements.Domain/InkLink.Engagements.Domain.csproj" />
+    <Project Path="src/backend/services/Engagements/src/InkLink.Engagements.Infrastructure/InkLink.Engagements.Infrastructure.csproj" />
+    <Project Path="src/backend/services/Engagements/tests/InkLink.Engagements.ArchitectureTests/InkLink.Engagements.ArchitectureTests.csproj" />
+    <Project Path="src/backend/services/Engagements/tests/InkLink.Engagements.UnitTests/InkLink.Engagements.UnitTests.csproj" />
   </Folder>
 </Solution>

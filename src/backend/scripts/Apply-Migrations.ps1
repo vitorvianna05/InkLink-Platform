@@ -35,3 +35,13 @@ try {
         if ($LASTEXITCODE -ne 0) { throw 'Catalog migration failed.' }
     } finally { Pop-Location }
 } finally { $env:CatalogDatabase__ConnectionString = $previousCatalogConnection }
+
+$previousEngagementsConnection = $env:EngagementsDatabase__ConnectionString
+try {
+    $env:EngagementsDatabase__ConnectionString = 'Host=127.0.0.1;Port=54332;Database=inklink_engagements;Username=inklink_engagements_owner;Password=' + $settings.ENGAGEMENTS_OWNER_PASSWORD
+    Push-Location $repoRoot
+    try {
+        dotnet ef database update --project src/backend/services/Engagements/src/InkLink.Engagements.Infrastructure --startup-project src/backend/services/Engagements/src/InkLink.Engagements.Infrastructure
+        if ($LASTEXITCODE -ne 0) { throw 'Engagements migration failed.' }
+    } finally { Pop-Location }
+} finally { $env:EngagementsDatabase__ConnectionString = $previousEngagementsConnection }

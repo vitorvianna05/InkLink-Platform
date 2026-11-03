@@ -13,6 +13,12 @@ internal static class GatewayProxyExtensions
         routes.AddCatalogRoutes();
         clusters.AddBackendCluster("identity", configuration["Gateway:IdentityAddress"], environment);
         clusters.AddBackendCluster("catalog", configuration["Gateway:CatalogAddress"], environment);
+        if (!string.IsNullOrWhiteSpace(configuration["Gateway:EngagementsAddress"]))
+        {
+            routes.Add(new RouteConfig { RouteId = "engagements", ClusterId = "engagements", Match = new RouteMatch { Path = "/api/v1/engagements/{**remainder}" }, AuthorizationPolicy = "default" });
+            routes.Add(new RouteConfig { RouteId = "engagements-v2", ClusterId = "engagements", Match = new RouteMatch { Path = "/api/v2/engagements/{**remainder}" }, AuthorizationPolicy = "default" });
+            clusters.AddBackendCluster("engagements", configuration["Gateway:EngagementsAddress"], environment);
+        }
         services.AddReverseProxy().LoadFromMemory(routes, clusters)
             .AddTransforms(context =>
             {

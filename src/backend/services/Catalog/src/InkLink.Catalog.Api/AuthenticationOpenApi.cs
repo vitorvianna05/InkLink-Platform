@@ -17,7 +17,7 @@ internal sealed class AuthenticationOpenApi : IOpenApiOperationTransformer
             Type = SecuritySchemeType.Http,
             Scheme = "bearer",
             BearerFormat = "JWT",
-            Description = "Keycloak access token for inklink-api. Private catalog routes require an approved user client; publication also requires the Artist role confirmed by Identity."
+            Description = "Keycloak access token for inklink-api. Private user routes require an approved user client; publication requires Artist confirmed by Identity. The internal engagement-context route requires client inklink-engagements, service actor and scope catalog.engagement-context.read."
         };
         operation.Security ??= [];
         operation.Security.Add(new OpenApiSecurityRequirement { [new OpenApiSecuritySchemeReference("Bearer", document)] = [] });

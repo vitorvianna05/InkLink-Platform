@@ -51,6 +51,8 @@ public sealed class SecurityFixture : IAsyncLifetime
         var clients = realm["clients"]!.AsArray();
         clients[0]!["secret"] = BffSecret;
         clients[3]!["secret"] = ServiceSecret;
+        // Every confidential client in the shared realm receives a test-only secret before import.
+        clients.Single(client => client!["clientId"]!.GetValue<string>() == "inklink-engagements")!["secret"] = Convert.ToHexString(RandomNumberGenerator.GetBytes(24));
         var testClient = clients[1]!.DeepClone();
         testClient["clientId"] = "inklink-test-users";
         testClient["directAccessGrantsEnabled"] = true;
