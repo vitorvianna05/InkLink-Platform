@@ -5,7 +5,7 @@ Nova aplicação InkLink, criada do zero e separada do protótipo.
 ## Organização
 
 - `docs/`: fonte oficial da documentação SDD.
-- `src/`: código da nova aplicação; serviços Identity e Catalog em src/backend/services/, Gateway e BFF em pastas próprias.
+- `src/`: código da nova aplicação; serviços Identity, Catalog e Engagements em src/backend/services/, Gateway e BFF em pastas próprias.
 
 O backend será desenvolvido em .NET 10 com microsserviços. Os canais previstos são website React e aplicativos iOS e Android em React Native. A prioridade inicial é o backend.
 
@@ -19,7 +19,9 @@ O backend será desenvolvido em .NET 10 com microsserviços. Os canais previstos
 
 ## Situação
 
-P00–P03 concluídas: Identity e Catalog .NET 10 com bancos PostgreSQL privados, Keycloak, funções locais, Gateway YARP e BFF com sessão no servidor. Catalog oferece publicação do próprio Artist, perfil/mídia públicos, descoberta, pesquisa aproximada e favoritos persistentes. Suíte atual com 110 cenários aprovados; M1 atingido e M2 depende de P04. Nenhuma implementação do protótipo foi copiada. A próxima tarefa é T04.01.
+P00–P04 concluídas: Identity, Catalog e Engagements .NET 10 com bancos PostgreSQL privados, autenticação Keycloak, funções locais, Gateway YARP e BFF com sessão no servidor. Catalog oferece publicação do próprio Artist, perfil/mídia públicos, descoberta, pesquisa aproximada e favoritos persistentes. Engagements oferece solicitações, snapshots de artista/flash, versões de proposta e aceite idempotente, com autorização e proteção concorrente. M1 e M2 atingidos; próxima tarefa T05.01. Nenhuma implementação do protótipo foi copiada.
+
+P04 e as correções de revisão somam 39 cenários; a regressão local executou 90 testes aprovados com PostgreSQL real e JWTs de provedor controlado. Os testes antigos de integração com Keycloak/Docker não foram reexecutados neste ambiente. Consulte [evidências e limites da P04](docs/verification/p04.md) e [execução de Engagements](docs/development/engagements.md).
 
 Consulte [execução e contratos de Catalog](docs/development/catalog.md), [evidências da P03](docs/verification/p03.md), [execução de Identity, Gateway e BFF](docs/development/authentication.md), [evidências da P02](docs/verification/p02.md) e o [histórico da P01](docs/verification/p01.md).
 

@@ -108,6 +108,8 @@ O cliente deve enviar ao artista uma descrição da ideia, a região do corpo e 
 
 ### RF10 — Apresentar e acompanhar propostas
 
+A política inicial de P04 foi aprovada na [decisão 0009](decisions/0009-p04-engagements.md): versões imutáveis, substituição apenas enquanto não houver aceite, confirmação pelo cliente da proposta vigente e repetição idempotente. A mesma decisão especifica limites do formulário e o snapshot de artista/flash preservado pelo pedido. A negociação inicial permite futura conversa antes do aceite; isso não altera a regra de novo agendamento após encerramento de RF15.
+
 O artista deve apresentar uma proposta para o atendimento, e o cliente deve consultá-la e registrar seu aceite.
 
 **Critérios de aceite:** a proposta identifica o atendimento, sua descrição e o valor. O cliente consulta o pedido e a proposta do artista correto. O aceite exige confirmação explícita, fica vinculado àquela proposta e não afeta outros atendimentos. O aceite não realiza cobrança nem ocupa um horário automaticamente. As duas partes conseguem consultar a situação da proposta associada ao atendimento.

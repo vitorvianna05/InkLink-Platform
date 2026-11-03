@@ -101,22 +101,25 @@ Cada linha abaixo é uma tarefa com ID estável, dependências diretas, entregá
 
 **Conclusão de P03:** catálogo e favoritos utilizáveis por API sem interface gráfica.
 
-**Evidência:** [verificação por tarefa](verification/p03.md), [decisão 0008](decisions/0008-p03-catalog-and-search.md) e [execução e contratos](development/catalog.md). Catalog: 39 cenários aprovados; suíte atual: 110 cenários aprovados. Build Release sem avisos/erros, migração e conferência HTTP local concluídas. M2 ainda depende de P04.
+**Evidência:** [verificação por tarefa](verification/p03.md), [decisão 0008](decisions/0008-p03-catalog-and-search.md) e [execução e contratos](development/catalog.md). Catalog: 39 cenários aprovados; suíte atual: 110 cenários aprovados. Build Release sem avisos/erros, migração e conferência HTTP local concluídas. Na conclusão de P03, M2 ainda dependia de P04; o marco foi concluído posteriormente conforme as evidências de P04.
 
 ### P04 — Solicitações, propostas e aceite
 
-**Referências:** RF07, RF09, RF10 e RF21; RNF04–RNF06. **Marco:** M2. **Situação inicial:** pendente.
+**Referências:** RF07, RF09, RF10 e RF21; RNF04–RNF06. **Marco:** M2. **Situação:** concluída; [evidências por tarefa](verification/p04.md) e [decisão aprovada](decisions/0009-p04-engagements.md).
 
 | ID / tarefa | Dependências | Entregável | Aceite e verificação |
 | --- | --- | --- | --- |
-| T04.01 — [ ] Especificar estados e habilitação inicial de chat | T03.07 | Transições de pedido/proposta, participantes e momento de criação e escrita da conversa. | O fluxo permite negociar sem exigir um aceite que dependa da própria conversa; as permissões ainda não decididas são registradas antes do código dependente. |
-| T04.02 — [ ] Criar Atendimentos e a solicitação | T04.01 | Persistência privada e comando de pedido com ideia, região, tamanho e referência ao flash. | Dados inválidos não criam pedidos; artista e flash escolhidos são preservados, sem consultar bancos alheios. A política de snapshot do contexto é explícita. |
-| T04.03 — [ ] Implementar apresentação de proposta | T04.02 | Operação do artista para registrar descrição, valor e vínculo ao atendimento. | Outro artista não apresenta proposta nesse atendimento; valores inválidos são rejeitados e alterações concorrentes têm tratamento definido. |
-| T04.04 — [ ] Implementar aceite específico e idempotente | T04.03 | Confirmação pelo cliente correto, vinculada à proposta e protegida contra repetição. | Repetir aceite não duplica efeitos; aceitar uma proposta não altera outra e não registra receita nem reserva horário. |
-| T04.05 — [ ] Implementar consultas das negociações | T04.02, T04.04 | Listagem e detalhe de pedidos e propostas por participante. | Cliente e artista consultam o mesmo contexto; terceiro não tem acesso e novo acesso preserva o aceite. |
-| T04.06 — [ ] Definir contratos com Conversas e Agenda | T04.01, T04.05, T02.05 | Contratos mínimos de integração, identificadores, validação, erros e idempotência. | Contratos são verificáveis sem entidades internas compartilhadas. Não se publica evento sem o mecanismo confiável a implementar em P05. |
+| T04.01 — [x] Especificar estados e habilitação inicial de chat | T03.07 | Transições de pedido/proposta, participantes e momento de criação e escrita da conversa. | O fluxo permite negociar sem exigir um aceite que dependa da própria conversa; as permissões ainda não decididas são registradas antes do código dependente. |
+| T04.02 — [x] Criar Atendimentos e a solicitação | T04.01 | Persistência privada e comando de pedido com ideia, região, tamanho e referência ao flash. | Dados inválidos não criam pedidos; artista e flash escolhidos são preservados, sem consultar bancos alheios. A política de snapshot do contexto é explícita. |
+| T04.03 — [x] Implementar apresentação de proposta | T04.02 | Operação do artista para registrar descrição, valor e vínculo ao atendimento. | Outro artista não apresenta proposta nesse atendimento; valores inválidos são rejeitados e alterações concorrentes têm tratamento definido. |
+| T04.04 — [x] Implementar aceite específico e idempotente | T04.03 | Confirmação pelo cliente correto, vinculada à proposta e protegida contra repetição. | Repetir aceite não duplica efeitos; aceitar uma proposta não altera outra e não registra receita nem reserva horário. |
+| T04.05 — [x] Implementar consultas das negociações | T04.02, T04.04 | Listagem e detalhe de pedidos e propostas por participante. | Cliente e artista consultam o mesmo contexto; terceiro não tem acesso e novo acesso preserva o aceite. |
+| T04.06 — [x] Definir contratos com Conversas e Agenda | T04.01, T04.05, T02.05 | Contratos mínimos de integração, identificadores, validação, erros e idempotência. | Contratos são verificáveis sem entidades internas compartilhadas. Não se publica evento sem o mecanismo confiável a implementar em P05. |
 
+**Correções da revisão:** [x] invariantes de propostas; [x] histórico e consultas limitados; [x] validações no OpenAPI. A mudança incompatível usa a API v2; detalhes e testes em [verificação P04](verification/p04.md).
 **Conclusão de P04:** negociação executável e persistida por API, isolada por proposta e atendimento.
+
+**Evidência:** [verificação P04](verification/p04.md), [execução e API](development/engagements.md) e [contratos com Conversas/Agenda](contracts/p04-integrations.md). M2 concluído no escopo backend, sem antecipar P05/P06.
 
 ### P05 — Conversas e primeira integração confiável
 
@@ -258,7 +261,7 @@ Cada linha abaixo é uma tarefa com ID estável, dependências diretas, entregá
 
 ## 4. Próximo lote e acompanhamento
 
-P00 foi concluída no nível de decisões e revisão. A [revisão T00.07](decisions/0006-p00-review.md) consolida os registros de T00.01 a T00.06 e o escopo do primeiro incremento. P01 foi implementada e verificada conforme [evidências](verification/p01.md), incluindo Docker e PostgreSQL real. P02 foi concluída conforme [evidências](verification/p02.md). P03 foi concluída conforme [evidências](verification/p03.md). O próximo passo é T04.01. As tarefas de P04 em diante permanecem pendentes.
+P00 foi concluída no nível de decisões e revisão. A [revisão T00.07](decisions/0006-p00-review.md) consolida os registros de T00.01 a T00.06 e o escopo do primeiro incremento. P01 foi implementada e verificada conforme [evidências](verification/p01.md), incluindo Docker e PostgreSQL real. P02 foi concluída conforme [evidências](verification/p02.md). P03 foi concluída conforme [evidências](verification/p03.md). P04 foi concluída conforme [evidências](verification/p04.md), com o fluxo aprovado pelo responsável. O próximo passo é T05.01. As tarefas de P05 em diante permanecem pendentes.
 
 Broker e stack móvel têm tarefas próprias quando se tornam necessários. A pesquisa inicial foi definida em P03, conforme decisão 0008. Essas escolhas não eram pré-requisitos do primeiro incremento de Identity.
 

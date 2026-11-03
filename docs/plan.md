@@ -162,28 +162,30 @@ Não é necessário esperar a etapa de validação integrada para criar testes, 
 
 **Rastreabilidade:** RF02–RF08 e RF21; RNF04–RNF08.
 
-**Evidência:** 39 cenários de Catalog aprovados, com 110 cenários na suíte atual, build Release sem avisos/erros e migração/conferência HTTP locais. [Decisão e política de publicação](decisions/0008-p03-catalog-and-search.md); [execução](development/catalog.md). M2 ainda depende de P04.
+**Evidência:** 39 cenários de Catalog aprovados, com 110 cenários na suíte atual, build Release sem avisos/erros e migração/conferência HTTP locais. [Decisão e política de publicação](decisions/0008-p03-catalog-and-search.md); [execução](development/catalog.md). Na conclusão de P03, M2 ainda dependia de P04; o marco foi concluído posteriormente conforme as evidências de P04.
 
 ### P04 — Implementar solicitações, propostas e aceite
 
-**Prioridade:** backend. **Dependências:** P02–P03. **Situação:** pendente.
+**Prioridade:** backend. **Dependências:** P02–P03. **Situação:** concluída; [evidências P04](verification/p04.md).
 
 **Objetivo:** registrar uma negociação completa no contexto Atendimentos.
 
-- [ ] Criar Atendimentos com banco lógico, credenciais e migrações próprios.
-- [ ] Definir participantes, identificadores, estados mínimos e transições de pedido e proposta.
-- [ ] Definir em qual etapa inicial a conversa é criada e o envio é permitido, evitando exigir aceite antes de uma negociação que dependa do chat.
-- [ ] Implementar solicitação com ideia, região do corpo, tamanho e referência ao flash, quando houver.
-- [ ] Preservar o contexto necessário da negociação quando o catálogo for alterado.
-- [ ] Implementar apresentação de proposta pelo artista e confirmação do aceite pelo cliente.
-- [ ] Implementar consultas de pedidos e propostas por participante.
-- [ ] Garantir isolamento de estado por atendimento e proposta.
-- [ ] Definir idempotência para repetição de operações críticas e respostas sob concorrência.
-- [ ] Definir os contratos mínimos de integração com Conversas e Agenda, sem publicar eventos por mecanismo não confiável.
+- [x] Criar Atendimentos com banco lógico, credenciais e migrações próprios.
+- [x] Definir participantes, identificadores, estados mínimos e transições de pedido e proposta.
+- [x] Definir em qual etapa inicial a conversa é criada e o envio é permitido, evitando exigir aceite antes de uma negociação que dependa do chat.
+- [x] Implementar solicitação com ideia, região do corpo, tamanho e referência ao flash, quando houver.
+- [x] Preservar o contexto necessário da negociação quando o catálogo for alterado.
+- [x] Implementar apresentação de proposta pelo artista e confirmação do aceite pelo cliente.
+- [x] Implementar consultas de pedidos e propostas por participante.
+- [x] Garantir isolamento de estado por atendimento e proposta.
+- [x] Definir idempotência para repetição de operações críticas e respostas sob concorrência.
+- [x] Definir os contratos mínimos de integração com Conversas e Agenda, sem publicar eventos por mecanismo não confiável.
 
 **Critério de conclusão:** cliente e artista realizam por API a solicitação, apresentação e aceite da proposta correta. Uma operação em outro atendimento não altera sua situação. Aceite não registra recebimento nem reserva automaticamente um horário.
 
 **Rastreabilidade:** RF07, RF09, RF10 e RF21; RNF04–RNF06.
+
+**Evidência:** negociação completa por API, snapshots, isolamento, idempotência e concorrência verificados conforme [P04](verification/p04.md). M2 concluído no recorte backend P03/P04. Conversas e reservas efetivas continuam em P05/P06.
 
 ### P05 — Implementar Conversas e a primeira integração confiável
 
@@ -397,6 +399,6 @@ A conclusão de uma etapa não significa a conclusão automática das etapas dep
 
 ## 8. Próxima ação
 
-Iniciar T04.01: especificar estados de atendimento e habilitação inicial do chat antes dos casos de solicitação e proposta. P00–P03 estão concluídas em seus respectivos escopos; a [verificação P03](verification/p03.md) consolida Catálogo, pesquisa e favoritos. M1 está concluído; M2 ainda depende de P04.
+Iniciar T05.01: escolher mensageria e contrato de eventos para a primeira integração confiável. P00–P04 estão concluídas em seus respectivos escopos; a [verificação P04](verification/p04.md) consolida solicitações, propostas e aceite. M1 e M2 estão concluídos. As verificações locais e suas limitações de ambiente estão registradas nas evidências.
 
 GetMyProfile possui transporte autenticado, atualização controlada de nome, vínculo externo/interno e funções locais. Keycloak, Gateway e BFF estão integrados e verificados em P02. Os próximos fluxos continuam priorizando backend, com autorização própria em cada serviço.

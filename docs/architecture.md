@@ -108,6 +108,8 @@ Responsável pelo ciclo de negócio da relação de serviço entre cliente e art
 
 O aceite é específico da proposta e do atendimento. Não há estado global compartilhado entre negociações.
 
+P04 implementa Engagements com persistência privada, snapshots obtidos pelo contrato técnico de Catalog, pedidos idempotentes, histórico de versões e aceite da proposta vigente. Casos de uso em Application coordenam as transições de Domain; Infrastructure oferece transação e bloqueio local da linha do atendimento para serializar apresentação e aceite. A [decisão 0009](decisions/0009-p04-engagements.md) e os [contratos de integração](contracts/p04-integrations.md) delimitam a negociação inicial. Não há publicação de eventos até P05, nem reserva ou recebimento automático.
+
 ### 4.4 Agenda
 
 Responsável pela disponibilidade e ocupação do tempo do artista.
