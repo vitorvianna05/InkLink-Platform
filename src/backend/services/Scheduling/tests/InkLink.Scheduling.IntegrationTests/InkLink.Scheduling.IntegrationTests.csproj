@@ -13,6 +13,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
     <PackageReference Include="Testcontainers.PostgreSql" />
   </ItemGroup>
+  <ItemGroup><ProjectReference Include="../../../Messaging/src/InkLink.Messaging.Api/InkLink.Messaging.Api.csproj" /></ItemGroup>
   <ItemGroup><ProjectReference Include="../../../Engagements/tests/InkLink.Engagements.IntegrationTests/InkLink.Engagements.IntegrationTests.csproj" /></ItemGroup><ItemGroup><Using Include="Xunit" /></ItemGroup>
   <ItemGroup>
     <Content Include="../../../../scripts/configure-broker.sh" Link="Broker/configure-broker.sh" CopyToOutputDirectory="PreserveNewest" />

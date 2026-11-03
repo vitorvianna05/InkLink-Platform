@@ -751,6 +751,37 @@
           "xunit": "[2.9.3, )"
         }
       },
+      "inklink.messaging.api": {
+        "type": "Project",
+        "dependencies": {
+          "InkLink.Authentication": "[1.0.0, )",
+          "InkLink.Messaging.Application": "[1.0.0, )",
+          "InkLink.Messaging.Infrastructure": "[1.0.0, )",
+          "InkLink.Observability": "[1.0.0, )",
+          "Microsoft.AspNetCore.OpenApi": "[10.0.14, )"
+        }
+      },
+      "inklink.messaging.application": {
+        "type": "Project",
+        "dependencies": {
+          "InkLink.Messaging.Domain": "[1.0.0, )"
+        }
+      },
+      "inklink.messaging.domain": {
+        "type": "Project"
+      },
+      "inklink.messaging.infrastructure": {
+        "type": "Project",
+        "dependencies": {
+          "InkLink.Messaging.Application": "[1.0.0, )",
+          "Microsoft.EntityFrameworkCore": "[10.0.14, )",
+          "Microsoft.EntityFrameworkCore.Relational": "[10.0.14, )",
+          "Microsoft.Extensions.Diagnostics.HealthChecks": "[10.0.14, )",
+          "Microsoft.Extensions.Options.ConfigurationExtensions": "[10.0.14, )",
+          "Npgsql.EntityFrameworkCore.PostgreSQL": "[10.0.3, )",
+          "RabbitMQ.Client": "[6.8.1, )"
+        }
+      },
       "inklink.observability": {
         "type": "Project"
       },
