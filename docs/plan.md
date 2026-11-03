@@ -210,29 +210,33 @@ Não é necessário esperar a etapa de validação integrada para criar testes, 
 
 **Rastreabilidade:** RF11–RF14 e RF21; RNF04–RNF06.
 
-**Evidência:** 171 testes aprovados, sem falhas/ignorados; build Release sem avisos/erros; recuperação e permissões com RabbitMQ, Keycloak e PostgreSQL reais, além de Compose e hosts locais. [Decisão 0010](decisions/0010-p05-messaging.md) e [execução](development/messaging.md). M3 depende de P06; encerramento distribuído em P07.
+**Evidência:** 171 testes aprovados, sem falhas/ignorados; build Release sem avisos/erros; recuperação e permissões com RabbitMQ, Keycloak e PostgreSQL reais, além de Compose e hosts locais. [Decisão 0010](decisions/0010-p05-messaging.md) e [execução](development/messaging.md). M3 foi concluído com P06; encerramento distribuído em P07.
 
 **Revisão de conformidade P05 (03/11/2026):** abertura em Application; orçamento durável de dez tentativas no consumidor e diagnóstico/reprocessamento; rastreamento W3C e métricas de eventos. Contratos e operação atualizados na decisão 0010 e na verificação P05. T09.03 continua responsável pela verificação operacional mais ampla.
 
 ### P06 — Implementar Agenda com proteção de concorrência
 
-**Prioridade:** backend. **Dependências:** P02 e P04; padrões de integração de P05 para publicações externas. **Situação:** pendente.
+**Prioridade:** backend. **Dependências:** P02 e P04; padrões de integração de P05 para publicações externas. **Situação:** concluída no recorte backend; [evidências](verification/p06.md).
 
 **Objetivo:** confirmar reservas válidas, inclusive quando duas requisições tentam ocupar o mesmo horário.
 
-- [ ] Definir disponibilidade inicial, dias permitidos, fuso horário e interpretação dos intervalos necessários à primeira entrega.
-- [ ] Criar Agenda com persistência, migrações e permissões próprias.
-- [ ] Implementar consulta de disponibilidade, calendário e reservas por artista e data.
-- [ ] Implementar a confirmação da reserva vinculada ao atendimento, ao cliente e ao artista.
-- [ ] Detalhar e implementar a proteção transacional por restrição de exclusão de intervalos no PostgreSQL para o mesmo artista, conforme decisão 0002, permitindo intervalos adjacentes com início incluído e término excluído. A modelagem deverá definir os estados de reserva que ocupam a agenda e a representação temporal apropriada.
-- [ ] Testar intervalos adjacentes, parcialmente sobrepostos, contidos e completamente envolventes.
-- [ ] Testar conflitos com solicitações simultâneas e repetição da mesma operação.
-- [ ] Publicar confirmação por Outbox e documentar o resultado síncrono da reserva.
-- [ ] Garantir que uma consulta anterior de disponibilidade não seja tratada como reserva já confirmada.
+- [x] Definir disponibilidade inicial, dias permitidos, fuso horário e interpretação dos intervalos necessários à primeira entrega.
+- [x] Criar Agenda com persistência, migrações e permissões próprias.
+- [x] Implementar consulta de disponibilidade, calendário e reservas por artista e data.
+- [x] Implementar a confirmação da reserva vinculada ao atendimento, ao cliente e ao artista.
+- [x] Detalhar e implementar a proteção transacional por restrição de exclusão de intervalos no PostgreSQL para o mesmo artista, conforme decisão 0002, permitindo intervalos adjacentes com início incluído e término excluído. A modelagem deverá definir os estados de reserva que ocupam a agenda e a representação temporal apropriada.
+- [x] Testar intervalos adjacentes, parcialmente sobrepostos, contidos e completamente envolventes.
+- [x] Testar conflitos com solicitações simultâneas e repetição da mesma operação.
+- [x] Publicar confirmação por Outbox e documentar o resultado síncrono da reserva.
+- [x] Garantir que uma consulta anterior de disponibilidade não seja tratada como reserva já confirmada.
 
 **Critério de conclusão:** não são persistidas reservas conflitantes sob concorrência. Cliente e artista consultam a mesma reserva autorizada. A confirmação da reserva não é confundida com a conclusão de toda a coordenação entre serviços.
 
 **Rastreabilidade:** RF15, RF18, RF19 e RF21; RNF04–RNF06.
+
+**Validação:** 192 casos com resultado final aprovado, incluindo reexecução direcionada após atualizar a expectativa do esquema. Build sem avisos/erros, formatação/lockfile e operação local verificados. M3 concluído no recorte backend; coordenação distribuída permanece em P07.
+
+**Correções da revisão P06:** validação JSON de datas, falhas de telemetria sob orçamento da Outbox e invariantes/fuso em Domain. 29 casos de Scheduling com resultado final aprovado; [evidências](verification/p06.md) detalham o recorte e a reexecução da expectativa de jsonb.
 
 ### P07 — Integrar o ciclo de atendimento, encerramento e novo agendamento
 
@@ -403,6 +407,6 @@ A conclusão de uma etapa não significa a conclusão automática das etapas dep
 
 ## 8. Próxima ação
 
-Iniciar T06.01: especificar intervalos, disponibilidade e regras iniciais de Agenda. P00–P05 estão concluídas em seus recortes; a [verificação P05](verification/p05.md) consolida conversas e integração confiável. M1/M2 concluídos; M3 depende também de P06. O encerramento distribuído continua em P07.
+Iniciar T07.01: especificar encerramento e permissões, com coordenação durável entre Atendimentos e Conversas. P00–P06 estão concluídas em seus recortes; a [verificação P06](verification/p06.md) consolida Agenda e concorrência. M1/M2/M3 concluídos no backend; encerramento distribuído e novo contexto de atendimento permanecem em P07.
 
 GetMyProfile possui transporte autenticado, atualização controlada de nome, vínculo externo/interno e funções locais. Keycloak, Gateway e BFF estão integrados e verificados em P02. Os próximos fluxos continuam priorizando backend, com autorização própria em cada serviço.

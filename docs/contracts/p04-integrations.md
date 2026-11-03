@@ -57,10 +57,18 @@ Engagements já permite às partes consultar `id`, `clientId`, `artistAccountId`
 
 A confirmação de reserva deverá receber `operationId`, `engagementId`, `clientId`, `artistAccountId`, início e término com fuso explícito. Agenda valida autorização, vínculo, disponibilidade e conflito no seu banco, usando chave idempotente; payload diferente com a mesma chave retorna conflito. O protocolo de consulta do resultado permite resolver timeout sem duplicar a reserva. A confirmação deverá carregar `reservationId`, participantes, atendimento, intervalo e revisão, com Outbox. Repetição de evento não cria outro atendimento nem habilita contexto antigo.
 
-P04 não determina que aceite seja requisito suficiente ou obrigatório para reservar: disponibilidade, regras temporais e transições serão decididas em T06.01/T07.04. Também não cria reserva, recebimento ou compensação. Estados pendentes e indisponibilidade nunca são apresentados como confirmação. Nenhum contrato autoriza compartilhar entidades internas entre serviços.
+P04 não impunha aceite como requisito de reserva. T06.01 aprovou proposta aceita como pré-requisito inicial de confirmação pelo artista, conforme decisão 0011. Aceite não é suficiente: disponibilidade e exclusão concorrente são verificadas por Scheduling. Também não cria reserva, recebimento ou compensação. Estados pendentes e indisponibilidade nunca são apresentados como confirmação. Nenhum contrato autoriza compartilhar entidades internas entre serviços.
 
 
 Em P05, a apresentação consulta GET /api/v2/engagements/{id} com token delegado do participante e valida os IDs antes de exibir estado/nome do artista. Não se usa token técnico para uma rota de usuário nem se compartilham entidades internas. O cliente técnico de Messaging consulta separadamente apenas o nome do cliente em Identity.
 
 
 Na revisão P05, o envelope v1 recebe traceParent W3C opcional e compatível com eventos anteriores. O header AMQP traceparent continua a cadeia de publicação/consumo; inklink-processing-attempt é metadado de transporte, não integra o fingerprint. Até dez falhas de processamento usam republicação persistente confirmada antes do ack original, seguida de diagnóstico ao esgotar orçamento. A abertura e compatibilidade ficam no caso de uso OpenConversation; Inbox/conversa continuam atomicamente persistidas.
+
+## Contexto técnico de Agenda implementado em P06
+
+GET /api/v1/internal/engagements/{id}/scheduling-context exige Client Credentials de inklink-scheduling e engagements.scheduling-context.read. Retorna id, clientId, artistAccountId, state, project, artistName, proposalId/proposalState/amount e revision. Leitura usa snapshot transacional local; Scheduling valida participante/Artist e aceite em Application. Nome do cliente vem de Identity com identity.profile.read.
+
+Evento scheduling.reservation-confirmed.v1 inclui messageId/type/schemaVersion/occurredAt/correlationId/causationId e traceParent opcional. Data: reservationId, engagementId, clientId, artistAccountId, operationId, start/end UTC, timeZoneId e revision=1. Não transporta nomes, texto do projeto ou dados financeiros. Reserva/Outbox são atômicas; Inbox/recibo em Engagements são atômicos. IDs/payload incompatíveis não deixam Inbox confirmada.
+
+O recibo técnico não altera atendimento Agreed, não cria outro atendimento e não habilita conversa. Coordenação de negócio e compensação permanecem em P07; não se apresenta resultado síncrono da reserva como conclusão dessa coordenação.

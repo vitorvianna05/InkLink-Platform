@@ -120,6 +120,8 @@ Responsável pela disponibilidade e ocupação do tempo do artista.
 - Publica confirmações e alterações de reserva quando necessárias aos demais contextos.
 - Não considera uma consulta de disponibilidade como garantia de reserva.
 
+P06 implementa Scheduling em banco próprio com disponibilidade por data/fuso IANA, confirmação pelo artista após proposta aceita, reservas idempotentes e restrição de exclusão GiST/tstzrange por artista. Alteração de disponibilidade e reserva usam o mesmo bloqueio local do calendário. Domain concentra a proteção das janelas reservadas e o fuso padrão; Application coordena e Infrastructure persiste os parâmetros recebidos. Contratos técnicos autenticados fornecem contexto/nomes; nenhuma tabela ou implementação alheia é acessada. Confirmação publica Outbox e gera recibo técnico idempotente em Atendimentos, sem concluir a coordenação de P07. Políticas e limites estão na [decisão 0011](decisions/0011-p06-scheduling.md).
+
 ### 4.5 Conversas
 
 Responsável pelo histórico, pelos participantes autorizados e pela aceitação de novas mensagens.
@@ -231,7 +233,7 @@ As referências entre contextos usam identificadores e contratos. Projeções po
 
 Invariantes que precisam ser atômicas devem permanecer sob um único serviço e sua transação local. Em Agenda, a decisão de aceitar uma reserva e a proteção contra sobreposição são uma única operação consistente.
 
-Consultar horários e inserir depois sem proteção concorrente não atende ao requisito. A decisão 0002 estabelece proteção por restrição de exclusão de intervalos no PostgreSQL para o mesmo artista. Intervalos adjacentes são permitidos, com início incluído e término excluído. Modelagem temporal e estados que ocupam a agenda serão definidos no fluxo de Agenda; a validação concorrente usará PostgreSQL real.
+Consultar horários e inserir depois sem proteção concorrente não atende ao requisito. A decisão 0002 estabelece proteção por restrição de exclusão de intervalos no PostgreSQL para o mesmo artista. Intervalos adjacentes são permitidos, com início incluído e término excluído. P06 representa instantes em UTC e conserva data local/fuso IANA. Reservas Confirmed ocupam a agenda; horários adjacentes são permitidos. Cancelamento e outros estados exigirão revisão da restrição no incremento correspondente. Validação concorrente usa PostgreSQL real.
 
 ### 6.3 Projeções e leitura
 
@@ -296,6 +298,8 @@ A captura de descrições e valores de referência deve preservar o contexto da 
 5. O usuário recebe uma indicação compatível com o estágio real do processo: reserva confirmada e atendimento preparado não devem ser confundidos enquanto houver coordenação pendente.
 
 Falhas entre etapas exigem repetição idempotente e reconciliação. Regras de liberação ou compensação de uma reserva serão detalhadas quando o fluxo for implementado. Um timeout não autoriza criar uma segunda reserva sem verificar a operação anterior.
+
+Na entrega P06, a reserva e sua Outbox são atômicas e o recebimento técnico em Atendimentos é idempotente. Esse recibo não altera o estado do atendimento nem habilita conversa. Coordenação de consequências e compensações continua em P07.
 
 ### 8.3 Encerramento e bloqueio do chat
 

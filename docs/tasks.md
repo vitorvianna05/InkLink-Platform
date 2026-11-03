@@ -136,7 +136,7 @@ Cada linha abaixo é uma tarefa com ID estável, dependências diretas, entregá
 | T05.07 — [x] Implementar bloqueio local da escrita | T05.06, T04.06 | Operação técnica idempotente de bloqueio por atendimento, atômica em relação à aceitação de mensagens. | Corrida entre mensagem e bloqueio tem ordem consistente; depois da confirmação de bloqueio não há nova gravação e repetir comando não reabre escrita. |
 | T05.08 — [x] Verificar falhas, repetição e acesso | T05.07 | Suíte de broker indisponível, publicação/consumo repetidos, interrupção e tentativa por terceiros. | Histórico não se perde ou duplica nos cenários; falhas são diagnosticáveis e recuperáveis. O encerramento distribuído ainda depende de P07. |
 
-**Evidência:** suíte completa com 171 aprovados (22 de Messaging), sem falhas/ignorados, build Release sem avisos/erros, RabbitMQ/Keycloak/PostgreSQL reais e Compose local verificados. Nomes e situação oficial integrados; bloqueio é barreira local. M3 ainda depende de P06 e o encerramento distribuído permanece em P07.
+**Evidência:** suíte completa com 171 aprovados (22 de Messaging), sem falhas/ignorados, build Release sem avisos/erros, RabbitMQ/Keycloak/PostgreSQL reais e Compose local verificados. Nomes e situação oficial integrados; bloqueio é barreira local. M3 foi concluído com P06; encerramento distribuído permanece em P07.
 
 **Revisão de conformidade P05 (03/11/2026):** abertura em Application; orçamento durável de dez tentativas no consumidor e diagnóstico/reprocessamento; rastreamento W3C e métricas de eventos. Contratos e operação atualizados na decisão 0010 e na verificação P05. T09.03 continua responsável pela verificação operacional mais ampla.
 
@@ -144,16 +144,20 @@ Cada linha abaixo é uma tarefa com ID estável, dependências diretas, entregá
 
 ### P06 — Agenda e concorrência
 
-**Referências:** RF15, RF18, RF19 e RF21; RNF04–RNF06. **Marco:** M3. **Situação inicial:** pendente.
+**Referências:** RF15, RF18, RF19 e RF21; RNF04–RNF06. **Marco:** M3. **Situação:** concluída no recorte backend.
 
 | ID / tarefa | Dependências | Entregável | Aceite e verificação |
 | --- | --- | --- | --- |
-| T06.01 — [ ] Definir disponibilidade e horários | T04.06, T00.03 | Regras iniciais de dias, intervalos, fuso, precisão e autorização das reservas. | Exemplos válidos, inválidos e adjacentes são inequívocos; não se herda a janela fixa de horários do protótipo. |
-| T06.02 — [ ] Criar Agenda e consultar calendário | T06.01, T02.06 | Persistência privada, migrações, disponibilidade e consultas de reservas por artista/data/período. | Há vínculo ao atendimento e consultas autorizadas ordenadas; uma consulta livre não é apresentada como garantia de reserva. |
-| T06.03 — [ ] Confirmar reservas com proteção transacional | T06.02 | Comando com validação, idempotência e proteção de sobreposição adequada ao banco. | Reserva válida é persistida uma vez; intervalo inválido ou fora da disponibilidade é rejeitado e timeout permite consultar o resultado anterior. |
-| T06.04 — [ ] Testar intervalos e requisições concorrentes | T06.03 | Testes contra o banco real escolhido, inclusive solicitações simultâneas. | Adjacência é aceita; sobreposições parciais, contidas e envolventes são rejeitadas. Duas reservas conflitantes não são confirmadas simultaneamente. |
-| T06.05 — [ ] Publicar confirmação com Outbox | T06.03, T05.02, T05.03 | Publicação recuperável e contrato da confirmação para Atendimentos. | Rollback não publica sucesso; entrega duplicada não duplica efeitos. Contrato diferencia resultado da reserva e coordenação posterior. |
-| T06.06 — [ ] Verificar reserva nas duas perspectivas | T06.02, T06.04, T06.05 | Testes de cliente e artista consultando a mesma reserva e rejeição de terceiro. | Os intervalos são os mesmos após novo acesso; autorização existe no serviço e não somente no Gateway. |
+| T06.01 — [x] Definir disponibilidade e horários | T04.06, T00.03 | Regras iniciais de dias, intervalos, fuso, precisão e autorização das reservas. | Exemplos válidos, inválidos e adjacentes são inequívocos; não se herda a janela fixa de horários do protótipo. |
+| T06.02 — [x] Criar Agenda e consultar calendário | T06.01, T02.06 | Persistência privada, migrações, disponibilidade e consultas de reservas por artista/data/período. | Há vínculo ao atendimento e consultas autorizadas ordenadas; uma consulta livre não é apresentada como garantia de reserva. |
+| T06.03 — [x] Confirmar reservas com proteção transacional | T06.02 | Comando com validação, idempotência e proteção de sobreposição adequada ao banco. | Reserva válida é persistida uma vez; intervalo inválido ou fora da disponibilidade é rejeitado e timeout permite consultar o resultado anterior. |
+| T06.04 — [x] Testar intervalos e requisições concorrentes | T06.03 | Testes contra o banco real escolhido, inclusive solicitações simultâneas. | Adjacência é aceita; sobreposições parciais, contidas e envolventes são rejeitadas. Duas reservas conflitantes não são confirmadas simultaneamente. |
+| T06.05 — [x] Publicar confirmação com Outbox | T06.03, T05.02, T05.03 | Publicação recuperável e contrato da confirmação para Atendimentos. | Rollback não publica sucesso; entrega duplicada não duplica efeitos. Contrato diferencia resultado da reserva e coordenação posterior. |
+| T06.06 — [x] Verificar reserva nas duas perspectivas | T06.02, T06.04, T06.05 | Testes de cliente e artista consultando a mesma reserva e rejeição de terceiro. | Os intervalos são os mesmos após novo acesso; autorização existe no serviço e não somente no Gateway. |
+
+**Política inicial:** [decisão 0011](decisions/0011-p06-scheduling.md), aprovada pelo responsável. 192 casos com resultado final aprovado; [evidências](verification/p06.md) detalham a reexecução direcionada da expectativa de esquema. Não antecipa P07.
+
+**Correções da revisão P06:** validação JSON de datas, falhas de telemetria sob orçamento da Outbox e invariantes/fuso em Domain. 29 casos de Scheduling com resultado final aprovado; [evidências](verification/p06.md) detalham o recorte e a reexecução da expectativa de jsonb.
 
 **Conclusão de P06:** reserva consistente sob concorrência e visível às partes autorizadas.
 
@@ -265,7 +269,7 @@ Cada linha abaixo é uma tarefa com ID estável, dependências diretas, entregá
 
 ## 4. Próximo lote e acompanhamento
 
-P00 foi concluída no nível de decisões e revisão. A [revisão T00.07](decisions/0006-p00-review.md) consolida os registros de T00.01 a T00.06 e o escopo do primeiro incremento. P01 foi implementada e verificada conforme [evidências](verification/p01.md), incluindo Docker e PostgreSQL real. P02 foi concluída conforme [evidências](verification/p02.md). P03 foi concluída conforme [evidências](verification/p03.md). P04 foi concluída conforme [evidências](verification/p04.md), com o fluxo aprovado pelo responsável. P05 foi concluída conforme [evidências](verification/p05.md). O próximo passo é T06.01. As tarefas de P06 em diante permanecem pendentes.
+P00 foi concluída no nível de decisões e revisão. A [revisão T00.07](decisions/0006-p00-review.md) consolida os registros de T00.01 a T00.06 e o escopo do primeiro incremento. P01 foi implementada e verificada conforme [evidências](verification/p01.md), incluindo Docker e PostgreSQL real. P02 foi concluída conforme [evidências](verification/p02.md). P03 foi concluída conforme [evidências](verification/p03.md). P04 foi concluída conforme [evidências](verification/p04.md), com o fluxo aprovado pelo responsável. P05 foi concluída conforme [evidências](verification/p05.md). P06 foi concluída conforme [evidências](verification/p06.md). O próximo passo é T07.01; tarefas de P07 em diante permanecem pendentes.
 
 O broker e a primeira integração confiável foram definidos/verificados em P05; stack móvel mantém tarefas próprias. A pesquisa inicial foi definida em P03, conforme decisão 0008. Essas escolhas não eram pré-requisitos do primeiro incremento de Identity.
 

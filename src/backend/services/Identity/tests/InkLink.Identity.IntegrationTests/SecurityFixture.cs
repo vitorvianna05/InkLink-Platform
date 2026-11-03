@@ -18,6 +18,7 @@ public sealed class SecurityFixture : IAsyncLifetime
     public string Password { get; } = Convert.ToHexString(RandomNumberGenerator.GetBytes(24));
     public string BffSecret { get; } = Convert.ToHexString(RandomNumberGenerator.GetBytes(24));
     public string EngagementsSecret { get; } = Convert.ToHexString(RandomNumberGenerator.GetBytes(24));
+    public string SchedulingSecret { get; } = Convert.ToHexString(RandomNumberGenerator.GetBytes(24));
     public string MessagingSecret { get; } = Convert.ToHexString(RandomNumberGenerator.GetBytes(24));
     public string ServiceSecret { get; } = Convert.ToHexString(RandomNumberGenerator.GetBytes(24));
     public string CertificateThumbprint { get; private set; } = string.Empty;
@@ -56,6 +57,7 @@ public sealed class SecurityFixture : IAsyncLifetime
         // Every confidential client in the shared realm receives a test-only secret before import.
         clients.Single(client => client!["clientId"]!.GetValue<string>() == "inklink-engagements")!["secret"] = EngagementsSecret;
         clients.Single(client => client!["clientId"]!.GetValue<string>() == "inklink-messaging")!["secret"] = MessagingSecret;
+        clients.Single(client => client!["clientId"]!.GetValue<string>() == "inklink-scheduling")!["secret"] = SchedulingSecret;
         var testClient = clients[1]!.DeepClone();
         testClient["clientId"] = "inklink-test-users";
         testClient["directAccessGrantsEnabled"] = true;

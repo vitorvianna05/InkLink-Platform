@@ -123,6 +123,7 @@ public sealed class EngagementFixture : IAsyncLifetime
         ["Authentication:UserClients:0"] = UserClient,
         ["Authentication:TechnicalClients:0"] = "inklink-catalog",
         ["Authentication:TechnicalClients:1"] = "inklink-messaging",
+        ["Authentication:TechnicalClients:2"] = "inklink-scheduling",
         ["IdentityDatabase:ConnectionString"] = identityConnection,
         ["CatalogDatabase:ConnectionString"] = catalogConnection,
         ["EngagementsDatabase:ConnectionString"] = AppConnection,
