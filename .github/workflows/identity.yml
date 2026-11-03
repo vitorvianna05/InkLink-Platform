@@ -1,4 +1,4 @@
-name: Backend foundation, identity, catalog, engagements, messaging and scheduling
+name: Backend services, gateway and BFF
 on:
   push:
   pull_request:

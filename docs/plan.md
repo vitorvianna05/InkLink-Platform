@@ -272,30 +272,32 @@ T09.01 revisará a consolidação final, exemplos e compatibilidade de todos os 
 
 **Rastreabilidade:** RF09–RF15, RF18, RF19 e RF21; RNF04–RNF06.
 
-**Evidência:** políticas da [decisão 0013](decisions/0013-p07-lifecycle.md), sete cenários novos e 215 casos com resultado final aprovado após reexecuções descritas na verificação. M4 concluído no recorte backend. Próximo incremento: T08.01.
+**Evidência:** políticas da [decisão 0013](decisions/0013-p07-lifecycle.md), sete cenários novos e 215 casos com resultado final aprovado após reexecuções descritas na verificação. M4 concluído no recorte backend. Incremento seguinte, P08, concluído conforme evidências próprias.
 
 **Revisão de conformidade P07:** ativação aguarda encerramento provisório; coordenação em Application; correlação persistida até o worker. 59 testes do recorte aprovados; [evidências](verification/p07.md) e decisão 0013 atualizadas. Migração aditiva LifecycleCorrelationAndRecovery.
 
 ### P08 — Implementar Gestão financeira e dados do dashboard
 
-**Prioridade:** backend. **Dependências:** P04, P06 e P07. **Situação:** pendente.
+**Prioridade:** backend. **Dependências:** P04, P06 e P07. **Situação:** concluída no recorte backend; [evidências](verification/p08.md).
 
 **Objetivo:** oferecer indicadores baseados em registros do artista, mantendo recebimentos distintos de reservas e conclusão de sessão.
 
-- [ ] Definir o registro gerencial mínimo de receitas, custos e respectivas datas, sem cobrança pela plataforma.
-- [ ] Definir como uma sessão concluída é registrada e como essa informação se relaciona com o atendimento, sem confundir encerramento de chat com recebimento.
-- [ ] Criar Gestão financeira com persistência e migrações próprias.
-- [ ] Implementar os registros autorizados necessários aos indicadores, com validação de valores e contexto.
-- [ ] Implementar cálculos de receita, custos, lucro e margem estimados e ticket médio conforme requirements.md.
-- [ ] Implementar consultas por período e isolamento por artista.
-- [ ] Integrar os dados operacionais necessários de reservas, sessões e conversas por contratos ou projeções.
-- [ ] Definir onde ocorre a composição do dashboard, sem introduzir obrigatoriamente um serviço exclusivo para a tela.
-- [ ] Tratar repetição de eventos, atraso e reconstrução de projeções sem duplicar lançamentos.
-- [ ] Testar períodos vazios, datas de referência diferentes e divergência entre valor agendado e valor recebido.
+- [x] Definir o registro gerencial mínimo de receitas, custos e respectivas datas, sem cobrança pela plataforma.
+- [x] Definir como uma sessão concluída é registrada e como essa informação se relaciona com o atendimento, sem confundir encerramento de chat com recebimento.
+- [x] Criar Gestão financeira com persistência e migrações próprias.
+- [x] Implementar os registros autorizados necessários aos indicadores, com validação de valores e contexto.
+- [x] Implementar cálculos de receita, custos, lucro e margem estimados e ticket médio conforme requirements.md.
+- [x] Implementar consultas por período e isolamento por artista.
+- [x] Integrar os dados operacionais necessários de reservas, sessões e conversas por contratos ou projeções.
+- [x] Definir onde ocorre a composição do dashboard, sem introduzir obrigatoriamente um serviço exclusivo para a tela.
+- [x] Tratar repetição de eventos, atraso e reconstrução de projeções sem duplicar lançamentos.
+- [x] Testar períodos vazios, datas de referência diferentes e divergência entre valor agendado e valor recebido.
 
 **Critério de conclusão:** o backend retorna indicadores verificáveis para uma base controlada, sem incluir dados de outro artista. Reservar ou encerrar um serviço não gera recebimento automaticamente. A composição do dashboard não consulta bancos privados de outros serviços.
 
 **Rastreabilidade:** RF16, RF17, RF20 e RF21; RNF04–RNF06.
+
+**Entrega:** políticas aprovadas na [decisão 0014](decisions/0014-p08-finance.md). Finance mantém ledger privado e compõe Scheduling/Messaging por APIs delegadas. Não há nova projeção: recomposição consulta autoridades, sem reaplicar efeitos. 66 testes do recorte aprovados, migrações e operação local verificadas. M5 depende do aceite integrado em P09.
 
 ### P09 — Validar e disponibilizar o backend integrado
 
@@ -423,6 +425,10 @@ A conclusão de uma etapa não significa a conclusão automática das etapas dep
 
 ## 8. Próxima ação
 
-P00–P07 e o incremento GW estão concluídos nos recortes documentados. M1–M4 atingidos no backend; a [verificação P07](verification/p07.md) consolida encerramento seguro, recuperação e novo atendimento. Próximo passo: T08.01, especificar lançamentos financeiros e sessões antes da implementação de Finance. P09 continua responsável pelo aceite integrado do backend antes dos frontends.
+P00–P08 e o incremento GW estão concluídos nos recortes documentados. M1–M4 atingidos no backend; a [verificação P07](verification/p07.md) consolida encerramento seguro, recuperação e novo atendimento. Próximo passo: T09.01, consolidar contratos e validar o backend integrado. P09 continua responsável pelo aceite integrado do backend antes dos frontends.
 
 GetMyProfile possui transporte autenticado, atualização controlada de nome, vínculo externo/interno e funções locais. Keycloak, Gateway e BFF estão integrados e verificados em P02. Os próximos fluxos continuam priorizando backend, com autorização própria em cada serviço.
+
+## Revisão de conformidade P08
+
+T08.05/T08.06: o adaptador de Finance exige os campos obrigatórios dos contratos operacionais e rejeita ausência/null com 503, preservando zero explícito como resultado válido. Scheduling resolve limites de datas civis com meia-noite inexistente/repetida sem rejeitar o período. A regra de validação dos horários de reserva permanece independente. Cenários e resultados da revisão estão em [evidências P08](verification/p08.md).

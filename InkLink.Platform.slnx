@@ -42,6 +42,8 @@
     <Project Path="src/backend/services/Finance/src/InkLink.Finance.Infrastructure/InkLink.Finance.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/src/backend/services/Finance/tests/">
+    <Project Path="src/backend/services/Finance/tests/InkLink.Finance.ArchitectureTests/InkLink.Finance.ArchitectureTests.csproj" />
+    <Project Path="src/backend/services/Finance/tests/InkLink.Finance.IntegrationTests/InkLink.Finance.IntegrationTests.csproj" />
     <Project Path="src/backend/services/Finance/tests/InkLink.Finance.UnitTests/InkLink.Finance.UnitTests.csproj" />
   </Folder>
   <Folder Name="/src/backend/services/Identity/" />

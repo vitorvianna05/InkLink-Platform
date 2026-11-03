@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+<PropertyGroup><IsTestProject>true</IsTestProject><IsPackable>false</IsPackable></PropertyGroup>
+<ItemGroup>
+<ProjectReference Include="../../src/InkLink.Finance.Api/InkLink.Finance.Api.csproj" />
+<ProjectReference Include="../../../Scheduling/tests/InkLink.Scheduling.IntegrationTests/InkLink.Scheduling.IntegrationTests.csproj" />
+<PackageReference Include="Microsoft.NET.Test.Sdk" /><PackageReference Include="xunit" /><PackageReference Include="xunit.runner.visualstudio" PrivateAssets="all" />
+<PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+</ItemGroup><ItemGroup><Using Include="Xunit" /></ItemGroup></Project>

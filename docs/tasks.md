@@ -193,18 +193,20 @@ Após P06 e antes de P07, conforme decisão 0012. Referências RNF06–RNF08 e c
 
 ### P08 — Gestão financeira e dashboard
 
-**Referências:** RF16, RF17, RF20 e RF21; RNF04–RNF06. **Marco:** M5. **Situação inicial:** pendente.
+**Referências:** RF16, RF17, RF20 e RF21; RNF04–RNF06. **Marco:** M5. **Situação:** concluída no recorte backend; [evidências](verification/p08.md).
 
 | ID / tarefa | Dependências | Entregável | Aceite e verificação |
 | --- | --- | --- | --- |
-| T08.01 — [ ] Especificar lançamentos e sessões | T07.06 | Contrato mínimo de receitas, custos, datas, moeda e registro de sessões concluídas. | Recebimento, conclusão de sessão e encerramento do chat são distintos; não há processamento de pagamento no site. |
-| T08.02 — [ ] Criar Gestão financeira e receitas | T08.01, T02.06 | Serviço, migrações privadas e registro gerencial autorizado de recebimento. | Registro persiste com data e origem; repetir operação não duplica receita e reserva ou aceite não criam lançamento automaticamente. |
-| T08.03 — [ ] Registrar custos e consultar lançamentos | T08.02 | Operações validadas e listagem por artista/período com paginação. | Entrada inválida não é gravada e outro artista não lê ou altera o lançamento. |
-| T08.04 — [ ] Implementar indicadores financeiros | T08.03 | Consultas de receita, custos, lucro e margem com referência temporal explícita. | Base de R$ 4.000,00 e R$ 940,00 retorna R$ 3.060,00 e 76,5%; período vazio não divide por zero e recebimento respeita sua data. |
-| T08.05 — [ ] Integrar dados operacionais do dashboard | T08.01, T08.04, T06.05, T05.05 | Composição contratada ou projeções de sessões, clientes distintos, ticket, reservas e conversas ativas. | Não há leitura de tabelas alheias; atraso ou falha de uma origem não se apresenta como zero real sem indicação. Valor agendado não compõe receita recebida. |
-| T08.06 — [ ] Verificar reconstrução e isolamento | T08.05 | Testes de reprocessamento, períodos distintos e dois artistas. | Projeções reconstruídas mantêm totais sem duplicar lançamentos; clientes são distintos, datas corretas e nenhum indicador vaza entre artistas. |
+| T08.01 — [x] Especificar lançamentos e sessões | T07.06 | Contrato mínimo de receitas, custos, datas, moeda e registro de sessões concluídas. | Recebimento, conclusão de sessão e encerramento do chat são distintos; não há processamento de pagamento no site. |
+| T08.02 — [x] Criar Gestão financeira e receitas | T08.01, T02.06 | Serviço, migrações privadas e registro gerencial autorizado de recebimento. | Registro persiste com data e origem; repetir operação não duplica receita e reserva ou aceite não criam lançamento automaticamente. |
+| T08.03 — [x] Registrar custos e consultar lançamentos | T08.02 | Operações validadas e listagem por artista/período com paginação. | Entrada inválida não é gravada e outro artista não lê ou altera o lançamento. |
+| T08.04 — [x] Implementar indicadores financeiros | T08.03 | Consultas de receita, custos, lucro e margem com referência temporal explícita. | Base de R$ 4.000,00 e R$ 940,00 retorna R$ 3.060,00 e 76,5%; período vazio não divide por zero e recebimento respeita sua data. |
+| T08.05 — [x] Integrar dados operacionais do dashboard | T08.01, T08.04, T06.05, T05.05 | Composição contratada ou projeções de sessões, clientes distintos, ticket, reservas e conversas ativas. | Não há leitura de tabelas alheias; atraso ou falha de uma origem não se apresenta como zero real sem indicação. Valor agendado não compõe receita recebida. |
+| T08.06 — [x] Verificar reconstrução e isolamento | T08.05 | Testes de reprocessamento, períodos distintos e dois artistas. | Projeções reconstruídas mantêm totais sem duplicar lançamentos; clientes são distintos, datas corretas e nenhum indicador vaza entre artistas. |
 
 **Conclusão de P08:** resultados gerenciais verificáveis por artista e período sem confundir previsão e recebimento.
+
+**Entrega:** decisão [0014](decisions/0014-p08-finance.md), serviço Finance, conclusão de sessões em Scheduling e resumo atual em Messaging. Composição síncrona, sem projeção operacional nova; recompor não grava lançamentos. 66 testes aprovados no recorte; M5 aguarda P09. [Execução](development/finance.md).
 
 ### P09 — Validação e disponibilização do backend
 
@@ -284,7 +286,7 @@ Após P06 e antes de P07, conforme decisão 0012. Referências RNF06–RNF08 e c
 
 ## 4. Próximo lote e acompanhamento
 
-P00 foi concluída no nível de decisões e revisão. A [revisão T00.07](decisions/0006-p00-review.md) consolida os registros de T00.01 a T00.06 e o escopo do primeiro incremento. P01 foi implementada e verificada conforme [evidências](verification/p01.md), incluindo Docker e PostgreSQL real. P02 foi concluída conforme [evidências](verification/p02.md). P03 foi concluída conforme [evidências](verification/p03.md). P04 foi concluída conforme [evidências](verification/p04.md), com o fluxo aprovado pelo responsável. P05 foi concluída conforme [evidências](verification/p05.md). P06 foi concluída conforme [evidências](verification/p06.md). O incremento GW foi concluído conforme [evidências](verification/gateway-documentation.md). P07 foi concluída conforme [evidências](verification/p07.md). O próximo passo é T08.01; tarefas de P08 em diante permanecem pendentes.
+P00 foi concluída no nível de decisões e revisão. A [revisão T00.07](decisions/0006-p00-review.md) consolida os registros de T00.01 a T00.06 e o escopo do primeiro incremento. P01 foi implementada e verificada conforme [evidências](verification/p01.md), incluindo Docker e PostgreSQL real. P02 foi concluída conforme [evidências](verification/p02.md). P03 foi concluída conforme [evidências](verification/p03.md). P04 foi concluída conforme [evidências](verification/p04.md), com o fluxo aprovado pelo responsável. P05 foi concluída conforme [evidências](verification/p05.md). P06 foi concluída conforme [evidências](verification/p06.md). O incremento GW foi concluído conforme [evidências](verification/gateway-documentation.md). P07 foi concluída conforme [evidências](verification/p07.md). P08 foi concluída conforme [evidências](verification/p08.md). O próximo passo é T09.01; P09 e os frontends permanecem pendentes.
 
 O broker e a primeira integração confiável foram definidos/verificados em P05; stack móvel mantém tarefas próprias. A pesquisa inicial foi definida em P03, conforme decisão 0008. Essas escolhas não eram pré-requisitos do primeiro incremento de Identity.
 
@@ -293,3 +295,7 @@ Ao concluir uma tarefa, manter referência à evidência e atualizar o marco do 
 Os itens de backend detalham operações e cenários críticos. Os itens de web e mobile são um refinamento inicial por fluxo e deverão ser decompostos novamente em histórias pequenas antes da respectiva etapa. Nenhuma tarefa futura autoriza adicionar funcionalidades que não façam parte do recorte aprovado.
 
 Este arquivo é mutável. A ordem e o detalhamento devem acompanhar as decisões e entregas, mantendo a prioridade do backend, a autonomia dos serviços e os critérios de segurança e consistência dos documentos de referência.
+
+## Revisão de conformidade P08
+
+T08.05/T08.06: o adaptador de Finance exige os campos obrigatórios dos contratos operacionais e rejeita ausência/null com 503, preservando zero explícito como resultado válido. Scheduling resolve limites de datas civis com meia-noite inexistente/repetida sem rejeitar o período. A regra de validação dos horários de reserva permanece independente. Cenários e resultados da revisão estão em [evidências P08](verification/p08.md).

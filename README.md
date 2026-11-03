@@ -5,7 +5,7 @@ Nova aplicação InkLink, criada do zero e separada do protótipo.
 ## Organização
 
 - `docs/`: fonte oficial da documentação SDD.
-- `src/`: código da nova aplicação; serviços Identity, Catalog, Engagements, Messaging e Scheduling em src/backend/services/, Gateway e BFF em pastas próprias.
+- `src/`: código da nova aplicação; serviços Identity, Catalog, Engagements, Messaging, Scheduling e Finance em src/backend/services/, Gateway e BFF em pastas próprias.
 
 O backend utiliza .NET 10 com microsserviços. Os canais previstos são website React e aplicativos iOS e Android em React Native. A prioridade inicial é o backend.
 
@@ -44,3 +44,7 @@ Incremento GW concluído: documentação interativa dos serviços pelo Gateway, 
 Encerramento, barreiras de escrita e reserva e retorno por novo agendamento: [execução e diagnóstico](docs/development/lifecycle.md), [decisão 0013](docs/decisions/0013-p07-lifecycle.md) e [evidências P07](docs/verification/p07.md). São 215 casos com resultado final aprovado nos recortes/reexecuções documentados. Próximo incremento: P08.
 
 Revisão P07: corrigidas recuperação de ativação, coordenação em Application e propagação de correlação; 59 testes do recorte aprovados conforme as evidências. Aplicar também LifecycleCorrelationAndRecovery em Engagements.
+
+## Gestão financeira — P08
+
+Backend de receitas/custos manuais, estornos imutáveis e dashboard por artista/período; conclusão de sessões em Scheduling e conversas atuais em Messaging. [Políticas](docs/decisions/0014-p08-finance.md), [execução e APIs](docs/development/finance.md) e [evidências](docs/verification/p08.md). São 66 testes aprovados no recorte P08, com migrações e health/Swagger locais verificados. Este é o estado atual, posterior aos registros históricos acima. Próxima etapa: P09; M5 e frontends permanecem pendentes.
