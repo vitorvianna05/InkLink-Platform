@@ -162,4 +162,50 @@ public sealed class CatalogApiTests(CatalogFixture fixture)
         Assert.Empty((await scenario.Http.GetFromJsonAsync<JsonObject>("/api/v1/artists"))!["items"]!.AsArray());
     }
 
+
+    [Fact]
+    public async Task Search_combines_filters_orders_relevance_and_binds_cursors()
+    {
+        using var scenario = await fixture.CreateAsync();
+        var first = await scenario.PublishAsync("alice", "Blackwork", "São Paulo", 300);
+        var second = await scenario.PublishAsync("bob", "Blackwork Studio", "São Paulo", 450);
+        var page = (await scenario.Proxied.GetFromJsonAsync<JsonObject>("/api/v1/artists/search?term=blakwork&style=BLACKWORK&city=sao%20paulo&maxPrice=450&limit=1"))!;
+        Assert.Equal(2, page["total"]!.GetValue<int>());
+        Assert.Single(page["items"]!.AsArray()); Assert.True(page["hasMore"]!.GetValue<bool>());
+        var cursor = Uri.EscapeDataString(page["nextCursor"]!.GetValue<string>());
+        var next = (await scenario.Http.GetFromJsonAsync<JsonObject>("/api/v1/artists/search?term=blakwork&style=BLACKWORK&city=sao%20paulo&maxPrice=450&limit=1&cursor=" + cursor))!;
+        Assert.NotEqual(page["items"]![0]!["id"]!.GetValue<Guid>(), next["items"]![0]!["id"]!.GetValue<Guid>());
+        Assert.False(next["hasMore"]!.GetValue<bool>());
+        Assert.Equal(HttpStatusCode.BadRequest, (await scenario.Http.GetAsync("/api/v1/artists/search?term=other&cursor=" + cursor)).StatusCode);
+        var budget = (await scenario.Http.GetFromJsonAsync<JsonObject>("/api/v1/artists/search?style=Blackwork&city=sao%20paulo&maxPrice=300"))!;
+        Assert.Equal(first, budget["items"]![0]!["id"]!.GetValue<Guid>()); Assert.Equal(1, budget["total"]!.GetValue<int>());
+        var empty = (await scenario.Http.GetFromJsonAsync<JsonObject>("/api/v1/artists/search?city=Rio&maxPrice=100"))!;
+        Assert.Empty(empty["items"]!.AsArray());
+        var relevance = (await scenario.Http.GetFromJsonAsync<JsonObject>("/api/v1/artists/search?term=Blackwork"))!;
+        Assert.Equal(first, relevance["items"]![0]!["id"]!.GetValue<Guid>());
+        Assert.Contains(second.ToString(), relevance.ToJsonString());
+        foreach (var invalid in new[] { "limit=0", "limit=101", "maxPrice=-1", "cursor=invalid", "term=" + new string('x', 101) })
+            Assert.Equal(HttpStatusCode.BadRequest, (await scenario.Http.GetAsync("/api/v1/artists/search?" + invalid)).StatusCode);
+    }
+
+
+    [Fact]
+    public async Task Search_projection_can_be_rebuilt_from_the_official_catalog()
+    {
+        using var scenario = await fixture.CreateAsync();
+        await scenario.PublishAsync();
+        await scenario.PublishAsync("bob", "Camila");
+        var options = new DbContextOptionsBuilder<CatalogDbContext>();
+        InkLink.Catalog.Infrastructure.DependencyInjection.Configure(options, scenario.OwnerConnection);
+        await using (var owner = new CatalogDbContext(options.Options))
+        {
+            await owner.Database.ExecuteSqlRawAsync("DELETE FROM catalog.search_terms");
+            Assert.Empty((await scenario.Http.GetFromJsonAsync<JsonArray>("/api/v1/artists/suggestions?term=rafa"))!);
+            Assert.Equal(2, await new CatalogSearchMaintenance(owner).RebuildAsync(default));
+            Assert.Equal(2, await new CatalogSearchMaintenance(owner).RebuildAsync(default));
+        }
+        Assert.NotEmpty((await scenario.Http.GetFromJsonAsync<JsonArray>("/api/v1/artists/suggestions?term=rafa"))!);
+        Assert.Equal(2, (await scenario.Http.GetFromJsonAsync<JsonObject>("/api/v1/artists"))!["total"]!.GetValue<int>());
+    }
+
 }

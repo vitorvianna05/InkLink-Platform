@@ -10,6 +10,9 @@ internal static class PublicCatalogEndpointExtensions
         artists.MapGet("", (ReadCatalog read, CancellationToken cancellationToken, int limit = 20, string? cursor = null) =>
             read.SearchAsync(new ArtistSearch(Limit: limit, Cursor: cursor), cancellationToken))
             .Produces<Page<ArtistCard>>().WithCatalogErrors();
+        artists.MapGet("/search", (ReadCatalog read, CancellationToken cancellationToken, string? term = null, string? style = null, string? city = null, decimal? maxPrice = null, int limit = 20, string? cursor = null) =>
+            read.SearchAsync(new ArtistSearch(term, style, city, maxPrice, limit, cursor), cancellationToken))
+            .Produces<Page<ArtistCard>>().WithCatalogErrors();
         artists.MapGet("/{id:guid}", (Guid id, ReadCatalog read, CancellationToken cancellationToken) => read.ArtistAsync(id, cancellationToken))
             .Produces<ArtistProfile>().ProducesProblem(404).WithCatalogErrors();
         foreach (var flashes in new[] { false, true })
