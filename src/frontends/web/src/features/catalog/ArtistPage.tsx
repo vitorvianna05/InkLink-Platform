@@ -12,7 +12,7 @@ import { Tabs } from '@/shared/ui/Tabs';
 import { useArtist, useArtworks } from './api';
 import { FavoriteButton } from './ArtistCardView';
 
-function ArtworkList({ artistId, kind, onWant }: { artistId: string; kind: ArtworkKind; onWant?: (flash: Artwork) => void }) {
+function ArtworkList({ artistId, kind, onWant, requestDisabled = false }: { artistId: string; kind: ArtworkKind; onWant?: (flash: Artwork) => void; requestDisabled?: boolean }) {
   const works = useArtworks(artistId, kind);
   if (works.isPending) return <Loading label="Carregando trabalhos…" />;
   if (works.isError) return <ErrorState error={works.error} onRetry={() => void works.refetch()} />;
@@ -33,7 +33,7 @@ function ArtworkList({ artistId, kind, onWant }: { artistId: string; kind: Artwo
                 {work.referencePrice !== null && ` · referência ${money(work.referencePrice)}`}
               </span>
               {onWant && (
-                <button type="button" className="text-button red" onClick={() => onWant(work)}>
+                <button type="button" className="text-button red" disabled={requestDisabled} onClick={() => onWant(work)}>
                   Quero este flash <ArrowUpRight size={14} aria-hidden="true" />
                 </button>
               )}
@@ -67,7 +67,8 @@ export function ArtistPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
-  const { session, signIn } = useSession();
+  const { session, signIn, status } = useSession();
+  const requestDisabled = status === 'loading' || status === 'error';
   const artist = useArtist(artistId);
   const conversations = useArtistConversations(artistId, session !== null);
   const [requestOpen, setRequestOpen] = useState(false);
@@ -136,7 +137,7 @@ export function ArtistPage() {
           <span className="price">{money(profile.startingPrice)}</span>
           <small className="muted">Preço inicial de referência. O valor final vem da proposta do artista.</small>
           <div className="row">
-            <button type="button" className="button red" style={{ flex: 1 }} onClick={() => openRequest(null)}>
+            <button type="button" className="button red" style={{ flex: 1 }} disabled={requestDisabled} onClick={() => openRequest(null)}>
               Contar minha ideia <ArrowUpRight size={16} aria-hidden="true" />
             </button>
             <FavoriteButton artistId={profile.id} artistName={profile.name} />
@@ -149,7 +150,7 @@ export function ArtistPage() {
         {tab === 'flashes' && (
           <>
             <p className="muted">Flashes são desenhos criados pelo artista. Tamanho, valor e adaptações são combinados na negociação.</p>
-            <ArtworkList artistId={profile.id} kind="flashes" onWant={openRequest} />
+            <ArtworkList artistId={profile.id} kind="flashes" onWant={openRequest} requestDisabled={requestDisabled} />
           </>
         )}
         {tab === 'conversa' && (

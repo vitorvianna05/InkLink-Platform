@@ -229,7 +229,7 @@ Após P06 e antes de P07, conforme decisão 0012. Referências RNF06–RNF08 e c
 
 ### P10 — Website React
 
-**Referências:** RF01–RF21; RNF01–RNF08, especialmente RNF02 e RNF03. **Marco:** M6. **Situação:** T10.01–T10.09 concluídas; T10.10 parcial, aguardando roteiro com backend real. [Evidências](verification/p10.md) e [decisão 0016](decisions/0016-p10-website.md).
+**Referências:** RF01–RF21; RNF01–RNF08, especialmente RNF02 e RNF03. **Marco:** M6. **Situação:** T10.01–T10.09 concluídas; T10.10 parcial, com quatro cenários de integração real aprovados e homologação restante pendente. [Evidências](verification/p10.md) e [decisão 0016](decisions/0016-p10-website.md).
 
 | ID / tarefa | Dependências | Entregável | Aceite e verificação |
 | --- | --- | --- | --- |
@@ -247,7 +247,7 @@ Após P06 e antes de P07, conforme decisão 0012. Referências RNF06–RNF08 e c
 
 **Conclusão de P10:** website novo sobre os serviços reais, com fluxos de cliente e artista verificados.
 
-**Pendência de T10.10:** checagens no navegador (360/768/1280 px, teclado, foco, recarga) aprovadas com respostas simuladas; falta executar o roteiro por HTTPS com BFF, Gateway e Keycloak reais descrito na [verificação P10](verification/p10.md). M6 não é declarado antes disso.
+**Pendência de T10.10:** checagens visuais/teclado anteriores e quatro cenários HTTPS com BFF, Gateway, Keycloak e APIs reais aprovados. [Integração](development/web-integration.md) documenta execução e correções de sessão/agenda. Faltam o fluxo web completo de proposta/reserva/encerramento, a expiração temporal durante formulário e a homologação de publicação, conforme [verificação P10](verification/p10.md). M6 permanece pendente.
 
 ### P11 — Base móvel React Native
 

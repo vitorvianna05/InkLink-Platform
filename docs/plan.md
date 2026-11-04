@@ -327,7 +327,7 @@ T09.01 consolidou exemplos e compatibilidade dos contratos atuais; incrementos f
 
 ### P10 — Implementar o website em React
 
-**Prioridade:** após a validação do backend integrado. **Dependências:** M5 / P09. **Situação:** em andamento; website implementado e verificado com testes automatizados e no navegador, roteiro com backend real pendente. [Evidências](verification/p10.md) e [decisão 0016](decisions/0016-p10-website.md).
+**Prioridade:** após a validação do backend integrado. **Dependências:** M5 / P09. **Situação:** em andamento; website implementado e verificado com testes automatizados e no navegador, quatro cenários com backend real aprovados; homologação restante de T10.10 pendente. [Evidências](verification/p10.md) e [decisão 0016](decisions/0016-p10-website.md).
 
 **Objetivo:** construir a experiência web sobre os serviços reais, usando o protótipo apenas como referência visual e de navegação.
 
@@ -427,7 +427,7 @@ A conclusão de uma etapa não significa a conclusão automática das etapas dep
 
 ## 8. Próxima ação
 
-P00–P09 e o incremento GW estão concluídos nos recortes documentados. M1–M5 atingidos no backend; a [verificação P09](verification/p09.md) consolida o aceite técnico local, seus resultados e limitações. Próximo passo: T10.01, iniciar o website React criado do zero. Os frontends e a operação de produção permanecem pendentes.
+P00–P09 e o incremento GW estão concluídos nos recortes documentados. M1–M5 atingidos no backend; a [verificação P09](verification/p09.md) consolida o aceite técnico local, seus resultados e limitações. P10 possui o website React e quatro cenários de integração HTTPS real aprovados; o próximo passo é concluir a homologação restante de T10.10, conforme a verificação P10. M6, aplicativos móveis e operação de produção permanecem pendentes.
 
 GetMyProfile possui transporte autenticado, atualização controlada de nome, vínculo externo/interno e funções locais. Keycloak, Gateway e BFF estão integrados e verificados em P02. Os próximos fluxos continuam priorizando backend, com autorização própria em cada serviço.
 

@@ -96,3 +96,9 @@ Para navegação manual simultânea em ambientes que usam localhost, utilizar pe
 ### Regressão da inicialização local
 
 No Windows/PowerShell 7, executar `./src/backend/scripts/tests/Test-IntegrationStartup.ps1`. A verificação usa uma porta real temporária para conferir o proprietário do listener e seis cenários controlados: porta ocupada antes da execução, processo encerrado, porta tomada durante a inicialização, troca de proprietário após o health check, encerramento após a resposta e inicialização saudável. Não inicia/para hosts reais nem altera bancos ou manifesto. Falhas na consulta de listeners impedem a inicialização; não são interpretadas como porta livre.
+
+## Website conectado
+
+Após iniciar os oito hosts, executar `./src/frontends/web/scripts/Start-WebIntegration.ps1` na raiz para abrir o website em https://localhost:5173, consumindo o BFF isolado com TLS verificado. [Configuração, contas e roteiro real](web-integration.md). O script não muda os contratos das APIs nem configura infraestrutura de produção.
+
+Start-Integration.ps1 também prepara a conta local master (Client + Artist) após os oito hosts ficarem disponíveis. A senha é gerada/preservada em artifacts/integration/master-account.json, ignorado pelo Git; [acesso e política](web-integration.md#conta-local-padrão). Não concede administração global nem cria usuário de produção.

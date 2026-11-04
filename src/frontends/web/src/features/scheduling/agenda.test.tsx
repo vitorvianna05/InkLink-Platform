@@ -59,4 +59,21 @@ describe('agenda do artista', () => {
     expect(bodies[0]).toEqual({ engagementId: 'e1', start: '2030-01-16T15:00:00-03:00', end: '2030-01-16T17:00:00-03:00' });
     expect(keys[0]).toMatch(/^[0-9a-f-]{36}$/);
   });
+  it('envia disponibilidade com segundos conforme o contrato TimeOnly da API', async () => {
+    signedIn(artist, true);
+    backend();
+    let sent: unknown;
+    server.use(http.put('/api/v1/scheduling/availability/:date', async ({ request, params }) => {
+      sent = await request.json();
+      return HttpResponse.json({ artistId: artist.id, date: params.date, timeZoneId: 'America/Sao_Paulo', windows: [], busy: [], guaranteesReservation: false });
+    }));
+    renderApp('/estudio/agenda?dia=2030-01-16');
+    const form = (await screen.findByRole('heading', { name: 'Disponibilidade do dia' })).closest('form')!;
+    await userEvent.clear(within(form).getByLabelText('Início'));
+    await userEvent.type(within(form).getByLabelText('Início'), '11:00');
+    await userEvent.click(within(form).getByRole('button', { name: 'Salvar disponibilidade' }));
+    expect(await within(form).findByText('Disponibilidade salva.')).toBeInTheDocument();
+    expect(sent).toEqual({ timeZoneId: 'America/Sao_Paulo', windows: [{ start: '11:00:00', end: '19:00:00' }] });
+  });
+
 });

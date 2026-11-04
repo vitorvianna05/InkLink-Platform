@@ -7,7 +7,7 @@ import { useFavorites, useToggleFavorite } from './api';
 
 /** Botão de favorito persistente: visitantes são convidados a entrar. */
 export function FavoriteButton({ artistId, artistName }: { artistId: string; artistName: string }) {
-  const { session, signIn } = useSession();
+  const { session, signIn, status } = useSession();
   const favorites = useFavorites(session !== null);
   const toggle = useToggleFavorite();
   const active = favorites.data?.some((artist) => artist.id === artistId) ?? false;
@@ -20,7 +20,7 @@ export function FavoriteButton({ artistId, artistName }: { artistId: string; art
       className={shown ? 'icon-button favorite active' : 'icon-button favorite'}
       aria-pressed={shown}
       aria-label={shown ? `Remover ${artistName} dos favoritos` : `Salvar ${artistName} nos favoritos`}
-      disabled={pending || (session !== null && favorites.isPending)}
+      disabled={status === 'loading' || status === 'error' || pending || (session !== null && favorites.isPending)}
       onClick={() => (session ? toggle.mutate({ artistId, favorite: !active }) : signIn())}
     >
       <Heart size={18} fill={shown ? 'currentColor' : 'none'} aria-hidden="true" />

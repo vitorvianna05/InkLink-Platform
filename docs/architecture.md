@@ -517,3 +517,9 @@ Finance foi republicado mantendo os outros sete processos e seu contrato públic
 O runner Test-Backend.ps1 e a CI executam projetos com relatórios distintos. Coleções de integração são serializadas para limitar Keycloak/brokers simultâneos; concorrência de negócio continua explícita nos testes. CLI Erlang dos harnesses possui limite de schedulers. Não foram ampliados timeouts dos serviços ou flexibilizadas autorizações para obter aprovação.
 
 Identity filtra logs de infraestrutura com potencial de incluir consultas/credenciais, mantendo o log estruturado próprio de requisição com traceId. API/worker, eventos, pendências e recuperação são verificáveis sem payload privado. OpenAPI de Scheduling declara tipos de timestamp e limites monetários coerentes com a validação existente, sem mudar regras de domínio ou schema de banco. [Evidências e limites](verification/p09.md).
+
+## Integração web P10
+
+O website React usa o BFF em mesma origem por proxy HTTPS do Vite no ambiente local. A configuração do proxy recebe o certificado confiável do BFF, sem desabilitar a validação TLS. Tokens permanecem no servidor, cookies HttpOnly/Secure e antiforgery protegem escritas. Retornos OIDC são encaminhados tanto no servidor de desenvolvimento como no preview. O script de execução isola configurações no processo e não altera os hosts do produto.
+
+O adaptador de Agenda converte a representação dos inputs HH:mm para o contrato HTTP TimeOnly HH:mm:ss; Domain continua responsável por disponibilidade e conflitos. O cliente HTTP propaga expiração também quando o 401 ocorre na aquisição do antiforgery. Controles dependentes de sessão aguardam a identidade antes de habilitar ações. [Operação e diagnóstico](development/web-integration.md) e [evidências/limites](verification/p10.md) registram a integração com serviços reais; T10.10/M6 permanecem parcialmente pendentes.

@@ -50,7 +50,12 @@ let csrfToken: Promise<string> | null = null;
 
 async function readCsrfToken(): Promise<string> {
   csrfToken ??= (async () => {
-    const response = await fetch('/bff/antiforgery', { credentials: 'same-origin', headers: { Accept: 'application/json' } });
+    let response: Response;
+    try {
+      response = await fetch('/bff/antiforgery', { credentials: 'same-origin', headers: { Accept: 'application/json' } });
+    } catch {
+      throw new ApiError({ status: 0, code: 'network.unavailable' });
+    }
     if (!response.ok) throw await toApiError(response);
     const body = (await response.json()) as { requestToken: string };
     return body.requestToken;
@@ -146,10 +151,12 @@ async function send(path: string, options: RequestOptions, retryCsrf: boolean): 
 
 /** Executa a chamada e devolve status + corpo JSON (ou undefined em 202/204 sem corpo). */
 export async function request<T>(path: string, options: RequestOptions = {}): Promise<ApiResponse<T>> {
-  const response = await send(path, options, true);
-  if (!response.ok) {
-    const error = await toApiError(response);
-    if (error.isSessionExpired) {
+  let response: Response;
+  try {
+    response = await send(path, options, true);
+    if (!response.ok) throw await toApiError(response);
+  } catch (error) {
+    if (error instanceof ApiError && error.isSessionExpired) {
       resetCsrfToken();
       sessionListeners.forEach((listener) => listener());
     }

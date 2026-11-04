@@ -1,5 +1,6 @@
 /// <reference types="vitest/config" />
 import { readFileSync } from 'node:fs';
+import { Agent } from 'node:https';
 import { fileURLToPath, URL } from 'node:url';
 import react from '@vitejs/plugin-react';
 import { defineConfig, loadEnv, type ProxyOptions } from 'vite';
@@ -11,7 +12,14 @@ import { defineConfig, loadEnv, type ProxyOptions } from 'vite';
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'INKLINK_');
   const bff = env.INKLINK_BFF_URL ?? 'https://localhost:5192';
-  const proxy: ProxyOptions = { target: bff, changeOrigin: true, secure: env.INKLINK_BFF_INSECURE !== 'true' };
+  const proxy: ProxyOptions = {
+    target: bff,
+    changeOrigin: true,
+    secure: env.INKLINK_BFF_INSECURE !== 'true',
+    // Confiança restrita ao upstream configurado, sem desabilitar a verificação TLS.
+    agent: env.INKLINK_BFF_CA_CERT ? new Agent({ ca: readFileSync(env.INKLINK_BFF_CA_CERT) }) : undefined,
+  };
+  const routes = { '/bff': proxy, '/api': proxy, '/signin-oidc': proxy, '/signout-callback-oidc': proxy };
   const https = env.INKLINK_DEV_CERT && env.INKLINK_DEV_KEY
     ? { cert: readFileSync(env.INKLINK_DEV_CERT), key: readFileSync(env.INKLINK_DEV_KEY) }
     : undefined;
@@ -23,9 +31,9 @@ export default defineConfig(({ mode }) => {
       port: Number(env.INKLINK_WEB_PORT ?? 5173),
       strictPort: true,
       https,
-      proxy: { '/bff': proxy, '/api': proxy, '/signin-oidc': proxy, '/signout-callback-oidc': proxy },
+      proxy: routes,
     },
-    preview: { port: Number(env.INKLINK_WEB_PORT ?? 5173), strictPort: true, https, proxy: { '/bff': proxy, '/api': proxy } },
+    preview: { port: Number(env.INKLINK_WEB_PORT ?? 5173), strictPort: true, https, proxy: routes },
     build: { sourcemap: true, target: 'es2022' },
     test: {
       environment: 'jsdom',

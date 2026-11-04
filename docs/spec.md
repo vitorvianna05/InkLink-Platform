@@ -4,7 +4,7 @@
 
 Este documento consolida, por engenharia reversa documental, a especificação funcional e técnica já estabelecida para o InkLink. Sua finalidade principal é reunir comportamentos, responsabilidades, contratos e limites do produto, sem introduzir decisões novas ou substituir os documentos existentes.
 
-**Data de referência:** 03/11/2026. **Recorte:** P00–P06 e incremento GW concluídos; P07 concluída no recorte backend; P08 concluída no recorte backend; P09 concluída no recorte backend local; P10–P13 planejados. A consolidação referencia as evidências de cada etapa; os resultados e limites da P09 estão em sua verificação própria.
+**Data de referência:** 03/11/2026. **Recorte:** P00–P06 e incremento GW concluídos; P07 concluída no recorte backend; P08 concluída no recorte backend; P09 concluída no recorte backend local; P10 implementada com T10.10 parcialmente validada; P11–P13 planejados. A consolidação referencia as evidências de cada etapa; os resultados e limites da P09 estão em sua verificação própria.
 
 | Fonte | Responsabilidade |
 | --- | --- |
@@ -321,7 +321,7 @@ P09 consolida regressão integrada, recuperação, ambiente e implantação inde
 | P07 / T07.01–T07.06 | Encerramento e novo atendimento | RF09–RF15, RF18–RF19, RF21 | Concluído; [evidências P07](verification/p07.md). |
 | P08 / T08.01–T08.06 | Finance e dashboard | RF16–RF17, RF20–RF21 | Concluído no backend; [evidências P08](verification/p08.md). |
 | P09 / T09.01–T09.06 | Consolidação/aceite backend | RF01–RF21 no backend; RNF01, RNF04–RNF08 | Concluído no recorte local; [evidências P09](verification/p09.md). |
-| P10 / T10.01–T10.10 | Website React | RF01–RF21; RNF01–RNF08 | Pendente. |
+| P10 / T10.01–T10.11 | Website React | RF01–RF21; RNF01–RNF08 | Implementado; quatro cenários com backend real aprovados. T10.10/M6 parcialmente pendentes, conforme verificação P10. |
 | P11 / T11.01–T11.05 | Base React Native | Capacidades do primeiro incremento móvel | Pendente. |
 | P12 / T12.01–T12.04 | iOS | Recorte móvel aprovado | Pendente; depende de P11. |
 | P13 / T13.01–T13.04 | Android | Recorte móvel aprovado | Pendente; depende de P11, não de P12. |
@@ -335,7 +335,7 @@ Permanecem para refinamento explícito:
 - Evolução do ciclo P07: cancelamento/reagendamento e novas políticas além da decisão 0013.
 - Evolução financeira além da decisão 0014: correções de sessões, estornos parciais e eventual projeção mediante necessidade.
 - Evolução operacional após P09: nuvem/produção, coleta e alertas, carga e novas versões de contrato, sem reabrir os resultados técnicos locais já verificados.
-- P10: ferramentas de build, rotas, cache e composição da experiência web.
+- P10: concluir homologação de fluxos, expiração temporal e publicação web. Ferramentas, rotas, cache e transporte pelo BFF estão na decisão 0016.
 - P11–P13: Expo ou configuração nativa, compartilhamento de código, recorte funcional, testes e distribuição móvel.
 - Upload, tratamento e armazenamento de mídia, moderação e exclusividade/reutilização de flashes.
 - Cancelamento, reagendamento e passagem por meia-noite fora do recorte P06.
