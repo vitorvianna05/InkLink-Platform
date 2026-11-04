@@ -7,7 +7,7 @@ internal static class SchedulingDocumentationExtensions
 {
     public static IServiceCollection AddSchedulingDocumentation(this IServiceCollection services)
     {
-        services.AddOpenApi(o => { o.AddSchemaTransformer<ProblemDetailsSchemaTransformer>(); o.AddOperationTransformer<AuthenticationOpenApi>(); o.AddOperationTransformer<ReservationIdempotency>(); });
+        services.AddOpenApi(o => { o.AddSchemaTransformer<ProblemDetailsSchemaTransformer>(); o.AddSchemaTransformer<SchedulingInputSchemas>(); o.AddOperationTransformer<AuthenticationOpenApi>(); o.AddOperationTransformer<ReservationIdempotency>(); });
         return services;
     }
     public static WebApplication MapSchedulingDocumentation(this WebApplication app)

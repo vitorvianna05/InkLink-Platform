@@ -17,6 +17,7 @@ public sealed class GatewayDocumentationTests
     [InlineData("engagements", "/api/v2/engagements")]
     [InlineData("messaging", "/api/v1/conversations")]
     [InlineData("scheduling", "/api/v1/scheduling/reservations")]
+    [InlineData("finance", "/api/v1/finance/dashboard")]
     public async Task Public_documents_are_selectable_filtered_and_use_gateway_origin(string name, string path)
     {
         var handler = new DocumentsHandler(path);
@@ -25,7 +26,7 @@ public sealed class GatewayDocumentationTests
         var script = await http.GetStringAsync("/swagger/index.js");
         Assert.Contains("inklink-swagger", script); Assert.Contains("usePkceWithAuthorizationCodeGrant", script);
         Assert.DoesNotContain("clientSecret", script); Assert.DoesNotContain("persistAuthorization\":true", script);
-        foreach (var service in new[] { "identity", "catalog", "engagements", "messaging", "scheduling" }) Assert.Contains(service + ".json", script);
+        foreach (var service in new[] { "identity", "catalog", "engagements", "messaging", "scheduling", "finance" }) Assert.Contains(service + ".json", script);
         var document = (await http.GetFromJsonAsync<JsonObject>($"/swagger/documents/{name}.json"))!;
         Assert.Equal("/", document["servers"]![0]!["url"]!.GetValue<string>());
         Assert.NotNull(document["paths"]![path]);
@@ -66,7 +67,7 @@ public sealed class GatewayDocumentationTests
             builder.UseSetting("Authentication:Authority", "https://issuer.test/realms/inklink");
             builder.UseSetting("Authentication:Audience", "inklink-api");
             builder.UseSetting("Authentication:UserClients:0", "inklink-swagger");
-            foreach (var service in new[] { "Identity", "Catalog", "Engagements", "Messaging", "Scheduling" })
+            foreach (var service in new[] { "Identity", "Catalog", "Engagements", "Messaging", "Scheduling", "Finance" })
                 builder.UseSetting("Gateway:" + service + "Address", "https://" + service.ToLowerInvariant() + ".test/");
             builder.ConfigureTestServices(s => s.AddHttpClient<GatewayDocuments>().ConfigurePrimaryHttpMessageHandler(() => handler));
         }

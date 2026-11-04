@@ -26,6 +26,7 @@ No Visual Studio, selecione múltiplos projetos de inicialização:
 | InkLink.Engagements.Api | http://localhost:5194 |
 | InkLink.Messaging.Api | http://localhost:5195 |
 | InkLink.Scheduling.Api | http://127.0.0.1:5196 |
+| InkLink.Finance.Api | http://127.0.0.1:5197 |
 | InkLink.Gateway | http://127.0.0.1:5191/swagger |
 
 Use os perfis Project com ASPNETCORE_ENVIRONMENT=Development. Gateway e Identity têm perfis alinhados às URLs de integração. BFF é opcional para testes separados de sessão web; os testes nesta interface usam Bearer via PKCE.
@@ -48,6 +49,7 @@ O cliente não utiliza segredo ou password grant. O token expira conforme a pol�
 - /swagger/documents/engagements.json — API v2 vigente
 - /swagger/documents/messaging.json
 - /swagger/documents/scheduling.json
+- /swagger/documents/finance.json
 
 Os documentos OpenAPI originais continuam em cada serviço, em /openapi/v1.json. O Gateway adapta apenas a apresentação de consumo público. Endpoints técnicos entre serviços não aparecem no catálogo; não use credenciais técnicas para contornar permissões de usuário.
 
@@ -55,6 +57,8 @@ Se um documento retornar 503 documentation.service_unavailable, confira se o ser
 
 ## Roteiro inicial
 
-Consultar/publicar artista em Catalog; criar solicitação em Engagements; apresentar proposta com Artist; aceitar com Client; consultar e enviar mensagens em Messaging; cadastrar disponibilidade e confirmar reserva em Scheduling. Serviços e broker precisam estar iniciados para os efeitos assíncronos. Encerramento distribuído segue as tarefas P07 e não é demonstrado como concluído por esta interface.
+Consultar/publicar artista em Catalog; criar solicitação em Engagements; apresentar proposta com Artist; aceitar com Client; consultar e enviar mensagens em Messaging; cadastrar disponibilidade e confirmar reserva em Scheduling. Serviços e broker precisam estar iniciados para os efeitos assíncronos. Encerramento distribuído e gestão financeira estão implementados em P07/P08; consultar ciclo integrado e Finance. A consolidação P09 está em [contratos dos consumidores](consumer-contracts.md), com exemplos e política de compatibilidade.
 
 A ferramenta é de desenvolvimento/testes e não é registrada em produção. Assets são embarcados no pacote, sem necessidade de CDN. O limite do documento é 4 MiB; origem upstream é configuração fixa de serviço, não parâmetro livre do usuário.
+
+Para execução integral isolada com HTTPS nos oito hosts, configuração e dados próprios, seguir o [ambiente P09](integration.md). O catálogo correspondente está em https://localhost:5291/swagger.

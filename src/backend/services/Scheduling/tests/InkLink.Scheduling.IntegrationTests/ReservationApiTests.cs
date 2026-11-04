@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text;
+using System.Text.Json.Nodes;
 using InkLink.Scheduling.Application.Reservations;
 using InkLink.Scheduling.Domain;
 using InkLink.Scheduling.Infrastructure.Integration;
@@ -15,6 +16,27 @@ namespace InkLink.Scheduling.IntegrationTests;
 [Collection("scheduling")]
 public sealed class ReservationApiTests(SchedulingFixture fixture)
 {
+    [Fact]
+    public async Task Openapi_declares_offset_timestamp_types_and_session_money_constraints()
+    {
+        using var client = fixture.Host.CreateClient();
+        var document = (await client.GetFromJsonAsync<JsonObject>("/openapi/v1.json"))!;
+        var schemas = document["components"]!["schemas"]!;
+        foreach (var property in new[] { "start", "end" })
+        {
+            var timestamp = schemas["ReserveInput"]!["properties"]![property]!;
+            Assert.Equal("string", timestamp["type"]!.GetValue<string>());
+            Assert.Equal("date-time", timestamp["format"]!.GetValue<string>());
+        }
+        var completion = schemas["CompletionInput"]!;
+        Assert.Contains(completion["required"]!.AsArray(), name => name!.GetValue<string>() == "completedAt");
+        Assert.Equal("string", completion["properties"]!["completedAt"]!["type"]!.GetValue<string>());
+        var amount = completion["properties"]!["amount"]!;
+        Assert.Equal(0.01m, amount["minimum"]!.GetValue<decimal>());
+        Assert.Equal(9999999.99m, amount["maximum"]!.GetValue<decimal>());
+        Assert.Equal(0.01m, amount["multipleOf"]!.GetValue<decimal>());
+        Assert.Contains("null", amount["type"]!.AsArray().Select(value => value!.GetValue<string>()));
+    }
     [Fact]
     public async Task Parties_share_reservation_calendar_and_persistent_operation_without_third_party_access()
     {

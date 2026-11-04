@@ -1,0 +1,130 @@
+@gateway = https://localhost:5291
+@clientToken = REPLACE_LOCALLY
+@artistToken = REPLACE_LOCALLY
+@artistId = REPLACE_UUID
+@engagementId = REPLACE_UUID
+@proposalId = REPLACE_UUID
+@conversationId = REPLACE_UUID
+@reservationId = REPLACE_UUID
+@entryId = REPLACE_UUID
+@reservationDate = 2030-01-15
+@start = 2030-01-15T10:00:00-03:00
+@end = 2030-01-15T11:00:00-03:00
+@effectiveDate = 2026-11-03
+@requestKey = REPLACE_NEW_UUID
+@from = 2026-11-03
+@to = 2026-11-04
+
+### Catálogo público
+GET {{gateway}}/api/v1/artists/suggestions?term=blakwork
+
+### Perfil privado
+GET {{gateway}}/api/v1/profiles/me
+Authorization: Bearer {{clientToken}}
+
+### Pedido; repetir a mesma chave e corpo recupera o resultado
+POST {{gateway}}/api/v2/engagements
+Authorization: Bearer {{clientToken}}
+Idempotency-Key: {{requestKey}}
+Content-Type: application/json
+
+{"artistId":"{{artistId}}","idea":"Tatuagem floral","bodyRegion":"Braço","approximateSizeCm":10}
+
+### Proposta exige outra chave UUID
+POST {{gateway}}/api/v2/engagements/{{engagementId}}/proposals
+Authorization: Bearer {{artistToken}}
+Idempotency-Key: REPLACE_ANOTHER_UUID
+Content-Type: application/json
+
+{"description":"Sessão floral","amount":450}
+
+### Aceite não cria recebimento ou horário
+PUT {{gateway}}/api/v2/engagements/{{engagementId}}/proposals/{{proposalId}}/acceptance
+Authorization: Bearer {{clientToken}}
+
+### Histórico autorizado
+GET {{gateway}}/api/v1/conversations/{{conversationId}}/messages?limit=20
+Authorization: Bearer {{clientToken}}
+
+### Erro 400: mensagem vazia
+POST {{gateway}}/api/v1/conversations/{{conversationId}}/messages
+Authorization: Bearer {{clientToken}}
+Idempotency-Key: REPLACE_ANOTHER_UUID
+Content-Type: application/json
+
+{"body":" "}
+
+### Encerramento: 202 é pendência; reservas futuras impedem conclusão
+POST {{gateway}}/api/v2/engagements/{{engagementId}}/closure
+Authorization: Bearer {{clientToken}}
+Content-Type: application/json
+
+{"confirmed":true}
+
+### Acompanhar processo
+GET {{gateway}}/api/v2/engagements/{{engagementId}}/lifecycle
+Authorization: Bearer {{clientToken}}
+
+### Dashboard do artista
+GET {{gateway}}/api/v1/finance/dashboard?from={{from}}&to={{to}}
+Authorization: Bearer {{artistToken}}
+
+### Erro 401, sem autenticação
+GET {{gateway}}/api/v1/finance/dashboard?from={{from}}&to={{to}}
+
+### Publicar perfil pelo artista
+PUT {{gateway}}/api/v1/artists/me
+Authorization: Bearer {{artistToken}}
+Content-Type: application/json
+
+{"name":"Artista de exemplo","studio":"Estúdio","city":"São Paulo","biography":"Portfólio","styles":["Blackwork"],"startingPrice":300}
+
+### Salvar favorito próprio
+PUT {{gateway}}/api/v1/favorites/{{artistId}}
+Authorization: Bearer {{clientToken}}
+
+### Disponibilidade: ajustar a data e os horários ao cenário real
+PUT {{gateway}}/api/v1/scheduling/availability/{{reservationDate}}
+Authorization: Bearer {{artistToken}}
+Content-Type: application/json
+
+{"timeZoneId":"America/Sao_Paulo","windows":[{"start":"10:00:00","end":"12:00:00"}]}
+
+### Reserva exige proposta aceita e intervalo futuro dentro da disponibilidade
+POST {{gateway}}/api/v1/scheduling/reservations
+Authorization: Bearer {{artistToken}}
+Idempotency-Key: REPLACE_ANOTHER_UUID
+Content-Type: application/json
+
+{"engagementId":"{{engagementId}}","start":"{{start}}","end":"{{end}}"}
+
+### Conclusão: somente após o término real; antes dele, esperar 400
+PUT {{gateway}}/api/v1/scheduling/reservations/{{reservationId}}/completion
+Authorization: Bearer {{artistToken}}
+Content-Type: application/json
+
+{"completedAt":"{{end}}","amount":450}
+
+### Recebimento manual: ajustar effectiveDate para não ser futura
+POST {{gateway}}/api/v1/finance/entries
+Authorization: Bearer {{artistToken}}
+Idempotency-Key: REPLACE_ANOTHER_UUID
+Content-Type: application/json
+
+{"kind":"Receipt","description":"Parcela recebida","amount":4000,"effectiveDate":"{{effectiveDate}}","engagementId":"{{engagementId}}"}
+
+### Custo geral: usar chave própria
+POST {{gateway}}/api/v1/finance/entries
+Authorization: Bearer {{artistToken}}
+Idempotency-Key: REPLACE_ANOTHER_UUID
+Content-Type: application/json
+
+{"kind":"Cost","description":"Material","amount":940,"effectiveDate":"{{effectiveDate}}"}
+
+### Estorno integral único: preserva original e sua data efetiva
+POST {{gateway}}/api/v1/finance/entries/{{entryId}}/reversal
+Authorization: Bearer {{artistToken}}
+Idempotency-Key: REPLACE_ANOTHER_UUID
+Content-Type: application/json
+
+{"reason":"Correção gerencial"}
