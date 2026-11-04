@@ -245,7 +245,9 @@ Projeções não são autoridade para confirmar reservas, permitir envio de mens
 
 O catálogo mantém a fonte dos dados pesquisáveis. Um índice de pesquisa deve poder ser reconstruído a partir dessa origem e não será usado como banco principal das regras de negócio.
 
-Arquivos de portfólio e flashes poderão ser mantidos em armazenamento próprio para mídia, com metadados sob responsabilidade de Catálogo. Em P03, apenas referências públicas HTTPS e metadados são persistidos, conforme decisão 0008; não há upload nem processamento de binários. Provedor e políticas do armazenamento de arquivos serão definidos em incremento próprio; o frontend não receberá credenciais administrativas desse armazenamento.
+Arquivos de portfólio e flashes poderão ser mantidos em armazenamento próprio para mídia, com metadados sob responsabilidade de Catálogo. Em P03, apenas referências públicas HTTPS e metadados são persistidos, conforme decisão 0008; não há upload nem processamento de binários. O frontend não recebe credenciais desse armazenamento.
+
+A [decisão 0018](decisions/0018-p10-images.md) define o incremento de imagens: armazenamento de objetos pela API S3, com Cloudflare R2 em produção e SeaweedFS no ambiente local. Catálogo é dono das imagens de obras; Identity é dono da foto de perfil, uma por conta. A foto do artista é pública e chega a Catálogo por projeção alimentada por evento; a foto do cliente é privada e só é entregue por endereço assinado de curta duração a artistas com atendimento com ele. O envio passa pelo backend, e as imagens são regravadas em WebP no servidor, sem metadados. Não se cria serviço de mídia próprio.
 
 ## 7. Comunicação e contratos
 
