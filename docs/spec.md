@@ -321,7 +321,7 @@ P09 consolida regressão integrada, recuperação, ambiente e implantação inde
 | P07 / T07.01–T07.06 | Encerramento e novo atendimento | RF09–RF15, RF18–RF19, RF21 | Concluído; [evidências P07](verification/p07.md). |
 | P08 / T08.01–T08.06 | Finance e dashboard | RF16–RF17, RF20–RF21 | Concluído no backend; [evidências P08](verification/p08.md). |
 | P09 / T09.01–T09.06 | Consolidação/aceite backend | RF01–RF21 no backend; RNF01, RNF04–RNF08 | Concluído no recorte local; [evidências P09](verification/p09.md). |
-| P10 / T10.01–T10.14 | Website React | RF01–RF21; RNF01–RNF08 | Implementado; quatro cenários com backend real aprovados. T10.10/M6 parcialmente pendentes, conforme verificação P10; menu do usuário e página de login (T10.12–T10.14) pendentes. |
+| P10 / T10.01–T10.14 | Website React | RF01–RF21; RNF01–RNF08 | Implementado; quatro cenários com backend real aprovados. T10.10/M6 parcialmente pendentes, conforme verificação P10; modelo de login definido na decisão 0017; menu do usuário e página de login (T10.12, T10.14) pendentes. |
 | P11 / T11.01–T11.05 | Base React Native | Capacidades do primeiro incremento móvel | Pendente. |
 | P12 / T12.01–T12.04 | iOS | Recorte móvel aprovado | Pendente; depende de P11. |
 | P13 / T13.01–T13.04 | Android | Recorte móvel aprovado | Pendente; depende de P11, não de P12. |
@@ -335,7 +335,7 @@ Permanecem para refinamento explícito:
 - Evolução do ciclo P07: cancelamento/reagendamento e novas políticas além da decisão 0013.
 - Evolução financeira além da decisão 0014: correções de sessões, estornos parciais e eventual projeção mediante necessidade.
 - Evolução operacional após P09: nuvem/produção, coleta e alertas, carga e novas versões de contrato, sem reabrir os resultados técnicos locais já verificados.
-- P10: concluir homologação de fluxos, expiração temporal e publicação web. Ferramentas, rotas, cache e transporte pelo BFF estão na decisão 0016.
+- P10: concluir homologação de fluxos, expiração temporal e publicação web. Ferramentas, rotas, cache e transporte pelo BFF estão na decisão 0016; a página de login usa o fluxo do BFF conforme a decisão 0017.
 - P11–P13: Expo ou configuração nativa, compartilhamento de código, recorte funcional, testes e distribuição móvel.
 - Upload, tratamento e armazenamento de mídia, moderação e exclusividade/reutilização de flashes.
 - Cancelamento, reagendamento e passagem por meia-noite fora do recorte P06.

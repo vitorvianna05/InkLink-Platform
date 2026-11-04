@@ -341,7 +341,8 @@ T09.01 consolidou exemplos e compatibilidade dos contratos atuais; incrementos f
 - [x] Implementar carregamento, falha, estado vazio e coordenação pendente em cada fluxo.
 - [x] Verificar responsividade e navegação por teclado, incluindo foco em diálogos e sugestões.
 - [ ] Corrigir o menu do cabeçalho para abrir as informações e ações do usuário (entrar/sair), conforme T10.12.
-- [ ] Definir o modelo de login web e entregar a página `/entrar` dividida 50/50 com a identidade InkLink, preservando Code + PKCE no BFF, conforme T10.13–T10.14.
+- [x] Definir o modelo de login web: página React que inicia o fluxo atual do BFF, conforme [decisão 0017](decisions/0017-p10-web-login.md) (T10.13).
+- [ ] Entregar a página `/entrar` dividida 50/50 com a identidade InkLink, preservando Code + PKCE no BFF, conforme T10.14.
 - [ ] Executar testes de integração com o backend e o roteiro completo pelo navegador.
 - [ ] Documentar e validar a publicação do website no ambiente escolhido. Instruções documentadas; validação pendente.
 
