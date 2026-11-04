@@ -142,8 +142,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     } finally {
       resetCsrfToken();
       setExpired(false);
-      queryClient.clear();
+      // Atualiza a sessão observada antes de descartar o restante do cache: limpar tudo primeiro
+      // desliga o observador da consulta antiga e manteria a identidade anterior na tela.
       queryClient.setQueryData(['session'], null);
+      queryClient.removeQueries({ predicate: (query) => query.queryKey[0] !== 'session' });
     }
   }, [queryClient]);
 

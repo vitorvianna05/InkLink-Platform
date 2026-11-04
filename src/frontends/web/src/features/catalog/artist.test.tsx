@@ -122,6 +122,7 @@ describe('perfil público', () => {
       expect(screen.getByRole('button', { name: /Salvar .* nos favoritos/ })).toBeDisabled();
       expect(await screen.findByRole('button', { name: /Quero este flash/ })).toBeDisabled();
     } finally { complete(); }
+    await userEvent.click(screen.getByRole('button', { name: 'Abrir menu da conta' }));
     expect(await screen.findByRole('button', { name: 'Sair da conta' })).toBeInTheDocument();
   });
 

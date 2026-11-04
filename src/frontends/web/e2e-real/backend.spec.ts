@@ -17,7 +17,10 @@ async function login(page: Page, actor: keyof typeof smoke.users) {
   await popup.locator('#username').fill(smoke.users[actor]);
   await popup.locator('#password').fill(password!);
   await popup.locator('#kc-login').click();
+  // T10.12: a saída fica no menu da conta, aberto pelo botão de três linhas.
+  await page.getByRole('button', { name: 'Abrir menu da conta' }).click();
   await expect(page.getByRole('button', { name: 'Sair da conta' })).toBeVisible({ timeout: 60_000 });
+  await page.keyboard.press('Escape');
   await expect.poll(() => popup.isClosed()).toBe(true);
 }
 
