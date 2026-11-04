@@ -30,6 +30,7 @@ Initialize gera credenciais novas preservadas nas reexecuções, certificados ex
 | Keycloak | https://localhost:5289 |
 | PostgreSQL: Identity/BFF/Catalog/Engagements/Messaging/Scheduling/Finance | 55329–55335, somente loopback |
 | RabbitMQ | 5773, somente loopback |
+| Armazenamento de objetos (SeaweedFS, S3) | http://127.0.0.1:5288, somente loopback; leitura pelo navegador em https://localhost:5173/media ([guia](object-storage.md)) |
 
 Todos os oito hosts e as chamadas HTTP entre eles usam o certificado confiável. Bancos/broker são dependências locais em rede/loopback; esta entrega não afirma TLS de produção para PostgreSQL/AMQP. Desenvolvimento permanece nas portas e volumes anteriores. Hosts são publicados individualmente em releases próprias e recebem configuração por ambiente, sem gravar seus segredos no User Secrets de desenvolvimento.
 

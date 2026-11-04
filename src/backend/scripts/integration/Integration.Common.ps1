@@ -50,6 +50,14 @@ function Get-IntegrationEnvironment {
     if($Service -in 'Catalog','Engagements','Messaging','Scheduling','Finance'){
         $values[$Service+'__IdentityAddress']='https://localhost:5280/'
     }
+    # Armazenamento de objetos isolado (SeaweedFS 5288) e leitura pelo proxy /media do website (decisão 0018).
+    if($Service -in 'Catalog','Identity'){
+        $lower=$Service.ToLowerInvariant()
+        $values.ObjectStorage__ServiceUrl='http://127.0.0.1:5288';$values.ObjectStorage__Region='us-east-1'
+        $values.ObjectStorage__AccessKeyId="inklink-$lower";$values.ObjectStorage__SecretAccessKey=$secrets['OBJECT_STORAGE_'+$Service.ToUpperInvariant()+'_SECRET']
+        $values.ObjectStorage__PublicBucket="inklink-$lower-media";$values.ObjectStorage__PublicBaseUrl="https://localhost:5173/media/inklink-$lower-media"
+        if($Service -eq 'Identity'){$values.ObjectStorage__PrivateBucket='inklink-identity-private';$values.ObjectStorage__SignedUrlBaseUrl='https://localhost:5173/media'}
+    }
     switch($Service){
         Gateway {foreach($backend in 'Identity','Catalog','Engagements','Messaging','Scheduling','Finance'){$values['Gateway__'+$backend+'Address']="https://localhost:$($IntegrationServices[$backend])/"}}
         Engagements {

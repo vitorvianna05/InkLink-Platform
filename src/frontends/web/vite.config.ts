@@ -19,7 +19,21 @@ export default defineConfig(({ mode }) => {
     // Confiança restrita ao upstream configurado, sem desabilitar a verificação TLS.
     agent: env.INKLINK_BFF_CA_CERT ? new Agent({ ca: readFileSync(env.INKLINK_BFF_CA_CERT) }) : undefined,
   };
-  const routes = { '/bff': proxy, '/api': proxy, '/signin-oidc': proxy, '/signout-callback-oidc': proxy };
+  // Imagens (decisão 0018): /media/<bucket>/<chave> é encaminhado ao armazenamento S3 local (SeaweedFS),
+  // mantendo o caminho assinado e o host do endpoint para que endereços assinados continuem válidos.
+  // Cookies e credenciais do website nunca seguem para o armazenamento.
+  const media: ProxyOptions = {
+    target: env.INKLINK_MEDIA_URL ?? 'http://127.0.0.1:5188',
+    changeOrigin: true,
+    rewrite: (path) => path.replace(/^\/media/, ''),
+    configure: (server) => {
+      server.on('proxyReq', (request) => {
+        request.removeHeader('cookie');
+        request.removeHeader('authorization');
+      });
+    },
+  };
+  const routes = { '/bff': proxy, '/api': proxy, '/signin-oidc': proxy, '/signout-callback-oidc': proxy, '/media': media };
   const https = env.INKLINK_DEV_CERT && env.INKLINK_DEV_KEY
     ? { cert: readFileSync(env.INKLINK_DEV_CERT), key: readFileSync(env.INKLINK_DEV_KEY) }
     : undefined;

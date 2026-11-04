@@ -344,7 +344,7 @@ T09.01 consolidou exemplos e compatibilidade dos contratos atuais; incrementos f
 - [x] Definir o modelo de login web: página React que inicia o fluxo atual do BFF, conforme [decisão 0017](decisions/0017-p10-web-login.md) (T10.13).
 - [x] Entregar a página `/entrar` dividida 50/50 com a identidade InkLink, preservando Code + PKCE no BFF, conforme T10.14. Retorno ao website por `/bff/login?returnUrl=` (decisão 0017 revisada), verificado com Keycloak real.
 - [x] Definir armazenamento e política de imagens (API S3, Cloudflare R2 em produção, SeaweedFS local), conforme [decisão 0018](decisions/0018-p10-images.md) (T10.15).
-- [ ] Preparar o armazenamento de objetos local e de integração, conforme T10.16.
+- [x] Preparar o armazenamento de objetos local e de integração, conforme T10.16 ([guia](development/object-storage.md)).
 - [ ] Substituir a URL do portfólio por upload de imagens e incluir foto de perfil para cliente e artista, com a foto do cliente visível apenas aos artistas em contato, conforme T10.17–T10.18.
 - [ ] Renovar a sessão web no BFF, com 30 minutos sem uso e 8 horas no total, revisando a decisão 0007, conforme T10.19–T10.20.
 - [ ] Aplicar o tema InkLink na tela de login do Keycloak, conforme T10.21.

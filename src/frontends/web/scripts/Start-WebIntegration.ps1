@@ -12,6 +12,7 @@ if($Preview -and !(Test-Path -LiteralPath "$web/dist/index.html")){throw 'Run np
 $null=Invoke-WebRequest 'https://localhost:5292/health/live' -TimeoutSec 5
 $variables=@{
     INKLINK_BFF_URL='https://localhost:5292'
+    INKLINK_MEDIA_URL='http://127.0.0.1:5288'
     INKLINK_DEV_CERT=$certificate
     INKLINK_DEV_KEY=$key
     INKLINK_BFF_CA_CERT=$certificate
