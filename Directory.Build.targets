@@ -1,0 +1,5 @@
+<Project>
+  <ItemGroup Condition="'$(IsTestProject)' == 'true' And $([System.String]::Copy('$(MSBuildProjectName)').EndsWith('.IntegrationTests'))">
+    <None Include="$(MSBuildThisFileDirectory)src/backend/testing/xunit.integration.runner.json" Link="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Never" />
+  </ItemGroup>
+</Project>

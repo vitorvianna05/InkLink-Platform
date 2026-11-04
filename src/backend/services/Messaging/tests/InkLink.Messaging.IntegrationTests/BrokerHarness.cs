@@ -19,6 +19,7 @@ internal sealed class BrokerHarness : IAsyncDisposable
             .WithEnvironment("RABBITMQ_PUBLISHER_PASS", publisherPassword)
             .WithEnvironment("RABBITMQ_CONSUMER_PASS", consumerPassword)
             .WithEnvironment("RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS", "+S 2:2")
+            .WithEnvironment("RABBITMQ_CTL_ERL_ARGS", "+S 1:1")
             .WithPortBinding(5672, true)
             .WithResourceMapping(File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Broker", "configure-broker.sh")), "/opt/inklink/configure-broker.sh")
             .WithResourceMapping(File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Broker", "broker-definitions.json")), "/opt/inklink/broker-definitions.json")
