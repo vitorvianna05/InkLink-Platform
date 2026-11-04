@@ -1,7 +1,9 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json.Nodes;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Console;
 using Microsoft.Extensions.Options;
 
@@ -44,6 +46,26 @@ public sealed class ObservabilityTests(SecurityFixture fixture)
         Assert.True(services.GetRequiredService<IOptionsMonitor<JsonConsoleFormatterOptions>>().CurrentValue.IncludeScopes);
     }
 
+    [Fact]
+    public async Task Identity_framework_logs_do_not_expose_private_query_or_credentials()
+    {
+        using var logs = new RecordedLogs();
+        using var identity = new SecurityIdentityHost(fixture).WithWebHostBuilder(builder =>
+            builder.ConfigureTestServices(services => services.AddSingleton<ILoggerProvider>(logs)));
+        using var client = identity.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new("Bearer", "private-token-marker");
+        var response = await client.GetAsync("/api/v1/profiles/me?private=private-query-marker");
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        var traceId = response.Headers.GetValues("X-Trace-Id").Single();
+        var request = Assert.Single(logs.Entries, entry => entry.Category.EndsWith("RequestLoggingMiddleware", StringComparison.Ordinal));
+        Assert.Equal(traceId, request.Scope["traceId"]);
+        Assert.All(logs.Entries, entry =>
+        {
+            var content = System.Text.Json.JsonSerializer.Serialize(new { entry.Message, entry.State, entry.Scope });
+            Assert.DoesNotContain("private-query-marker", content);
+            Assert.DoesNotContain("private-token-marker", content);
+        });
+    }
     [Fact]
     public async Task Successful_proxy_requests_are_logged_without_query_values_or_access_tokens()
     {
