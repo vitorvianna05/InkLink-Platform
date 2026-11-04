@@ -17,7 +17,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.UseBffAntiforgery();
 app.MapBffHealth();
-app.MapBffSessionEndpoints();
+app.MapBffSessionEndpoints(settings);
 app.MapReverseProxy();
 app.Run();
 

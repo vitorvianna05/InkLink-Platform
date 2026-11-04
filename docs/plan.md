@@ -342,7 +342,7 @@ T09.01 consolidou exemplos e compatibilidade dos contratos atuais; incrementos f
 - [x] Verificar responsividade e navegação por teclado, incluindo foco em diálogos e sugestões.
 - [x] Corrigir o menu do cabeçalho para abrir as informações e ações do usuário (entrar/sair), conforme T10.12.
 - [x] Definir o modelo de login web: página React que inicia o fluxo atual do BFF, conforme [decisão 0017](decisions/0017-p10-web-login.md) (T10.13).
-- [ ] Entregar a página `/entrar` dividida 50/50 com a identidade InkLink, preservando Code + PKCE no BFF, conforme T10.14.
+- [x] Entregar a página `/entrar` dividida 50/50 com a identidade InkLink, preservando Code + PKCE no BFF, conforme T10.14. Retorno ao website por `/bff/login?returnUrl=` (decisão 0017 revisada), verificado com Keycloak real.
 - [ ] Executar testes de integração com o backend e o roteiro completo pelo navegador.
 - [ ] Documentar e validar a publicação do website no ambiente escolhido. Instruções documentadas; validação pendente.
 

@@ -48,7 +48,7 @@ Abrir https://localhost:5173, clicar em Entrar e usar essas credenciais no Keycl
 
 ## Contas e fluxos
 
-Entrar abre a tela do Keycloak em uma janela própria. O callback continua na porta do BFF, já registrada no realm; o website detecta a sessão e fecha a janela. Permitir pop-ups para o website. O primeiro acesso ao perfil cria Client; somente a ferramenta administrativa concede Artist. Estúdio depende da função confirmada pelo backend. O catálogo inicialmente pode estar vazio: publicar um artista pela conta apropriada, sem inserir cards fictícios.
+Entrar leva a /entrar e, dali, a /bff/login?returnUrl=<destino> (decisão 0017). O callback continua na porta do BFF, já registrada no realm; ao concluir, o BFF devolve o navegador a https://localhost:5173 no destino, já autenticado (Bff__WebOrigin definido por Start-Integration.ps1). Somente o novo login após sessão expirada usa janela própria; permitir pop-ups para esse caso. O primeiro acesso ao perfil cria Client; somente a ferramenta administrativa concede Artist. Estúdio depende da função confirmada pelo backend. O catálogo inicialmente pode estar vazio: publicar um artista pela conta apropriada, sem inserir cards fictícios.
 
 A escrita usa o cookie de sessão e X-CSRF-TOKEN, obtido em /bff/antiforgery. Se a sessão expirar durante essa obtenção, o website também abre o aviso de expiração e preserva a intenção de escrita. Indisponibilidade desse endpoint é tratada como falha transitória. Favoritos e pedidos aguardam a resolução da sessão antes de aceitar cliques, evitando abrir outro login durante o carregamento.
 
@@ -62,7 +62,6 @@ Com o website e backend ativos, na raiz:
 
 ```powershell
 $env:INKLINK_RUN_REAL_E2E='1'
-$env:NODE_EXTRA_CA_CERTS=(Resolve-Path artifacts/integration/localhost.pem).Path
 # Opcional, se Chromium não estiver instalado pelo Playwright:
 $env:PLAYWRIGHT_CHROMIUM_PATH='C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe'
 Push-Location src/frontends/web
@@ -70,7 +69,7 @@ npm run e2e:integration
 Pop-Location
 ```
 
-playwright.integration.config.ts é separado das checagens visuais simuladas; não utiliza page.route/MSW nem ignora erros TLS. Lê as contas e senha dos artefatos ignorados da P09, sem copiá-las para código, parâmetros de linha de comando ou relatórios. Traces, vídeo e screenshots estão desabilitados para não persistir o tráfego de autenticação. Não versionar artefatos de execução ou estado de sessão.
+playwright.integration.config.ts é separado das checagens visuais simuladas; não utiliza page.route/MSW nem ignora erros TLS. As verificações diretas de API são feitas por fetch no próprio navegador, na origem do website e com os cookies da sessão: o cliente Node do Playwright não aceita o certificado de desenvolvimento do ASP.NET Core (autoassinado, CA:FALSE) como raiz, mesmo com NODE_EXTRA_CA_CERTS. Lê as contas e senha dos artefatos ignorados da P09, sem copiá-las para código, parâmetros de linha de comando ou relatórios. Traces, vídeo e screenshots estão desabilitados para não persistir o tráfego de autenticação. Não versionar artefatos de execução ou estado de sessão.
 
 O roteiro verifica catálogo/sugestões, login por popup, favorito com recarga, envio e persistência de mensagem, histórico bloqueado, pedido originado em flash, dashboard/agenda do artista e negação de acesso a terceiro. Altera somente os dados sintéticos: salva favorito, acrescenta mensagem, cria pedido e define disponibilidade futura do artista sintético; não apaga bancos ou reinicia serviços. O total de testes web é separado da suíte .NET. Responsividade/teclado continuam na suíte e2e visual; concluir esse roteiro reduz a pendência T10.10, mas não demonstra sozinho expiração temporal, reserva/encerramento completos e publicação de produção.
 

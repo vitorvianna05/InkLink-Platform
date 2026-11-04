@@ -1,4 +1,5 @@
-import { NavLink, Outlet, useLocation } from 'react-router';
+import { Link, NavLink, Outlet, useLocation } from 'react-router';
+import { loginPath } from '@/features/session/destination';
 import { SessionNotices } from '@/features/session/guards';
 import { useSession } from '@/features/session/session';
 import { UserMenu, type NavItem } from './UserMenu';
@@ -20,7 +21,7 @@ const studioLinks: NavItem[] = [
 
 export function Layout() {
   const location = useLocation();
-  const { session, status, signIn, signingIn } = useSession();
+  const { session, status } = useSession();
   const inStudio = location.pathname.startsWith('/estudio');
   const links = inStudio ? studioLinks : clientLinks;
   // Artistas alternam entre as áreas pela navegação; o menu da conta oferece o mesmo atalho.
@@ -50,9 +51,9 @@ export function Layout() {
           </nav>
           <div className="nav-right">
             {status === 'anonymous' && (
-              <button type="button" className="button white header-signin" onClick={signIn} disabled={signingIn}>
-                {signingIn ? 'Aguardando login…' : 'Entrar'}
-              </button>
+              <Link className="button white header-signin" to={loginPath(location)}>
+                Entrar
+              </Link>
             )}
             <UserMenu links={links} inStudio={inStudio} />
           </div>

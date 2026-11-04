@@ -68,6 +68,13 @@ internal static class BffAuthenticationExtensions
             options.Events.OnRemoteFailure = context =>
             {
                 context.HandleResponse();
+                // Login iniciado pelo website com state válido: volta à página de login com o aviso e o destino.
+                if (context.Properties?.Items.TryGetValue(BffSessionEndpointExtensions.WebReturnItem, out var returnUrl) == true
+                    && returnUrl is not null && BffReturnUrl.IsLocal(returnUrl))
+                {
+                    context.Response.Redirect(BffReturnUrl.Resolve(settings, "/entrar?erro=login&destino=" + Uri.EscapeDataString(returnUrl)));
+                    return Task.CompletedTask;
+                }
                 return ApiErrors.WriteAsync(context.HttpContext, 401, "login.failed");
             };
             options.Events.OnRedirectToIdentityProviderForSignOut = context =>

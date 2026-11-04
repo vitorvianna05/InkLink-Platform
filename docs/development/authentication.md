@@ -57,7 +57,7 @@ Crie uma conta no console administrativo do realm inklink, com senha definida pe
 | GET /api/v1/profiles/me | Access token de usuário aprovado: 200 com id, displayName e roles. 401 sem token válido; 403 para chamador técnico/não autorizado. |
 | PUT /api/v1/profiles/me | Apenas displayName. 204 ao atualizar; 400 para nome vazio, JSON inválido ou campos extras; 401/403 conforme autenticação. |
 | GET /api/v1/internal/profiles/{id} | Somente cliente técnico autorizado com identity.profile.read. 200 com id/displayName, 404 se inexistente, 401/403 se não autorizado. |
-| GET /bff/login | Inicia OIDC por código, PKCE S256, state/nonce e PAR quando anunciado pelo provedor. Retorno fixo para /bff/session. |
+| GET /bff/login | Inicia OIDC por código, PKCE S256, state/nonce e PAR quando anunciado pelo provedor. Sem `returnUrl`, retorna para /bff/session. Com `returnUrl` (caminho local), retorna ao website nesse caminho, prefixado por `Bff:WebOrigin` quando configurado; valor inválido responde 400 `login.return_url_invalid`. Falha do provedor nesse fluxo volta a `/entrar?erro=login`. |
 | GET /bff/session | 200 com authenticated e name da identidade federada; 401 sem sessão válida. Perfil e funções atuais são consultados em Identity. Não devolve tokens. |
 | GET /bff/antiforgery | Sessão válida: devolve requestToken e cookie antiforgery. |
 | POST /bff/logout | Sessão e X-CSRF-TOKEN válidos: remove ticket durável e redireciona ao logout OIDC. Sem CSRF: 400. |

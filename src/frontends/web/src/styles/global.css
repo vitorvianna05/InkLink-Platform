@@ -270,3 +270,48 @@ td.amount { text-align: right; font-variant-numeric: tabular-nums; }
   .list-item .button { width: 100%; }
   .bubble { max-width: 90%; }
 }
+
+/* Página de login (T10.14, decisão 0017) */
+.login-page { min-height: 100vh; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); background: var(--paper); }
+.login-brand { position: relative; overflow: hidden; background: var(--ink-strong); color: #fff; padding: 40px clamp(24px, 5vw, 72px); display: flex; flex-direction: column; gap: 48px; }
+.login-brand .logo { color: #fff; position: relative; z-index: 1; align-self: flex-start; }
+.login-brand-copy { position: relative; z-index: 1; margin-top: auto; max-width: 520px; }
+.login-brand-title { font-family: var(--font-display); font-weight: 800; font-size: clamp(34px, 4.2vw, 60px); line-height: 1.02; letter-spacing: -0.03em; margin: 0 0 28px; }
+.login-brand-title em { font-style: normal; color: var(--red); }
+.login-highlights { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; color: rgb(255 255 255 / 80%); }
+.login-highlights li { display: flex; align-items: flex-start; gap: 12px; line-height: 1.45; }
+.login-highlights svg { flex: none; color: var(--red); margin-top: 2px; }
+.login-art { position: absolute; inset: 0; pointer-events: none; }
+.login-art .ring { position: absolute; border-radius: 50%; border: 1px solid rgb(255 255 255 / 10%); right: -140px; top: -120px; }
+.login-art .ring-1 { width: 520px; height: 520px; }
+.login-art .ring-2 { width: 380px; height: 380px; right: -70px; top: -50px; border-color: rgb(227 41 50 / 45%); }
+.login-art .ring-3 { width: 240px; height: 240px; right: 0; top: 20px; border-style: dashed; }
+.login-art .line { position: absolute; height: 1px; background: rgb(255 255 255 / 12%); transform: rotate(-24deg); transform-origin: left; }
+.login-art .line-1 { width: 70%; left: 30%; top: 46%; }
+.login-art .line-2 { width: 50%; left: 50%; top: 52%; background: rgb(227 41 50 / 40%); }
+.login-art .drop { position: absolute; width: 14px; height: 14px; border-radius: 50%; background: var(--red); right: 186px; top: 246px; box-shadow: 0 0 0 10px rgb(227 41 50 / 15%); }
+.login-panel { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; padding: 48px clamp(16px, 5vw, 72px); min-height: 0; max-width: none; margin: 0; }
+.login-card { width: min(440px, 100%); background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: clamp(24px, 4vw, 40px); display: grid; gap: 16px; }
+.login-card h1 { font-size: clamp(28px, 3vw, 36px); line-height: 1.1; }
+.login-card > p.muted { margin: 0; }
+.login-action { margin-top: 8px; }
+.login-status { margin: 0; min-height: 1.55em; font-size: 14px; color: var(--muted); }
+.login-status:empty { display: none; }
+.login-notice { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 12px 14px; border-radius: var(--radius-small); background: #fdf0f0; border: 1px solid #f3c4c7; color: var(--red-strong); font-size: 14px; }
+.login-notice svg { flex: none; }
+.login-notice span { flex: 1 1 200px; }
+.login-security { display: flex; gap: 10px; align-items: flex-start; margin: 4px 0 0; padding-top: 16px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); }
+.login-security svg { flex: none; color: var(--green); }
+.login-back { display: inline-flex; align-items: center; gap: 6px; justify-self: start; font-weight: 600; text-decoration: none; color: var(--ink); }
+.login-back:hover { color: var(--red-strong); }
+.login-footnote { color: var(--muted); }
+@media (max-width: 860px) {
+  .login-page { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr; }
+  .login-brand { padding: 24px var(--gutter) 28px; gap: 20px; }
+  .login-brand-title { font-size: clamp(26px, 6vw, 36px); margin-bottom: 0; }
+  .login-highlights, .login-art .line { display: none; }
+  .login-art .ring-1 { width: 300px; height: 300px; }
+  .login-art .ring-2 { width: 220px; height: 220px; }
+  .login-art .ring-3, .login-art .drop { display: none; }
+  .login-panel { justify-content: flex-start; padding: 28px var(--gutter) 40px; }
+}

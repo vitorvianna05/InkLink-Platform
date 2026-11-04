@@ -1,6 +1,7 @@
 import { LogIn, LogOut, Menu, X } from 'lucide-react';
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react';
 import { Link, NavLink, useLocation } from 'react-router';
+import { loginPath } from '@/features/session/destination';
 import { useSession } from '@/features/session/session';
 import { initials } from '@/shared/lib/format';
 
@@ -16,7 +17,7 @@ export interface NavItem {
  */
 export function UserMenu({ links, inStudio }: { links: NavItem[]; inStudio: boolean }) {
   const location = useLocation();
-  const { status, session, expired, signIn, signingIn, signOut, retry } = useSession();
+  const { status, session, expired, reauthenticate, signingIn, signOut, retry } = useSession();
   // O menu fica associado ao endereço em que foi aberto: navegar por um link do painel o fecha.
   const route = `${location.pathname}${location.search}`;
   const [openAt, setOpenAt] = useState<string | null>(null);
@@ -26,6 +27,7 @@ export function UserMenu({ links, inStudio }: { links: NavItem[]; inStudio: bool
   const button = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLDivElement>(null);
   const panelId = useId();
+  const signInHref = loginPath(location);
   const account = status === 'authenticated' && session && !expired ? session : null;
   // Atalho para a outra área: Meu espaço a partir do estúdio; Estúdio do artista somente com a função Artist.
   const shortcuts: NavItem[] = !account ? [] : inStudio ? [{ to: '/meu-espaco', label: 'Meu espaço' }] : account.isArtist ? [{ to: '/estudio', label: 'Estúdio do artista' }] : [];
@@ -103,7 +105,7 @@ export function UserMenu({ links, inStudio }: { links: NavItem[]; inStudio: bool
             ) : expired ? (
               <>
                 <p className="user-menu-note">Sua sessão expirou. Entre novamente para continuar de onde parou.</p>
-                <button type="button" className="button red full" onClick={signIn} disabled={signingIn}>
+                <button type="button" className="button red full" onClick={reauthenticate} disabled={signingIn}>
                   {signingIn ? 'Aguardando login…' : 'Entrar novamente'}
                 </button>
               </>
@@ -120,10 +122,10 @@ export function UserMenu({ links, inStudio }: { links: NavItem[]; inStudio: bool
             ) : (
               <>
                 <p className="user-menu-note">Entre para acompanhar pedidos, conversas e favoritos.</p>
-                <button type="button" className="button red full" onClick={signIn} disabled={signingIn}>
+                <Link className="button red full" to={signInHref}>
                   <LogIn size={18} aria-hidden="true" />
-                  {signingIn ? 'Aguardando login…' : 'Entrar'}
-                </button>
+                  Entrar
+                </Link>
               </>
             )}
           </div>

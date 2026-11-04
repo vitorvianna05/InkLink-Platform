@@ -12,6 +12,7 @@ import { StudioDashboardPage } from '@/features/finance/StudioDashboardPage';
 import { ConversationPage } from '@/features/messaging/ConversationPage';
 import { ConversationsPage } from '@/features/messaging/ConversationsPage';
 import { AgendaPage } from '@/features/scheduling/AgendaPage';
+import { LoginPage } from '@/features/session/LoginPage';
 import { SessionProvider } from '@/features/session/session';
 import { ApiError } from '@/shared/api/http';
 import { EmptyState } from '@/shared/ui/States';
@@ -45,6 +46,7 @@ function NotFound() {
 export function AppRoutes() {
   return (
     <Routes>
+      <Route path="entrar" element={<LoginPage />} />
       <Route element={<Layout />}>
         <Route index element={<DiscoverPage />} />
         <Route path="explorar" element={<ExplorePage />} />

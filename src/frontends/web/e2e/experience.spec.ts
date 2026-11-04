@@ -93,6 +93,25 @@ test('abas do perfil respondem às setas', async ({ page }) => {
 });
 
 for (const width of widths) {
+  test(`página de login ${width}px sem sobreposição e com layout dividido`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await mockBackend(page, 'anonymous');
+    await page.goto('/entrar?destino=%2Fmeu-espaco');
+    await expect(page.getByRole('heading', { level: 1, name: 'Bem-vindo ao InkLink.' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Entrar', exact: true })).toBeEnabled();
+    await expect(page.locator('input')).toHaveCount(0);
+    await expectNoHorizontalOverflow(page);
+    const brand = await page.locator('.login-brand').boundingBox();
+    const panel = await page.locator('.login-panel').boundingBox();
+    if (width >= 1280) {
+      expect(Math.abs(brand!.width - panel!.width)).toBeLessThanOrEqual(1);
+      expect(Math.abs(brand!.y - panel!.y)).toBeLessThanOrEqual(1);
+    } else {
+      expect(panel!.y).toBeGreaterThanOrEqual(brand!.y + brand!.height - 1);
+    }
+    await page.screenshot({ path: `test-results/screens/${width}_entrar.png`, fullPage: true });
+  });
+
   test(`menu da conta ${width}px abre informações do usuário`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     await mockBackend(page, 'client');

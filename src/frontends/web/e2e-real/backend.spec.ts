@@ -9,19 +9,42 @@ const smoke = JSON.parse(readFileSync(`${root}/smoke.json`, 'utf8')) as {
 const password = readFileSync(`${root}/.env`, 'utf8').split(/\r?\n/).find((line) => line.startsWith('INTEGRATION_USER_PASSWORD='))?.split('=')[1];
 if (!password) throw new Error('Run the P09 synthetic smoke before the browser integration checks.');
 
+/**
+ * Chamada de API feita pelo próprio navegador, na origem do website e com os cookies da sessão.
+ * O cliente Node do Playwright não aceita o certificado de desenvolvimento do ASP.NET Core
+ * (autoassinado, CA:FALSE) como raiz confiável; o navegador o aceita pela confiança do sistema.
+ * TLS continua verificado: nenhuma checagem de certificado é desativada.
+ */
+async function api(page: Page, method: string, path: string, options: { csrf?: string; body?: unknown } = {}) {
+  return page.evaluate(async ({ method, path, csrf, body }) => {
+    const headers: Record<string, string> = { Accept: 'application/json' };
+    if (csrf) headers['X-CSRF-TOKEN'] = csrf;
+    if (body !== undefined) headers['Content-Type'] = 'application/json';
+    const response = await fetch(path, { method, headers, credentials: 'same-origin', body: body === undefined ? undefined : JSON.stringify(body) });
+    const text = await response.text();
+    return { status: response.status, json: (text ? JSON.parse(text) : null) as unknown };
+  }, { method, path, csrf: options.csrf, body: options.body });
+}
+
+async function antiforgery(page: Page) {
+  return ((await api(page, 'GET', '/bff/antiforgery')).json as { requestToken: string }).requestToken;
+}
+
 async function login(page: Page, actor: keyof typeof smoke.users) {
+  // Decisão 0017 (revisada): o convite leva a /entrar com o destino; o BFF conclui o OIDC e devolve
+  // o navegador ao website, no destino, já autenticado.
   await page.goto('/meu-espaco');
-  const opened = page.waitForEvent('popup');
-  await page.getByRole('button', { name: 'Entrar', exact: true }).first().click();
-  const popup = await opened;
-  await popup.locator('#username').fill(smoke.users[actor]);
-  await popup.locator('#password').fill(password!);
-  await popup.locator('#kc-login').click();
-  // T10.12: a saída fica no menu da conta, aberto pelo botão de três linhas.
+  await page.getByRole('main').getByRole('link', { name: 'Entrar', exact: true }).click();
+  await expect(page).toHaveURL(/\/entrar\?destino=%2Fmeu-espaco$/);
+  await expect(page.locator('input')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Entrar', exact: true }).click();
+  await page.locator('#username').fill(smoke.users[actor]);
+  await page.locator('#password').fill(password!);
+  await page.locator('#kc-login').click();
+  await expect(page).toHaveURL('https://localhost:5173/meu-espaco', { timeout: 60_000 });
   await page.getByRole('button', { name: 'Abrir menu da conta' }).click();
-  await expect(page.getByRole('button', { name: 'Sair da conta' })).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByRole('button', { name: 'Sair da conta' })).toBeVisible();
   await page.keyboard.press('Escape');
-  await expect.poll(() => popup.isClosed()).toBe(true);
 }
 
 test('catálogo público e sugestões reais pelo proxy HTTPS', async ({ page }) => {
@@ -33,16 +56,15 @@ test('catálogo público e sugestões reais pelo proxy HTTPS', async ({ page }) 
   await page.getByRole('combobox', { name: 'O que você está procurando?' }).fill('');
   await page.getByRole('button', { name: /Buscar artistas/ }).click();
   await expect(page.locator('.artist-card').first()).toBeVisible();
-  expect((await page.request.get('/bff/session')).status()).toBe(401);
+  expect((await api(page, 'GET', '/bff/session')).status).toBe(401);
 });
 
 test('cliente autentica por OIDC, persiste favorito e mensagem e consulta histórico bloqueado', async ({ page }) => {
   await login(page, 'client');
-  const response = await page.request.get(`/api/v2/engagements/${smoke.engagement}`);
-  expect(response.status()).toBe(200);
-  const engagement = await response.json() as { catalog: { artistId: string; name: string } };
-  const csrf = await (await page.request.get('/bff/antiforgery')).json() as { requestToken: string };
-  expect((await page.request.delete(`/api/v1/favorites/${engagement.catalog.artistId}`, { headers: { 'X-CSRF-TOKEN': csrf.requestToken } })).status()).toBe(204);
+  const response = await api(page, 'GET', `/api/v2/engagements/${smoke.engagement}`);
+  expect(response.status).toBe(200);
+  const engagement = response.json as { catalog: { artistId: string; name: string } };
+  expect((await api(page, 'DELETE', `/api/v1/favorites/${engagement.catalog.artistId}`, { csrf: await antiforgery(page) })).status).toBe(204);
   await page.goto(`/artistas/${engagement.catalog.artistId}`);
   const favorite = page.getByRole('button', { name: `Salvar ${engagement.catalog.name} nos favoritos` });
   const saved = page.waitForResponse((r) => r.url().includes('/api/v1/favorites/') && r.request().method() === 'PUT');
@@ -87,8 +109,7 @@ test('artista acessa indicadores, agenda e atendimento reais pela própria persp
   await expect(page.getByText('Lucro estimado', { exact: true })).toBeVisible();
   await expect(page.locator('[role="alert"]')).toHaveCount(0);
   const date = new Date(Date.now() + 7 * 86_400_000).toISOString().slice(0, 10);
-  const csrf = await (await page.request.get('/bff/antiforgery')).json() as { requestToken: string };
-  expect((await page.request.put(`/api/v1/scheduling/availability/${date}`, { headers: { 'X-CSRF-TOKEN': csrf.requestToken }, data: { timeZoneId: 'America/Sao_Paulo', windows: [] } })).status()).toBe(200);
+  expect((await api(page, 'PUT', `/api/v1/scheduling/availability/${date}`, { csrf: await antiforgery(page), body: { timeZoneId: 'America/Sao_Paulo', windows: [] } })).status).toBe(200);
   await page.goto(`/estudio/agenda?dia=${date}`);
   await expect(page.getByRole('heading', { name: 'Espaço para novas histórias.' })).toBeVisible();
   await expect(page.getByText('Nenhuma janela de atendimento neste dia.')).toBeVisible();
@@ -104,9 +125,17 @@ test('artista acessa indicadores, agenda e atendimento reais pela própria persp
   await expect(page.getByLabel('Mensagem', { exact: true })).toBeEnabled();
 });
 
+test('menu da conta encerra a sessão real pelo BFF', async ({ page }) => {
+  await login(page, 'client');
+  await page.getByRole('button', { name: 'Abrir menu da conta' }).click();
+  await page.getByRole('button', { name: 'Sair da conta' }).click();
+  await expect(page.getByRole('banner').getByRole('link', { name: 'Entrar', exact: true })).toBeVisible();
+  expect((await api(page, 'GET', '/bff/session')).status).toBe(401);
+});
+
 test('terceiro autenticado não lê conversa de outro atendimento', async ({ page }) => {
   await login(page, 'other');
-  expect((await page.request.get(`/api/v1/conversations/${smoke.newConversation}`)).status()).toBe(404);
+  expect((await api(page, 'GET', `/api/v1/conversations/${smoke.newConversation}`)).status).toBe(404);
   await page.goto(`/mensagens/${smoke.newConversation}`);
   await expect(page.getByRole('alert').getByText('Não encontramos este conteúdo.')).toBeVisible();
   await expect(page.getByRole('log')).toHaveCount(0);

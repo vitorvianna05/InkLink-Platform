@@ -17,13 +17,13 @@ describe('menu da conta (T10.12)', () => {
     catalogEmpty();
     renderApp('/explorar');
     const trigger = await screen.findByRole('button', { name: 'Abrir menu da conta' });
-    await waitFor(() => expect(screen.getAllByRole('button', { name: 'Entrar' })).toHaveLength(1));
+    await waitFor(() => expect(screen.getAllByRole('link', { name: 'Entrar' })).toHaveLength(1));
     await userEvent.click(trigger);
     expect(trigger).toHaveAttribute('aria-expanded', 'true');
     const panel = document.getElementById(trigger.getAttribute('aria-controls')!)!;
     expect(panel).toHaveTextContent('Entre para acompanhar pedidos, conversas e favoritos.');
-    const signIn = screen.getAllByRole('button', { name: 'Entrar' }).find((element) => panel.contains(element))!;
-    expect(signIn).toBeEnabled();
+    const signIn = screen.getAllByRole('link', { name: 'Entrar' }).find((element) => panel.contains(element))!;
+    expect(signIn).toHaveAttribute('href', '/entrar?destino=%2Fexplorar');
     expect(signIn).toHaveFocus();
     expect(screen.queryByRole('button', { name: 'Sair da conta' })).not.toBeInTheDocument();
     await userEvent.keyboard('{Escape}');
@@ -42,7 +42,7 @@ describe('menu da conta (T10.12)', () => {
     expect(within(panel).getByText('Júlia Vieira')).toBeInTheDocument();
     expect(within(panel).getByText('Cliente')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Estúdio do artista' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Entrar' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Entrar' })).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('heading', { name: 'O próximo traço começa com a sua busca.' }));
     expect(screen.queryByText('Júlia Vieira')).not.toBeInTheDocument();
   });
@@ -69,7 +69,7 @@ describe('menu da conta (T10.12)', () => {
     expect(screen.getByRole('link', { name: 'Meu espaço' })).toHaveAttribute('href', '/meu-espaco');
     await userEvent.click(screen.getByRole('button', { name: 'Sair da conta' }));
     await waitFor(() => expect(csrf).toBe('csrf-token'));
-    expect((await screen.findAllByRole('button', { name: 'Entrar' })).length).toBeGreaterThan(0);
+    expect((await screen.findAllByRole('link', { name: 'Entrar' }))[0]).toHaveAttribute('href', '/entrar?destino=%2Festudio');
     expect(screen.queryByText('Rafael Moura', { selector: 'strong' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Abrir menu da conta' })).toHaveAttribute('aria-expanded', 'false');
   });

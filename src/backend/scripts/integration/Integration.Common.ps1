@@ -70,6 +70,8 @@ function Get-IntegrationEnvironment {
         Bff {
             $values.Bff__Authority='https://localhost:5289/realms/inklink';$values.Bff__ClientId='inklink-bff';$values.Bff__ClientSecret=$secrets.INKLINK_BFF_SECRET
             $values.Bff__GatewayAddress='https://localhost:5291/';$values.Bff__AllowHttpMetadata='false'
+            # Website local (Start-WebIntegration.ps1): destino do retorno após o login (decisão 0017).
+            $values.Bff__WebOrigin='https://localhost:5173'
             $values.Bff__ConnectionString="Host=127.0.0.1;Port=55330;Database=inklink_bff;Username=inklink_bff_app;Password=$($secrets.BFF_APP_PASSWORD)"
             $values.Bff__CertificatePath="$IntegrationRoot/protection.pfx";$values.Bff__CertificatePassword=$secrets.BFF_CERT_PASSWORD
         }

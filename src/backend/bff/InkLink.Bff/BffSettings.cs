@@ -13,10 +13,22 @@ public sealed class BffSettings
     public string CertificatePath { get; set; } = string.Empty;
     public string CertificatePassword { get; set; } = string.Empty;
     public bool AllowHttpMetadata { get; set; }
+    /// <summary>
+    /// Origem do website quando ele não compartilha a origem do BFF (desenvolvimento/integração local).
+    /// Vazia em publicação de mesma origem: o retorno do login usa caminho relativo.
+    /// </summary>
+    public string WebOrigin { get; set; } = string.Empty;
     public static BffSettings Load(IConfiguration configuration, IHostEnvironment environment)
     {
         var settings = configuration.GetSection("Bff").Get<BffSettings>() ?? new();
         var local = environment.IsDevelopment() || environment.IsEnvironment("Testing");
+        if (!string.IsNullOrWhiteSpace(settings.WebOrigin))
+        {
+            if (!Uri.TryCreate(settings.WebOrigin, UriKind.Absolute, out var web) || web.AbsolutePath != "/" || web.Query.Length > 0 || web.Fragment.Length > 0
+                || !string.IsNullOrEmpty(web.UserInfo) || web.Scheme != "https")
+                throw new InvalidOperationException("Bff web origin must be an absolute HTTPS origin without path, query or credentials.");
+            settings.WebOrigin = web.GetLeftPart(UriPartial.Authority);
+        }
         if (new[] { settings.Authority, settings.ClientId, settings.ClientSecret, settings.GatewayAddress, settings.ConnectionString,
             settings.CertificatePath, settings.CertificatePassword }.Any(string.IsNullOrWhiteSpace)
             || (settings.AllowHttpMetadata && !local)
