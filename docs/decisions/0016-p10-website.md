@@ -14,7 +14,7 @@ O cliente HTTP envia X-CSRF-TOKEN em escritas (renovação única em csrf.invali
 
 ## Sessão e áreas
 
-O BFF não aceita returnUrl e /bff/login termina em /bff/session (JSON). Sem alterar o backend, o login abre /bff/login em janela própria e a página principal consulta /bff/session até a sessão existir, fechando a janela em seguida. Cookies não são isolados por porta: em localhost, a sessão criada no host do BFF vale para o website. Pop-up bloqueado é informado.
+O BFF não aceita returnUrl e /bff/login termina em /bff/session (JSON). Sem alterar o backend, o login abre /bff/login em janela própria e a página principal consulta /bff/session até a sessão existir, fechando a janela em seguida. Cookies não são isolados por porta: em localhost, a sessão criada no host do BFF vale para o website. Pop-up bloqueado é informado. Revisado pela [decisão 0017](0017-p10-web-login.md): o login comum passou a usar `/bff/login?returnUrl=` com redirecionamento de página inteira; a janela própria permanece para o novo login após sessão expirada.
 
 A sessão do BFF dura até 5 minutos e não é renovada. 401 abre um aviso de sessão expirada que preserva página e formulário; as chaves de idempotência são mantidas para que o reenvio após novo login não duplique a operação. Nenhum dado é mantido em armazenamento local como fonte oficial.
 

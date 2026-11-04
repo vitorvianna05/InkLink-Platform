@@ -72,4 +72,31 @@ describe('cliente HTTP', () => {
     expect(error.status).toBe(0);
     expect(error.isTransient).toBe(true);
   });
+  it('avisa expiração quando a sessão vence antes de obter o token antiforgery', async () => {
+    resetCsrfToken();
+    const listener = vi.fn();
+    const off = onSessionExpired(listener);
+    let writes = 0;
+    server.use(
+      http.get('/bff/antiforgery', () => problem(401, 'session.required')),
+      http.put('/api/v1/favorites/a', () => { writes++; return new HttpResponse(null, { status: 204 }); }),
+    );
+    try {
+      await expect(request('/api/v1/favorites/a', { method: 'PUT' })).rejects.toMatchObject({ status: 401 });
+      expect(listener).toHaveBeenCalledOnce();
+      expect(writes).toBe(0);
+    } finally { off(); }
+  });
+
+  it('classifica indisponibilidade do antiforgery como transitória sem enviar a escrita', async () => {
+    resetCsrfToken();
+    server.use(http.get('/bff/antiforgery', () => HttpResponse.error()));
+    await expect(request('/api/v1/favorites/a', { method: 'PUT' })).rejects.toMatchObject({ status: 0, code: 'network.unavailable' });
+  });
+
+  it('aceita o sinal de cancelamento usado pelas consultas', async () => {
+    server.use(http.get('/api/v1/artists', () => HttpResponse.json({ items: [] })));
+    await expect(request('/api/v1/artists', { signal: new AbortController().signal })).resolves.toMatchObject({ status: 200 });
+  });
+
 });

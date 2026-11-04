@@ -45,7 +45,8 @@ internal sealed class SecurityBffHost(SecurityFixture fixture, HttpMessageHandle
             ["Bff:ConnectionString"] = fixture.BffConnection,
             ["Bff:CertificatePath"] = fixture.CertificatePath,
             ["Bff:CertificatePassword"] = fixture.CertificatePassword,
-            ["Bff:AllowHttpMetadata"] = "false"
+            ["Bff:AllowHttpMetadata"] = "false",
+            ["Bff:WebOrigin"] = "https://localhost:5173"
         })
         .ConfigureTestServices(services =>
         {

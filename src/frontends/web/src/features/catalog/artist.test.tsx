@@ -102,4 +102,28 @@ describe('perfil público', () => {
     expect(body).toEqual({ artistId: 'a1', idea: 'Mariposa no ombro', bodyRegion: 'Ombro', approximateSizeCm: 10, flashId: 'f1' });
     expect(key).toMatch(/^[0-9a-f-]{36}$/);
   });
+  it('aguarda a sessão antes de habilitar favoritos e pedidos', async () => {
+    signedIn(client);
+    catalog();
+    let complete!: () => void;
+    const pending = new Promise<void>((resolve) => { complete = resolve; });
+    server.use(
+      http.get('/api/v1/favorites', () => HttpResponse.json(page([]))),
+      http.get('/api/v2/engagements', () => HttpResponse.json(page([]))),
+      http.get('/api/v1/conversations', () => HttpResponse.json(page([]))),
+    );
+    server.use(http.get('/bff/session', async () => {
+      await pending;
+      return HttpResponse.json({ authenticated: true, name: client.displayName });
+    }));
+    renderApp('/artistas/a1?aba=flashes');
+    try {
+      expect(await screen.findByRole('button', { name: 'Contar minha ideia' })).toBeDisabled();
+      expect(screen.getByRole('button', { name: /Salvar .* nos favoritos/ })).toBeDisabled();
+      expect(await screen.findByRole('button', { name: /Quero este flash/ })).toBeDisabled();
+    } finally { complete(); }
+    await userEvent.click(screen.getByRole('button', { name: 'Abrir menu da conta' }));
+    expect(await screen.findByRole('button', { name: 'Sair da conta' })).toBeInTheDocument();
+  });
+
 });

@@ -30,6 +30,7 @@ Initialize gera credenciais novas preservadas nas reexecuções, certificados ex
 | Keycloak | https://localhost:5289 |
 | PostgreSQL: Identity/BFF/Catalog/Engagements/Messaging/Scheduling/Finance | 55329–55335, somente loopback |
 | RabbitMQ | 5773, somente loopback |
+| Armazenamento de objetos (SeaweedFS, S3) | http://127.0.0.1:5288, somente loopback; leitura pelo navegador em https://localhost:5173/media ([guia](object-storage.md)) |
 
 Todos os oito hosts e as chamadas HTTP entre eles usam o certificado confiável. Bancos/broker são dependências locais em rede/loopback; esta entrega não afirma TLS de produção para PostgreSQL/AMQP. Desenvolvimento permanece nas portas e volumes anteriores. Hosts são publicados individualmente em releases próprias e recebem configuração por ambiente, sem gravar seus segredos no User Secrets de desenvolvimento.
 
@@ -96,3 +97,9 @@ Para navegação manual simultânea em ambientes que usam localhost, utilizar pe
 ### Regressão da inicialização local
 
 No Windows/PowerShell 7, executar `./src/backend/scripts/tests/Test-IntegrationStartup.ps1`. A verificação usa uma porta real temporária para conferir o proprietário do listener e seis cenários controlados: porta ocupada antes da execução, processo encerrado, porta tomada durante a inicialização, troca de proprietário após o health check, encerramento após a resposta e inicialização saudável. Não inicia/para hosts reais nem altera bancos ou manifesto. Falhas na consulta de listeners impedem a inicialização; não são interpretadas como porta livre.
+
+## Website conectado
+
+Após iniciar os oito hosts, executar `./src/frontends/web/scripts/Start-WebIntegration.ps1` na raiz para abrir o website em https://localhost:5173, consumindo o BFF isolado com TLS verificado. [Configuração, contas e roteiro real](web-integration.md). O script não muda os contratos das APIs nem configura infraestrutura de produção.
+
+Start-Integration.ps1 também prepara a conta local master (Client + Artist) após os oito hosts ficarem disponíveis. A senha é gerada/preservada em artifacts/integration/master-account.json, ignorado pelo Git; [acesso e política](web-integration.md#conta-local-padrão). Não concede administração global nem cria usuário de produção.

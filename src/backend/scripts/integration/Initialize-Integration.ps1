@@ -3,7 +3,7 @@ New-Item -ItemType Directory -Force -Path $IntegrationRoot|Out-Null
 $sourceCompose=Join-Path $IntegrationRepo 'src/backend/compose.yaml'
 $realmText=Get-Content "$IntegrationRepo/src/backend/identity-provider/inklink-realm.json" -Raw
 $composeText=Get-Content $sourceCompose -Raw
-$keys=@([regex]::Matches($composeText+' '+$realmText,'\$\{([A-Z_]+)')|ForEach-Object {$_.Groups[1].Value})+@('BFF_CERT_PASSWORD','INTEGRATION_USER_PASSWORD')
+$keys=@([regex]::Matches($composeText+' '+$realmText,'\$\{([A-Z_]+)')|ForEach-Object {$_.Groups[1].Value})+@('BFF_CERT_PASSWORD','INTEGRATION_USER_PASSWORD','OBJECT_STORAGE_CATALOG_SECRET','OBJECT_STORAGE_IDENTITY_SECRET')
 $envPath="$IntegrationRoot/.env"
 if(!(Test-Path -LiteralPath $envPath)){[IO.File]::WriteAllText($envPath,'')}
 $existing=Get-Content -LiteralPath $envPath
@@ -26,13 +26,16 @@ $testClient=($realm.clients|Where-Object clientId -eq 'inklink-ios'|ConvertTo-Js
 $testClient.clientId='inklink-integration-users';$testClient.directAccessGrantsEnabled=$true;$testClient.standardFlowEnabled=$false
 $realm.clients+=@($testClient)
 [IO.File]::WriteAllText("$IntegrationRoot/inklink-realm.json",($realm|ConvertTo-Json -Depth 40))
+$objectStorage=Get-Content "$IntegrationRepo/src/backend/scripts/object-storage-identities.json" -Raw
+foreach($name in 'OBJECT_STORAGE_CATALOG_SECRET','OBJECT_STORAGE_IDENTITY_SECRET'){$objectStorage=$objectStorage.Replace('${'+$name+'}',$secrets[$name])}
+[IO.File]::WriteAllText("$IntegrationRoot/object-storage.json",$objectStorage)
 $raw=& docker compose --env-file $envPath -f $sourceCompose config --format json
 if($LASTEXITCODE -ne 0){throw 'Unable to resolve dependency template.'}
 $compose=$raw|ConvertFrom-Json -AsHashtable;$compose.name='inklink-integration'
 foreach($service in $compose.services.Values){
     foreach($port in $service.ports){$number=[int]$port.published;$port.published=[string]$(if($number -ge 54000){$number+1000}else{$number+100})}
     foreach($mount in $service.volumes){
-        if($mount.type -eq 'bind' -and $mount.target -match 'inklink-realm.json|localhost.pem|localhost.key'){$mount.source=Join-Path $IntegrationRoot ([IO.Path]::GetFileName($mount.target))}
+        if($mount.type -eq 'bind' -and $mount.target -match 'inklink-realm.json|localhost.pem|localhost.key|object-storage.json'){$mount.source=Join-Path $IntegrationRoot ([IO.Path]::GetFileName($mount.target))}
     }
 }
 foreach($name in $compose.volumes.Keys){$compose.volumes[$name].name='inklink-integration_'+$name}
@@ -51,6 +54,7 @@ Invoke-IntegrationCompose @('config','--quiet')
 Invoke-IntegrationCompose @('run','--rm','--no-deps','--user','0','--entrypoint','sh','rabbitmq','-ec','if [ -f /var/lib/rabbitmq/.erlang.cookie ]; then chown rabbitmq:rabbitmq /var/lib/rabbitmq/.erlang.cookie; chmod 600 /var/lib/rabbitmq/.erlang.cookie; fi')
 Invoke-IntegrationCompose @('up','-d','--wait')
 Invoke-IntegrationCompose @('exec','-T','rabbitmq','sh','/opt/inklink/configure-broker.sh')
+Invoke-IntegrationCompose @('exec','-T','object-storage','sh','/opt/inklink/configure-object-storage.sh')
 $ready=$false
 for($i=0;$i -lt 60;$i++){try{$null=Invoke-RestMethod 'https://localhost:5289/realms/inklink/.well-known/openid-configuration' -TimeoutSec 3;$ready=$true;break}catch{Start-Sleep -Seconds 1}}
 if(!$ready){throw 'Integration Keycloak did not become ready over trusted HTTPS.'}

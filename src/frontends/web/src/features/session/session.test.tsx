@@ -10,7 +10,7 @@ describe('sessão e áreas por função', () => {
     anonymous();
     renderApp('/meu-espaco');
     expect(await screen.findByText('Entre para ver seus pedidos, conversas e favoritos.')).toBeInTheDocument();
-    expect(screen.getAllByRole('button', { name: 'Entrar' }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('link', { name: 'Entrar' }).length).toBeGreaterThan(0);
   });
 
   it('cliente sem função Artist não acessa o estúdio', async () => {
@@ -52,12 +52,15 @@ describe('sessão e áreas por função', () => {
       http.get('/api/v1/artists', () => HttpResponse.json(page([]))),
       http.post('/bff/logout', ({ request }) => {
         csrf = request.headers.get('X-CSRF-TOKEN');
+        // Como o BFF real: depois da saída, /bff/session volta a responder 401.
+        anonymous();
         return new HttpResponse(null, { status: 204 });
       }),
     );
     renderApp('/');
+    await userEvent.click(await screen.findByRole('button', { name: 'Abrir menu da conta' }));
     await userEvent.click(await screen.findByRole('button', { name: 'Sair da conta' }));
     await waitFor(() => expect(csrf).toBe('csrf-token'));
-    expect(await screen.findByRole('button', { name: 'Entrar' })).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'Entrar' })).toBeInTheDocument();
   });
 });

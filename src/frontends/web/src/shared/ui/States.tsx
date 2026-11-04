@@ -1,5 +1,6 @@
 import { AlertTriangle, Inbox, Loader2, LogIn } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { Link } from 'react-router';
 import { ApiError } from '@/shared/api/http';
 
 export function Loading({ label = 'Carregando…' }: { label?: string }) {
@@ -55,14 +56,15 @@ export function EmptyState({ title, children, icon }: { title: string; children?
   );
 }
 
-export function SignInPrompt({ onSignIn, message }: { onSignIn: () => void; message: string }) {
+/** Convite das áreas privadas: leva à página de login preservando o destino (decisão 0017). */
+export function SignInPrompt({ href, message }: { href: string; message: string }) {
   return (
     <div className="state state-empty">
       <LogIn size={26} aria-hidden="true" />
       <strong>{message}</strong>
-      <button type="button" className="button red" onClick={onSignIn}>
+      <Link className="button red" to={href}>
         Entrar
-      </button>
+      </Link>
     </div>
   );
 }

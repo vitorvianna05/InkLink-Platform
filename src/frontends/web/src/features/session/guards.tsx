@@ -1,15 +1,17 @@
 import type { ReactNode } from 'react';
-import { Link } from 'react-router';
+import { Link, useLocation } from 'react-router';
 import { Dialog } from '@/shared/ui/Dialog';
 import { EmptyState, ErrorState, Loading, SignInPrompt } from '@/shared/ui/States';
+import { loginPath } from './destination';
 import { useSession, type Session } from './session';
 
 /** Renderiza o conteúdo apenas com sessão válida; visitantes recebem o convite para entrar. */
 export function RequireSession({ message, children }: { message: string; children: (session: Session) => ReactNode }) {
-  const { status, session, signIn, retry } = useSession();
+  const location = useLocation();
+  const { status, session, retry } = useSession();
   if (status === 'loading') return <Loading label="Verificando sua sessão…" />;
   if (status === 'error') return <ErrorState error={null} onRetry={retry} />;
-  if (!session) return <SignInPrompt message={message} onSignIn={signIn} />;
+  if (!session) return <SignInPrompt message={message} href={loginPath(location)} />;
   return <>{children(session)}</>;
 }
 
@@ -35,12 +37,12 @@ export function RequireArtist({ children }: { children: (session: Session) => Re
 
 /** Avisos globais de sessão: expiração e bloqueio da janela de login. */
 export function SessionNotices() {
-  const { expired, signIn, signingIn, dismissExpired, popupBlocked } = useSession();
+  const { expired, reauthenticate, signingIn, dismissExpired, popupBlocked } = useSession();
   return (
     <>
       <Dialog open={expired} title="Sua sessão expirou" eyebrow="SEGURANÇA" onClose={dismissExpired}>
         <p>Por segurança, a sessão do InkLink dura poucos minutos. Entre novamente para continuar de onde parou; nada desta página será perdido.</p>
-        <button type="button" className="button red full" onClick={signIn} disabled={signingIn} data-autofocus>
+        <button type="button" className="button red full" onClick={reauthenticate} disabled={signingIn} data-autofocus>
           {signingIn ? 'Aguardando login…' : 'Entrar novamente'}
         </button>
       </Dialog>

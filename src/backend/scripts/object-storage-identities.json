@@ -1,0 +1,18 @@
+{
+  "identities": [
+    {
+      "name": "inklink-catalog",
+      "credentials": [{ "accessKey": "inklink-catalog", "secretKey": "${OBJECT_STORAGE_CATALOG_SECRET}" }],
+      "actions": ["Read:inklink-catalog-media", "Write:inklink-catalog-media"]
+    },
+    {
+      "name": "inklink-identity",
+      "credentials": [{ "accessKey": "inklink-identity", "secretKey": "${OBJECT_STORAGE_IDENTITY_SECRET}" }],
+      "actions": ["Read:inklink-identity-media", "Write:inklink-identity-media", "Read:inklink-identity-private", "Write:inklink-identity-private"]
+    },
+    {
+      "name": "anonymous",
+      "actions": ["Read:inklink-catalog-media", "Read:inklink-identity-media"]
+    }
+  ]
+}

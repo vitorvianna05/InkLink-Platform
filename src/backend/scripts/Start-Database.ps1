@@ -10,3 +10,5 @@ docker compose --env-file $envFile -f "$repoRoot/src/backend/compose.yaml" up -d
 if ($LASTEXITCODE -ne 0) { throw 'Database startup failed.' }
 docker compose --env-file $envFile -f "$repoRoot/src/backend/compose.yaml" exec -T rabbitmq sh /opt/inklink/configure-broker.sh
 if ($LASTEXITCODE -ne 0) { throw 'Broker user configuration failed.' }
+docker compose --env-file $envFile -f "$repoRoot/src/backend/compose.yaml" exec -T object-storage sh /opt/inklink/configure-object-storage.sh
+if ($LASTEXITCODE -ne 0) { throw 'Object storage bucket configuration failed.' }

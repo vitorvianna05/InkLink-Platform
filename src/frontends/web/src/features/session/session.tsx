@@ -2,6 +2,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { ArtistCalendarContext, Profile } from '@/shared/api/contracts';
 import { ApiError, getJson, onSessionExpired, resetCsrfToken } from '@/shared/api/http';
+import { browser } from '@/shared/lib/browser';
+import { safeDestination } from './destination';
 
 export interface Session {
   name: string | null;
@@ -17,9 +19,12 @@ interface SessionContextValue {
   status: Status;
   session: Session | null;
   expired: boolean;
+  /** Novo login em janela própria (sessão expirada), preservando a página e formulários. */
   signingIn: boolean;
   popupBlocked: boolean;
-  signIn: () => void;
+  /** Login por redirecionamento de página inteira; volta ao destino (padrão: endereço atual) autenticado. */
+  signIn: (destination?: string) => void;
+  reauthenticate: () => void;
   signOut: () => Promise<void>;
   dismissExpired: () => void;
   retry: () => void;
@@ -84,9 +89,15 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     await queryClient.invalidateQueries();
   }, [queryClient]);
 
-  const signIn = useCallback(() => {
-    // O login acontece em uma janela própria para preservar o contexto desta página:
-    // o BFF conclui o fluxo OIDC e esta aba detecta a nova sessão consultando /bff/session.
+  const signIn = useCallback((destination?: string) => {
+    // Decisão 0017 (revisada): o BFF conclui o OIDC e devolve o navegador ao website no destino validado.
+    const target = safeDestination(destination ?? `${window.location.pathname}${window.location.search}${window.location.hash}`);
+    browser.assign(`/bff/login?returnUrl=${encodeURIComponent(target)}`);
+  }, []);
+
+  const reauthenticate = useCallback(() => {
+    // Sessão expirada durante o uso: o novo login acontece em janela própria para preservar a página
+    // e os formulários; esta aba detecta a nova sessão consultando /bff/session.
     const popup = window.open('/bff/login', 'inklink-login', 'popup,width=520,height=720');
     if (!popup) {
       setPopupBlocked(true);
@@ -103,6 +114,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       };
       if (Date.now() - started > LOGIN_TIMEOUT_MS) {
         stop();
+        if (!popup.closed) popup.close();
         setSigningIn(false);
         return;
       }
@@ -142,8 +154,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     } finally {
       resetCsrfToken();
       setExpired(false);
-      queryClient.clear();
+      // Atualiza a sessão observada antes de descartar o restante do cache: limpar tudo primeiro
+      // desliga o observador da consulta antiga e manteria a identidade anterior na tela.
       queryClient.setQueryData(['session'], null);
+      queryClient.removeQueries({ predicate: (query) => query.queryKey[0] !== 'session' });
     }
   }, [queryClient]);
 
@@ -156,11 +170,12 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       signingIn,
       popupBlocked,
       signIn,
+      reauthenticate,
       signOut,
       dismissExpired: () => setExpired(false),
       retry: () => void query.refetch(),
     };
-  }, [query, authenticated, expired, signingIn, popupBlocked, signIn, signOut]);
+  }, [query, authenticated, expired, signingIn, popupBlocked, signIn, reauthenticate, signOut]);
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
 }

@@ -50,6 +50,14 @@ function Get-IntegrationEnvironment {
     if($Service -in 'Catalog','Engagements','Messaging','Scheduling','Finance'){
         $values[$Service+'__IdentityAddress']='https://localhost:5280/'
     }
+    # Armazenamento de objetos isolado (SeaweedFS 5288) e leitura pelo proxy /media do website (decisão 0018).
+    if($Service -in 'Catalog','Identity'){
+        $lower=$Service.ToLowerInvariant()
+        $values.ObjectStorage__ServiceUrl='http://127.0.0.1:5288';$values.ObjectStorage__Region='us-east-1'
+        $values.ObjectStorage__AccessKeyId="inklink-$lower";$values.ObjectStorage__SecretAccessKey=$secrets['OBJECT_STORAGE_'+$Service.ToUpperInvariant()+'_SECRET']
+        $values.ObjectStorage__PublicBucket="inklink-$lower-media";$values.ObjectStorage__PublicBaseUrl="https://localhost:5173/media/inklink-$lower-media"
+        if($Service -eq 'Identity'){$values.ObjectStorage__PrivateBucket='inklink-identity-private';$values.ObjectStorage__SignedUrlBaseUrl='https://localhost:5173/media'}
+    }
     switch($Service){
         Gateway {foreach($backend in 'Identity','Catalog','Engagements','Messaging','Scheduling','Finance'){$values['Gateway__'+$backend+'Address']="https://localhost:$($IntegrationServices[$backend])/"}}
         Engagements {
@@ -70,6 +78,8 @@ function Get-IntegrationEnvironment {
         Bff {
             $values.Bff__Authority='https://localhost:5289/realms/inklink';$values.Bff__ClientId='inklink-bff';$values.Bff__ClientSecret=$secrets.INKLINK_BFF_SECRET
             $values.Bff__GatewayAddress='https://localhost:5291/';$values.Bff__AllowHttpMetadata='false'
+            # Website local (Start-WebIntegration.ps1): destino do retorno após o login (decisão 0017).
+            $values.Bff__WebOrigin='https://localhost:5173'
             $values.Bff__ConnectionString="Host=127.0.0.1;Port=55330;Database=inklink_bff;Username=inklink_bff_app;Password=$($secrets.BFF_APP_PASSWORD)"
             $values.Bff__CertificatePath="$IntegrationRoot/protection.pfx";$values.Bff__CertificatePassword=$secrets.BFF_CERT_PASSWORD
         }
@@ -93,7 +103,8 @@ function Save-IntegrationProcesses {param([hashtable]$Processes)
 }
 function Test-IntegrationProcess {param($Entry)
     $process=Get-Process -Id $Entry.Id -ErrorAction SilentlyContinue
-    if(!$process -or $process.StartTime.ToUniversalTime().Ticks -ne $Entry.StartTicks){return $false}
+    # A PID reused by a protected process has no readable StartTime; it is never the registered host.
+    if(!$process -or !$process.StartTime -or $process.StartTime.ToUniversalTime().Ticks -ne $Entry.StartTicks){return $false}
     $native=Get-CimInstance Win32_Process -Filter "ProcessId=$($Entry.Id)"
     return $native -and $native.CommandLine -and $native.CommandLine.Contains($Entry.Dll,[StringComparison]::OrdinalIgnoreCase)
 }

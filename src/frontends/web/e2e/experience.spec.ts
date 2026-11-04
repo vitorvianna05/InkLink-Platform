@@ -91,3 +91,48 @@ test('abas do perfil respondem às setas', async ({ page }) => {
   await expect(page.getByRole('tab', { name: 'Flashes' })).toHaveAttribute('aria-selected', 'true');
   await expect(page.getByRole('tab', { name: 'Flashes' })).toBeFocused();
 });
+
+for (const width of widths) {
+  test(`página de login ${width}px sem sobreposição e com layout dividido`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await mockBackend(page, 'anonymous');
+    await page.goto('/entrar?destino=%2Fmeu-espaco');
+    await expect(page.getByRole('heading', { level: 1, name: 'Bem-vindo ao InkLink.' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Entrar', exact: true })).toBeEnabled();
+    await expect(page.locator('input')).toHaveCount(0);
+    await expectNoHorizontalOverflow(page);
+    const brand = await page.locator('.login-brand').boundingBox();
+    const panel = await page.locator('.login-panel').boundingBox();
+    if (width >= 1280) {
+      expect(Math.abs(brand!.width - panel!.width)).toBeLessThanOrEqual(1);
+      expect(Math.abs(brand!.y - panel!.y)).toBeLessThanOrEqual(1);
+    } else {
+      expect(panel!.y).toBeGreaterThanOrEqual(brand!.y + brand!.height - 1);
+    }
+    await page.screenshot({ path: `test-results/screens/${width}_entrar.png`, fullPage: true });
+  });
+
+  test(`menu da conta ${width}px abre informações do usuário`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await mockBackend(page, 'client');
+    await page.goto('/meu-espaco');
+    const trigger = page.getByRole('button', { name: 'Abrir menu da conta' });
+    await expect(trigger).toContainText('JV');
+    await trigger.focus();
+    await page.keyboard.press('Enter');
+    const panel = page.locator('.user-menu-panel');
+    await expect(panel.getByText('Júlia Vieira')).toBeVisible();
+    await expect(panel.getByRole('button', { name: 'Sair da conta' })).toBeVisible();
+    // Até 860 px o painel também reúne a navegação da área.
+    await expect(panel.getByRole('link', { name: 'Explorar' })).toBeVisible({ visible: width <= 860 });
+    expect(await panel.evaluate((node) => node.contains(document.activeElement))).toBe(true);
+    const box = await panel.boundingBox();
+    expect(box!.x).toBeGreaterThanOrEqual(0);
+    expect(box!.x + box!.width).toBeLessThanOrEqual(width);
+    await expectNoHorizontalOverflow(page);
+    await page.screenshot({ path: `test-results/screens/${width}_menu-conta.png` });
+    await page.keyboard.press('Escape');
+    await expect(panel).toBeHidden();
+    await expect(page.getByRole('button', { name: 'Abrir menu da conta' })).toBeFocused();
+  });
+}

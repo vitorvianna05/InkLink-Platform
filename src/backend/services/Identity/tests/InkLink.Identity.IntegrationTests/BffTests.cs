@@ -101,6 +101,62 @@ public sealed class BffTests(SecurityFixture fixture)
             .ExecuteUpdateAsync(setters => setters.SetProperty(session => session.ExpiresAt, DateTimeOffset.UtcNow.AddSeconds(-1)));
         Assert.Equal(HttpStatusCode.Unauthorized, (await browser.GetAsync("/bff/session")).StatusCode);
     }
+
+    [Fact]
+    public async Task Login_without_return_url_keeps_the_session_endpoint_as_destination()
+    {
+        using var identity = new SecurityIdentityHost(fixture);
+        using var gateway = new SecurityGatewayHost(fixture, identity.Server.CreateHandler());
+        using var bff = new SecurityBffHost(fixture, gateway.Server.CreateHandler());
+        using var browser = new TestBrowser(bff);
+        var callback = await browser.LoginAsync(fixture, "alice");
+        Assert.Equal("/bff/session", callback.Headers.Location!.OriginalString);
+    }
+
+    [Fact]
+    public async Task Login_with_local_return_url_comes_back_to_the_website_authenticated()
+    {
+        using var identity = new SecurityIdentityHost(fixture);
+        using var gateway = new SecurityGatewayHost(fixture, identity.Server.CreateHandler());
+        using var bff = new SecurityBffHost(fixture, gateway.Server.CreateHandler());
+        using var browser = new TestBrowser(bff);
+        var callback = await browser.LoginAsync(fixture, "alice", "/bff/login?returnUrl=" + Uri.EscapeDataString("/estudio/agenda?dia=2030-01-15"));
+        Assert.Equal("https://localhost:5173/estudio/agenda?dia=2030-01-15", callback.Headers.Location!.AbsoluteUri);
+        Assert.Equal(HttpStatusCode.OK, (await browser.GetAsync("/bff/session")).StatusCode);
+    }
+
+    [Theory]
+    [InlineData("https://evil.example/")]
+    [InlineData("//evil.example/")]
+    [InlineData("/\\evil.example")]
+    [InlineData("meu-espaco")]
+    [InlineData("")]
+    [InlineData("/a\nb")]
+    public async Task Login_rejects_external_or_ambiguous_return_urls_without_redirecting(string returnUrl)
+    {
+        using var identity = new SecurityIdentityHost(fixture);
+        using var gateway = new SecurityGatewayHost(fixture, identity.Server.CreateHandler());
+        using var bff = new SecurityBffHost(fixture, gateway.Server.CreateHandler());
+        using var browser = new TestBrowser(bff);
+        var response = await browser.GetAsync("/bff/login?returnUrl=" + Uri.EscapeDataString(returnUrl));
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Null(response.Headers.Location);
+        Assert.Contains("login.return_url_invalid", await response.Content.ReadAsStringAsync());
+    }
+
+    [Fact]
+    public async Task Provider_error_for_a_website_login_returns_to_the_login_page_without_a_session()
+    {
+        using var identity = new SecurityIdentityHost(fixture);
+        using var gateway = new SecurityGatewayHost(fixture, identity.Server.CreateHandler());
+        using var bff = new SecurityBffHost(fixture, gateway.Server.CreateHandler());
+        using var browser = new TestBrowser(bff);
+        // Mantém o state válido e substitui o código por um erro do provedor (ex.: acesso negado).
+        var callback = await browser.LoginAsync(fixture, "alice", "/bff/login?returnUrl=%2Fmeu-espaco",
+            uri => Regex.Replace(uri, "([?&])code=[^&]*", "$1error=access_denied"));
+        Assert.Equal("https://localhost:5173/entrar?erro=login&destino=%2Fmeu-espaco", callback.Headers.Location!.AbsoluteUri);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await browser.GetAsync("/bff/session")).StatusCode);
+    }
 }
 
 internal sealed class TestBrowser : IDisposable
@@ -125,9 +181,9 @@ internal sealed class TestBrowser : IDisposable
             foreach (var value in values) Cookies.SetCookies(request.RequestUri, value);
         return response;
     }
-    public async Task LoginAsync(SecurityFixture fixture, string user)
+    public async Task<HttpResponseMessage> LoginAsync(SecurityFixture fixture, string user, string path = "/bff/login", Func<string, string>? rewriteCallback = null)
     {
-        var challenge = await GetAsync("/bff/login");
+        var challenge = await GetAsync(path);
         Assert.Equal(HttpStatusCode.Redirect, challenge.StatusCode);
         using var provider = new HttpClient(fixture.CreateProviderHandler(Cookies));
         var login = await provider.GetAsync(challenge.Headers.Location);
@@ -144,8 +200,10 @@ internal sealed class TestBrowser : IDisposable
         var submit = await provider.PostAsync(WebUtility.HtmlDecode(form.Groups[1].Value),
             new FormUrlEncodedContent(new Dictionary<string, string> { ["username"] = user, ["password"] = fixture.Password, ["credentialId"] = "" }));
         Assert.Equal(HttpStatusCode.Redirect, submit.StatusCode);
-        var callback = await GetAsync(submit.Headers.Location!.AbsoluteUri);
+        var callbackUri = submit.Headers.Location!.AbsoluteUri;
+        var callback = await GetAsync(rewriteCallback is null ? callbackUri : rewriteCallback(callbackUri));
         Assert.Equal(HttpStatusCode.Redirect, callback.StatusCode);
+        return callback;
     }
     public void Dispose() => bff.Dispose();
 }

@@ -2,7 +2,7 @@
 
 Nova aplicação InkLink, criada do zero e separada do protótipo. Backend em .NET 10 com os serviços Identity, Catalog, Engagements, Messaging, Scheduling e Finance, além de Gateway e BFF web.
 
-P00–P09 concluídas nos recortes documentados. **M5 técnico do backend atingido no ambiente local isolado.** P10 em andamento: [website React](src/frontends/web/README.md) implementado e verificado por testes automatizados e no navegador; falta o roteiro com backend real ([verificação P10](docs/verification/p10.md)). iOS e Android em React Native permanecem posteriores. O código do protótipo não é base da implementação.
+P00–P09 concluídas nos recortes documentados. **M5 técnico do backend atingido no ambiente local isolado.** P10 em andamento: [website React](src/frontends/web/README.md) implementado e verificado por testes automatizados e no navegador; quatro cenários com backend real aprovados, com homologação restante de T10.10 pendente ([verificação P10](docs/verification/p10.md)). iOS e Android em React Native permanecem posteriores. O código do protótipo não é base da implementação.
 
 ## Organização e SDD
 
@@ -19,6 +19,8 @@ O [guia de integração P09](docs/development/integration.md) descreve ambiente 
 A regressão é executada por Test-Backend.ps1 e pela CI, com TRX distintos por projeto. A [verificação P09](docs/verification/p09.md) registra 249 casos únicos com resultado final aprovado, a rodada inicial com falhas, a reexecução completa e o recorte final de OpenAPI. O roteiro real demonstra recuperação, histórico bloqueado, retorno por reserva, indicadores e publicação independente de Finance.
 
 Nuvem, produção, aplicativos móveis, acessibilidade visual, carga e distribuição mobile continuam fora deste aceite técnico local. As evidências históricas de cada incremento permanecem em docs/verification/.
+
+O [guia de integração web](docs/development/web-integration.md) conecta o website ao BFF isolado com TLS verificado: após iniciar o backend, executar `./src/frontends/web/scripts/Start-WebIntegration.ps1` na raiz e abrir https://localhost:5173.
 
 ## Contribuição
 

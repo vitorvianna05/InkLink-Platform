@@ -54,7 +54,14 @@ export function useDefineAvailability(date: string) {
   const client = useQueryClient();
   return useMutation({
     mutationFn: ({ windows, timeZoneId }: { windows: TimeWindow[]; timeZoneId?: string }) =>
-      request<Availability>(`/api/v1/scheduling/availability/${date}`, { method: 'PUT', body: { windows, timeZoneId } }).then((r) => r.data),
+      request<Availability>(`/api/v1/scheduling/availability/${date}`, {
+        method: 'PUT',
+        body: {
+          timeZoneId,
+          // HTML time inputs yield HH:mm; System.Text.Json TimeOnly expects seconds.
+          windows: windows.map(({ start, end }) => ({ start: start.length === 5 ? `${start}:00` : start, end: end.length === 5 ? `${end}:00` : end })),
+        },
+      }).then((r) => r.data),
     onSuccess: (data) => client.setQueryData(schedulingKeys.availability(date), data),
     onSettled: () => client.invalidateQueries({ queryKey: ['scheduling', 'availability'] }),
   });

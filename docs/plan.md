@@ -327,7 +327,7 @@ T09.01 consolidou exemplos e compatibilidade dos contratos atuais; incrementos f
 
 ### P10 — Implementar o website em React
 
-**Prioridade:** após a validação do backend integrado. **Dependências:** M5 / P09. **Situação:** em andamento; website implementado e verificado com testes automatizados e no navegador, roteiro com backend real pendente. [Evidências](verification/p10.md) e [decisão 0016](decisions/0016-p10-website.md).
+**Prioridade:** após a validação do backend integrado. **Dependências:** M5 / P09. **Situação:** em andamento; website implementado e verificado com testes automatizados e no navegador, quatro cenários com backend real aprovados; homologação restante de T10.10 pendente. [Evidências](verification/p10.md) e [decisão 0016](decisions/0016-p10-website.md).
 
 **Objetivo:** construir a experiência web sobre os serviços reais, usando o protótipo apenas como referência visual e de navegação.
 
@@ -340,6 +340,14 @@ T09.01 consolidou exemplos e compatibilidade dos contratos atuais; incrementos f
 - [x] Entregar dashboard e acesso aos clientes do artista.
 - [x] Implementar carregamento, falha, estado vazio e coordenação pendente em cada fluxo.
 - [x] Verificar responsividade e navegação por teclado, incluindo foco em diálogos e sugestões.
+- [x] Corrigir o menu do cabeçalho para abrir as informações e ações do usuário (entrar/sair), conforme T10.12.
+- [x] Definir o modelo de login web: página React que inicia o fluxo atual do BFF, conforme [decisão 0017](decisions/0017-p10-web-login.md) (T10.13).
+- [x] Entregar a página `/entrar` dividida 50/50 com a identidade InkLink, preservando Code + PKCE no BFF, conforme T10.14. Retorno ao website por `/bff/login?returnUrl=` (decisão 0017 revisada), verificado com Keycloak real.
+- [x] Definir armazenamento e política de imagens (API S3, Cloudflare R2 em produção, SeaweedFS local), conforme [decisão 0018](decisions/0018-p10-images.md) (T10.15).
+- [x] Preparar o armazenamento de objetos local e de integração, conforme T10.16 ([guia](development/object-storage.md)).
+- [ ] Substituir a URL do portfólio por upload de imagens e incluir foto de perfil para cliente e artista, com a foto do cliente visível apenas aos artistas em contato, conforme T10.17–T10.18.
+- [ ] Renovar a sessão web no BFF, com 30 minutos sem uso e 8 horas no total, revisando a decisão 0007, conforme T10.19–T10.20.
+- [ ] Aplicar o tema InkLink na tela de login do Keycloak, conforme T10.21.
 - [ ] Executar testes de integração com o backend e o roteiro completo pelo navegador.
 - [ ] Documentar e validar a publicação do website no ambiente escolhido. Instruções documentadas; validação pendente.
 
@@ -427,7 +435,7 @@ A conclusão de uma etapa não significa a conclusão automática das etapas dep
 
 ## 8. Próxima ação
 
-P00–P09 e o incremento GW estão concluídos nos recortes documentados. M1–M5 atingidos no backend; a [verificação P09](verification/p09.md) consolida o aceite técnico local, seus resultados e limitações. Próximo passo: T10.01, iniciar o website React criado do zero. Os frontends e a operação de produção permanecem pendentes.
+P00–P09 e o incremento GW estão concluídos nos recortes documentados. M1–M5 atingidos no backend; a [verificação P09](verification/p09.md) consolida o aceite técnico local, seus resultados e limitações. P10 possui o website React e quatro cenários de integração HTTPS real aprovados; o próximo passo é concluir a homologação restante de T10.10, conforme a verificação P10. M6, aplicativos móveis e operação de produção permanecem pendentes.
 
 GetMyProfile possui transporte autenticado, atualização controlada de nome, vínculo externo/interno e funções locais. Keycloak, Gateway e BFF estão integrados e verificados em P02. Os próximos fluxos continuam priorizando backend, com autorização própria em cada serviço.
 
