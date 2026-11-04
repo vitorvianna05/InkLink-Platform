@@ -95,7 +95,8 @@ function Save-IntegrationProcesses {param([hashtable]$Processes)
 }
 function Test-IntegrationProcess {param($Entry)
     $process=Get-Process -Id $Entry.Id -ErrorAction SilentlyContinue
-    if(!$process -or $process.StartTime.ToUniversalTime().Ticks -ne $Entry.StartTicks){return $false}
+    # A PID reused by a protected process has no readable StartTime; it is never the registered host.
+    if(!$process -or !$process.StartTime -or $process.StartTime.ToUniversalTime().Ticks -ne $Entry.StartTicks){return $false}
     $native=Get-CimInstance Win32_Process -Filter "ProcessId=$($Entry.Id)"
     return $native -and $native.CommandLine -and $native.CommandLine.Contains($Entry.Dll,[StringComparison]::OrdinalIgnoreCase)
 }
