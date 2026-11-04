@@ -1,0 +1,13 @@
+# Decisão 0015 — Integração e aceite técnico do backend
+
+T09.01–T09.06. O responsável aprovou ambiente de integração local isolado com Docker Compose, HTTPS confiável e dados sintéticos. Nuvem e produção permanecem posteriores.
+
+O Compose de dependências existente é a fonte do ambiente. A geração altera explicitamente projeto, rede, nomes de volumes, portas, credenciais e importação do realm. Não utiliza .env.local, User Secrets de desenvolvimento como destino, bancos existentes ou dados do protótipo. Artefatos, segredos e certificados ficam somente em artifacts/integration, ignorado pelo Git. Nenhum script instala ou altera confiança de certificados; exige certificado localhost previamente confiável. Windows, PowerShell 7, Docker Linux e SDK fixado são pré-requisitos.
+
+As oito aplicações são publicadas separadamente com dotnet publish e executadas por HTTPS em processos ocultos, com configurações por ambiente. O manifesto registra PID, horário de criação e assembly; parada só atua em processos correspondentes. Volumes são preservados. A publicação individual mantém processos dos outros componentes e conserva a versão anterior para recuperação se a nova não ficar saudável. A demonstração utiliza Finance com contrato e schema compatíveis; não comprova atualização incompatível ou implantação sem interrupção.
+
+Somente no realm gerado para integração existe inklink-integration-users com password grant para automação sintética. Clientes do produto continuam Code/PKCE, sem password grant. Contas sintéticas são criadas administrativamente, vinculadas por GET profiles/me e recebem Artist pela ferramenta administrativa existente. Cada execução cria um conjunto próprio e evita misturar seus indicadores. Não existe senha fixa versionada ou endpoint adicional de concessão de função.
+
+O roteiro usa Gateway e fontes reais, interrompe exclusivamente o broker do projeto de integração, verifica Outbox pendente por consulta operacional sem payload, retoma consumo, encerra conversa, exige reserva para retorno e aguarda o término real da sessão antes da conclusão. Não altera relógio de produção nem contorna invariantes. A consulta operacional não é uma dependência entre bancos das aplicações.
+
+OpenAPI por serviço permanece a fonte dos contratos; snapshots de execução não são outra fonte editável. Documentação interativa é exclusiva de Development/Testing. Exemplos e política de compatibilidade são consolidados para o consumo dos três canais. O aceite M5 depende de evidência executada e ausência de falhas críticas; frontend, acessibilidade visual, carga, nuvem e operação de produção ficam fora deste marco.
