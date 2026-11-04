@@ -327,21 +327,21 @@ T09.01 consolidou exemplos e compatibilidade dos contratos atuais; incrementos f
 
 ### P10 — Implementar o website em React
 
-**Prioridade:** após a validação do backend integrado. **Dependências:** M5 / P09. **Situação:** pendente.
+**Prioridade:** após a validação do backend integrado. **Dependências:** M5 / P09. **Situação:** em andamento; website implementado e verificado com testes automatizados e no navegador, roteiro com backend real pendente. [Evidências](verification/p10.md) e [decisão 0016](decisions/0016-p10-website.md).
 
 **Objetivo:** construir a experiência web sobre os serviços reais, usando o protótipo apenas como referência visual e de navegação.
 
-- [ ] Definir build, rotas, cliente HTTP, cache e estrutura por funcionalidades.
-- [ ] Implementar a integração de sessão e a navegação apropriada a cliente e artista.
-- [ ] Entregar Descobrir, Explorar, sugestões, filtros, perfil e favoritos.
-- [ ] Entregar pedidos, propostas e acompanhamento do atendimento.
-- [ ] Entregar listagem e página individual de conversas, com autoria e estados de bloqueio.
-- [ ] Entregar calendário, reserva e acompanhamento do novo atendimento.
-- [ ] Entregar dashboard e acesso aos clientes do artista.
-- [ ] Implementar carregamento, falha, estado vazio e coordenação pendente em cada fluxo.
-- [ ] Verificar responsividade e navegação por teclado, incluindo foco em diálogos e sugestões.
+- [x] Definir build, rotas, cliente HTTP, cache e estrutura por funcionalidades.
+- [x] Implementar a integração de sessão e a navegação apropriada a cliente e artista.
+- [x] Entregar Descobrir, Explorar, sugestões, filtros, perfil e favoritos.
+- [x] Entregar pedidos, propostas e acompanhamento do atendimento.
+- [x] Entregar listagem e página individual de conversas, com autoria e estados de bloqueio.
+- [x] Entregar calendário, reserva e acompanhamento do novo atendimento.
+- [x] Entregar dashboard e acesso aos clientes do artista.
+- [x] Implementar carregamento, falha, estado vazio e coordenação pendente em cada fluxo.
+- [x] Verificar responsividade e navegação por teclado, incluindo foco em diálogos e sugestões.
 - [ ] Executar testes de integração com o backend e o roteiro completo pelo navegador.
-- [ ] Documentar e validar a publicação do website no ambiente escolhido.
+- [ ] Documentar e validar a publicação do website no ambiente escolhido. Instruções documentadas; validação pendente.
 
 **Critério de conclusão:** cliente e artista executam os fluxos da entrega pelo website, com dados persistidos no backend. Não são reaproveitados o estado global, os personagens ou o armazenamento do protótipo como mecanismo de aplicação real.
 

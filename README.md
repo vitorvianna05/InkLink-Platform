@@ -2,7 +2,7 @@
 
 Nova aplicação InkLink, criada do zero e separada do protótipo. Backend em .NET 10 com os serviços Identity, Catalog, Engagements, Messaging, Scheduling e Finance, além de Gateway e BFF web.
 
-P00–P09 concluídas nos recortes documentados. **M5 técnico do backend atingido no ambiente local isolado.** Próximo passo: T10.01, website React; iOS e Android em React Native permanecem posteriores. O código do protótipo não é base da implementação.
+P00–P09 concluídas nos recortes documentados. **M5 técnico do backend atingido no ambiente local isolado.** P10 em andamento: [website React](src/frontends/web/README.md) implementado e verificado por testes automatizados e no navegador; falta o roteiro com backend real ([verificação P10](docs/verification/p10.md)). iOS e Android em React Native permanecem posteriores. O código do protótipo não é base da implementação.
 
 ## Organização e SDD
 
@@ -10,6 +10,7 @@ P00–P09 concluídas nos recortes documentados. **M5 técnico do backend atingi
 - src/backend/services/: microsserviços com camadas e dados privados.
 - src/backend/gateway/ e src/backend/bff/: entradas dos consumidores.
 - src/backend/scripts/: execução, migrações e verificação.
+- src/frontends/web/: website React que consome o BFF.
 
 ## Executar e testar
 
@@ -17,7 +18,7 @@ O [guia de integração P09](docs/development/integration.md) descreve ambiente 
 
 A regressão é executada por Test-Backend.ps1 e pela CI, com TRX distintos por projeto. A [verificação P09](docs/verification/p09.md) registra 249 casos únicos com resultado final aprovado, a rodada inicial com falhas, a reexecução completa e o recorte final de OpenAPI. O roteiro real demonstra recuperação, histórico bloqueado, retorno por reserva, indicadores e publicação independente de Finance.
 
-Nuvem, produção, frontends, acessibilidade visual, carga e distribuição mobile continuam fora deste aceite técnico local. As evidências históricas de cada incremento permanecem em docs/verification/.
+Nuvem, produção, aplicativos móveis, acessibilidade visual, carga e distribuição mobile continuam fora deste aceite técnico local. As evidências históricas de cada incremento permanecem em docs/verification/.
 
 ## Contribuição
 
