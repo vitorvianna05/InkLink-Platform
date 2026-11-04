@@ -470,7 +470,7 @@ Continuam abertas, sem bloquear esta fundação:
 - Tecnologia de atualização de mensagens e escala das conexões.
 - Evolução da pesquisa conforme volume e qualidade observados, a partir de PostgreSQL/pg_trgm definido na decisão 0008; provedor de armazenamento, upload e tratamento de arquivos de mídia.
 - Evolução financeira além da decisão 0014: correção de sessões, estornos parciais e eventual projeção operacional, mediante novo refinamento.
-- Infraestrutura, automação de entrega, observabilidade e metas de operação.
+- Infraestrutura, automação de entrega, coleta/alertas e metas de operação em produção, além do ambiente local da P09.
 
 As escolhas serão registradas conforme surgirem, preferencialmente com contexto, decisão, alternativas e consequências. Mudanças que afetem comportamento também devem atualizar os requisitos. Este arquivo não autoriza inferir uma ferramenta ou política de negócio apenas porque ela é comum em determinada arquitetura.
 
@@ -507,3 +507,13 @@ Não se mantém nova projeção operacional: a resposta é reconstruída por con
 Respostas operacionais precisam conter todos os campos obrigatórios, inclusive contadores e valores. Ausência ou null não equivale a zero; Finance rejeita o contrato com 503 e code finance.source_unavailable. Um resumo completo com contadores explicitamente zerados permanece válido. A exigência fica no adaptador de integração, sem introduzir serialização em Domain/Application.
 
 Períodos por data usam o primeiro instante existente do dia no fuso do artista. Meia-noite inexistente avança até o primeiro minuto válido, conforme a precisão da Agenda; meia-noite repetida utiliza sua primeira ocorrência em UTC. A regra também se aplica ao limite exclusivo, mantendo períodos adjacentes sem lacunas ou sobreposição. Não altera a rejeição de horários de reserva ambíguos/inexistentes.
+
+## Consolidação operacional P09
+
+A [decisão 0015](decisions/0015-p09-backend-validation.md) delimita o aceite técnico M5 local. O ambiente reproduzível deriva as dependências do Compose existente, com projeto/rede/volumes/portas e credenciais próprios. Os oito hosts .NET são publicados por componente e usam HTTPS confiável inclusive nas chamadas entre APIs. Não se modifica confiança de certificados, armazenamento do navegador ou o protótipo. Os scripts ficam em src/backend/scripts/integration; [operação](development/integration.md).
+
+Finance foi republicado mantendo os outros sete processos e seu contrato público, seguido de verificação de dados e acesso pelo Gateway. Releases anteriores permanecem disponíveis; falha de inicialização tenta recuperação do binário anterior. A demonstração não inclui zero downtime ou rollback de migrações incompatíveis. A política de evolução está nos [contratos](development/consumer-contracts.md).
+
+O runner Test-Backend.ps1 e a CI executam projetos com relatórios distintos. Coleções de integração são serializadas para limitar Keycloak/brokers simultâneos; concorrência de negócio continua explícita nos testes. CLI Erlang dos harnesses possui limite de schedulers. Não foram ampliados timeouts dos serviços ou flexibilizadas autorizações para obter aprovação.
+
+Identity filtra logs de infraestrutura com potencial de incluir consultas/credenciais, mantendo o log estruturado próprio de requisição com traceId. API/worker, eventos, pendências e recuperação são verificáveis sem payload privado. OpenAPI de Scheduling declara tipos de timestamp e limites monetários coerentes com a validação existente, sem mudar regras de domínio ou schema de banco. [Evidências e limites](verification/p09.md).

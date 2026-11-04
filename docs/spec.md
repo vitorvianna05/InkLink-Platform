@@ -4,7 +4,7 @@
 
 Este documento consolida, por engenharia reversa documental, a especificação funcional e técnica já estabelecida para o InkLink. Sua finalidade principal é reunir comportamentos, responsabilidades, contratos e limites do produto, sem introduzir decisões novas ou substituir os documentos existentes.
 
-**Data de referência:** 03/11/2026. **Recorte:** P00–P06 e incremento GW concluídos; P07 concluída no recorte backend; P08 concluída no recorte backend; P09–P13 planejados. A consolidação utiliza as versões locais dos documentos, incluindo o incremento do Gateway, e não representa uma nova auditoria de código ou execução de testes.
+**Data de referência:** 03/11/2026. **Recorte:** P00–P06 e incremento GW concluídos; P07 concluída no recorte backend; P08 concluída no recorte backend; P09 concluída no recorte backend local; P10–P13 planejados. A consolidação referencia as evidências de cada etapa; os resultados e limites da P09 estão em sua verificação própria.
 
 | Fonte | Responsabilidade |
 | --- | --- |
@@ -280,7 +280,7 @@ O cliente público inklink-swagger autentica por Code/PKCE S256, sem segredo ou 
 
 Falha de obtenção de documento retorna erro explícito para o serviço afetado, sem substituição por documento vazio e sem impedir os demais. Produção não registra UI, assets ou agregação.
 
-O [guia do Gateway](development/gateway-documentation.md) descreve execução dos cinco projetos Api e Gateway com dependências configuradas. BFF não é necessário para esses testes diretos. T09.01 permanece responsável pela consolidação de exemplos, compatibilidade e contratos futuros.
+O [guia do Gateway](development/gateway-documentation.md) descreve execução dos seis projetos Api e Gateway com dependências configuradas. BFF não é necessário para esses testes diretos. T09.01 consolidou os [contratos dos consumidores](development/consumer-contracts.md), exemplos e compatibilidade; versões futuras deverão mantê-los atualizados.
 
 ## 8. Qualidade e verificação
 
@@ -320,13 +320,13 @@ P09 consolida regressão integrada, recuperação, ambiente e implantação inde
 | GW / TGW.01–TGW.04 | Swagger interativo | RNF06–RNF08 | Concluído; [evidências GW](verification/gateway-documentation.md). |
 | P07 / T07.01–T07.06 | Encerramento e novo atendimento | RF09–RF15, RF18–RF19, RF21 | Concluído; [evidências P07](verification/p07.md). |
 | P08 / T08.01–T08.06 | Finance e dashboard | RF16–RF17, RF20–RF21 | Concluído no backend; [evidências P08](verification/p08.md). |
-| P09 / T09.01–T09.06 | Consolidação/aceite backend | RF01–RF21 no backend; RNF01, RNF04–RNF08 | Pendente; condição para P10. |
+| P09 / T09.01–T09.06 | Consolidação/aceite backend | RF01–RF21 no backend; RNF01, RNF04–RNF08 | Concluído no recorte local; [evidências P09](verification/p09.md). |
 | P10 / T10.01–T10.10 | Website React | RF01–RF21; RNF01–RNF08 | Pendente. |
 | P11 / T11.01–T11.05 | Base React Native | Capacidades do primeiro incremento móvel | Pendente. |
 | P12 / T12.01–T12.04 | iOS | Recorte móvel aprovado | Pendente; depende de P11. |
 | P13 / T13.01–T13.04 | Android | Recorte móvel aprovado | Pendente; depende de P11, não de P12. |
 
-M0–M4 estão atendidos nos recortes documentados. O aceite integrado do backend (M5) e as interfaces permanecem pendentes. As evidências vinculadas mantêm os resultados e limites de cada execução; contagens históricas não são somadas como se fossem uma nova suíte completa.
+M0–M5 estão atendidos nos recortes documentados do backend. As interfaces permanecem pendentes. As evidências vinculadas mantêm os resultados e limites de cada execução; contagens históricas não são somadas como se fossem uma nova suíte completa.
 
 ## 10. Limites e decisões futuras
 
@@ -334,7 +334,7 @@ Permanecem para refinamento explícito:
 
 - Evolução do ciclo P07: cancelamento/reagendamento e novas políticas além da decisão 0013.
 - Evolução financeira além da decisão 0014: correções de sessões, estornos parciais e eventual projeção mediante necessidade.
-- P09: consolidação de contratos, compatibilidade, evidências integradas e aceite operacional do backend.
+- Evolução operacional após P09: nuvem/produção, coleta e alertas, carga e novas versões de contrato, sem reabrir os resultados técnicos locais já verificados.
 - P10: ferramentas de build, rotas, cache e composição da experiência web.
 - P11–P13: Expo ou configuração nativa, compartilhamento de código, recorte funcional, testes e distribuição móvel.
 - Upload, tratamento e armazenamento de mídia, moderação e exclusividade/reutilização de flashes.
@@ -357,3 +357,11 @@ Application decide a política de retorno, criação e retomada de operações e
 Respostas operacionais precisam conter todos os campos obrigatórios, inclusive contadores e valores. Ausência ou null não equivale a zero; Finance rejeita o contrato com 503 e code finance.source_unavailable. Um resumo completo com contadores explicitamente zerados permanece válido. A exigência fica no adaptador de integração, sem introduzir serialização em Domain/Application.
 
 Períodos por data usam o primeiro instante existente do dia no fuso do artista. Meia-noite inexistente avança até o primeiro minuto válido, conforme a precisão da Agenda; meia-noite repetida utiliza sua primeira ocorrência em UTC. A regra também se aplica ao limite exclusivo, mantendo períodos adjacentes sem lacunas ou sobreposição. Não altera a rejeição de horários de reserva ambíguos/inexistentes.
+
+## Aceite técnico P09
+
+M5 consolidado no ambiente local isolado aprovado na [decisão 0015](decisions/0015-p09-backend-validation.md): seis APIs, Gateway e BFF por HTTPS, dependências próprias e dados sintéticos separados. O roteiro real percorre as duas funções, recuperação após parada do broker, encerramento, novo agendamento, conclusão de sessão e indicadores, sem usar o protótipo.
+
+[Contratos e exemplos](development/consumer-contracts.md) consolidam versões, limites, paginação, erros e pendências. OpenAPI de Agenda explicita timestamps textuais com offset e limites monetários da conclusão. Logs de Identity preservam correlação e suprimem valores privados de consulta; verificação automatizada e marcadores no roteiro real comprovam o comportamento.
+
+A regressão final possui 249 casos únicos aprovados, conforme o detalhamento das rodadas e correções de infraestrutura de testes na [verificação P09](verification/p09.md). Finance foi publicado individualmente com contrato inalterado e demais processos preservados; consultas posteriores confirmaram persistência e autorização. P10 pode iniciar pelo recorte técnico; páginas, acessibilidade, responsividade, mobile, carga e operação de produção continuam posteriores.

@@ -212,7 +212,7 @@ Não é necessário esperar a etapa de validação integrada para criar testes, 
 
 **Evidência:** 171 testes aprovados, sem falhas/ignorados; build Release sem avisos/erros; recuperação e permissões com RabbitMQ, Keycloak e PostgreSQL reais, além de Compose e hosts locais. [Decisão 0010](decisions/0010-p05-messaging.md) e [execução](development/messaging.md). M3 foi concluído com P06; encerramento distribuído em P07.
 
-**Revisão de conformidade P05 (03/11/2026):** abertura em Application; orçamento durável de dez tentativas no consumidor e diagnóstico/reprocessamento; rastreamento W3C e métricas de eventos. Contratos e operação atualizados na decisão 0010 e na verificação P05. T09.03 continua responsável pela verificação operacional mais ampla.
+**Revisão de conformidade P05 (03/11/2026):** abertura em Application; orçamento durável de dez tentativas no consumidor e diagnóstico/reprocessamento; rastreamento W3C e métricas de eventos. Contratos e operação atualizados na decisão 0010 e na verificação P05. A verificação operacional mais ampla foi consolidada em T09.03.
 
 ### P06 — Implementar Agenda com proteção de concorrência
 
@@ -248,7 +248,7 @@ Não é necessário esperar a etapa de validação integrada para criar testes, 
 - [x] Verificar filtro de contratos internos, autorização, indisponibilidade e ausência da ferramenta em produção.
 - [x] Documentar execução no Visual Studio e evidências reais de autenticação/consumo.
 
-T09.01 revisará a consolidação final, exemplos e compatibilidade de todos os contratos, incluindo os incrementos futuros. Este incremento não altera os critérios de conclusão de P07/P09.
+T09.01 consolidou exemplos e compatibilidade dos contratos atuais; incrementos futuros deverão manter essa documentação. Este incremento não altera os critérios de conclusão de P07/P09.
 
 ### P07 — Integrar o ciclo de atendimento, encerramento e novo agendamento
 
@@ -297,29 +297,31 @@ T09.01 revisará a consolidação final, exemplos e compatibilidade de todos os 
 
 **Rastreabilidade:** RF16, RF17, RF20 e RF21; RNF04–RNF06.
 
-**Entrega:** políticas aprovadas na [decisão 0014](decisions/0014-p08-finance.md). Finance mantém ledger privado e compõe Scheduling/Messaging por APIs delegadas. Não há nova projeção: recomposição consulta autoridades, sem reaplicar efeitos. 66 testes do recorte aprovados, migrações e operação local verificadas. M5 depende do aceite integrado em P09.
+**Entrega:** políticas aprovadas na [decisão 0014](decisions/0014-p08-finance.md). Finance mantém ledger privado e compõe Scheduling/Messaging por APIs delegadas. Não há nova projeção: recomposição consulta autoridades, sem reaplicar efeitos. 66 testes do recorte aprovados, migrações e operação local verificadas. M5 foi concluído pelo aceite integrado em P09.
 
 ### P09 — Validar e disponibilizar o backend integrado
 
-**Prioridade:** conclusão da base backend antes do frontend. **Dependências:** P01–P08. **Situação:** pendente.
+**Prioridade:** conclusão da base backend antes do frontend. **Dependências:** P01–P08. **Situação:** concluída no recorte backend local; [evidências](verification/p09.md).
 
 **Objetivo:** consolidar um backend executável, protegido e verificável, pronto para sustentar os canais de interface.
 
-- [ ] Executar o roteiro integrado das duas funções sem depender do protótipo.
-- [ ] Executar os testes de contrato, autorização, persistência, concorrência e falhas distribuídas.
-- [ ] Revisar paginação, limites de entrada, compatibilidade e documentação das APIs.
-- [ ] Revisar timeouts, cancelamento, repetição segura, filas e diagnóstico de falhas permanentes.
-- [ ] Verificar correlação entre chamadas, eventos e processos incompletos.
-- [ ] Demonstrar publicação e teste de um serviço sem exigir publicação simultânea dos demais quando seus contratos forem compatíveis.
-- [ ] Preparar ambiente de integração com configuração e segredos separados, escolhido conforme a necessidade de validar a entrega.
-- [ ] Verificar HTTPS e configuração de consumo pelos frontends previstos.
-- [ ] Documentar inicialização dos serviços necessários, migrações e preparação de dados sintéticos em desenvolvimento e testes.
-- [ ] Preparar exemplos de chamadas e evidências de sucesso e falha para os futuros consumidores.
-- [ ] Registrar limitações da entrega e critérios não atendidos, sem marcá-los implicitamente como concluídos.
+- [x] Executar o roteiro integrado das duas funções sem depender do protótipo.
+- [x] Executar os testes de contrato, autorização, persistência, concorrência e falhas distribuídas.
+- [x] Revisar paginação, limites de entrada, compatibilidade e documentação das APIs.
+- [x] Revisar timeouts, cancelamento, repetição segura, filas e diagnóstico de falhas permanentes.
+- [x] Verificar correlação entre chamadas, eventos e processos incompletos.
+- [x] Demonstrar publicação e teste de um serviço sem exigir publicação simultânea dos demais quando seus contratos forem compatíveis.
+- [x] Preparar ambiente de integração com configuração e segredos separados, escolhido conforme a necessidade de validar a entrega.
+- [x] Verificar HTTPS e configuração de consumo pelos frontends previstos.
+- [x] Documentar inicialização dos serviços necessários, migrações e preparação de dados sintéticos em desenvolvimento e testes.
+- [x] Preparar exemplos de chamadas e evidências de sucesso e falha para os futuros consumidores.
+- [x] Registrar limitações da entrega e critérios não atendidos, sem marcá-los implicitamente como concluídos.
 
 **Critério de conclusão:** existe uma versão do backend integrado executável por instruções reproduzíveis, com contratos documentados e evidência dos fluxos fundamentais. Nenhuma dependência de interface é usada como substituto de autorização, persistência ou regra de negócio. Este marco não exige antecipar toda a infraestrutura de escala futura.
 
 **Rastreabilidade:** todos os requisitos funcionais de backend aplicáveis e RNF01, RNF04–RNF08.
+
+**Aceite M5:** contratos dos seis serviços, regressão, recuperação e privacidade consolidados; ambiente isolado com oito hosts HTTPS e demonstração de publicação independente de Finance. 249 casos únicos com resultado final aprovado, incluindo o recorte final de OpenAPI. Decisão [0015](decisions/0015-p09-backend-validation.md). Próxima etapa: P10. Nuvem, produção e frontends permanecem fora deste aceite técnico.
 
 ## 5. Etapas posteriores de frontend
 
@@ -425,7 +427,7 @@ A conclusão de uma etapa não significa a conclusão automática das etapas dep
 
 ## 8. Próxima ação
 
-P00–P08 e o incremento GW estão concluídos nos recortes documentados. M1–M4 atingidos no backend; a [verificação P07](verification/p07.md) consolida encerramento seguro, recuperação e novo atendimento. Próximo passo: T09.01, consolidar contratos e validar o backend integrado. P09 continua responsável pelo aceite integrado do backend antes dos frontends.
+P00–P09 e o incremento GW estão concluídos nos recortes documentados. M1–M5 atingidos no backend; a [verificação P09](verification/p09.md) consolida o aceite técnico local, seus resultados e limitações. Próximo passo: T10.01, iniciar o website React criado do zero. Os frontends e a operação de produção permanecem pendentes.
 
 GetMyProfile possui transporte autenticado, atualização controlada de nome, vínculo externo/interno e funções locais. Keycloak, Gateway e BFF estão integrados e verificados em P02. Os próximos fluxos continuam priorizando backend, com autorização própria em cada serviço.
 

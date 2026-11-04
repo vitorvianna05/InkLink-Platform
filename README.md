@@ -1,50 +1,24 @@
-# InkLink
+# InkLink-Platform
 
-Nova aplicação InkLink, criada do zero e separada do protótipo.
+Nova aplicação InkLink, criada do zero e separada do protótipo. Backend em .NET 10 com os serviços Identity, Catalog, Engagements, Messaging, Scheduling e Finance, além de Gateway e BFF web.
 
-## Organização
+P00–P09 concluídas nos recortes documentados. **M5 técnico do backend atingido no ambiente local isolado.** Próximo passo: T10.01, website React; iOS e Android em React Native permanecem posteriores. O código do protótipo não é base da implementação.
 
-- `docs/`: fonte oficial da documentação SDD.
-- `src/`: código da nova aplicação; serviços Identity, Catalog, Engagements, Messaging, Scheduling e Finance em src/backend/services/, Gateway e BFF em pastas próprias.
+## Organização e SDD
 
-O backend utiliza .NET 10 com microsserviços. Os canais previstos são website React e aplicativos iOS e Android em React Native. A prioridade inicial é o backend.
+- docs/: [requisitos](docs/requirements.md), [arquitetura](docs/architecture.md), [spec](docs/spec.md), [plano](docs/plan.md) e [tarefas](docs/tasks.md).
+- src/backend/services/: microsserviços com camadas e dados privados.
+- src/backend/gateway/ e src/backend/bff/: entradas dos consumidores.
+- src/backend/scripts/: execução, migrações e verificação.
 
-## Documentos
+## Executar e testar
 
-- [Requisitos](docs/requirements.md)
-- [Arquitetura](docs/architecture.md)
-- [Plano](docs/plan.md)
-- [Tarefas](docs/tasks.md)
-- [Revisão da fundação P00](docs/decisions/0006-p00-review.md)
+O [guia de integração P09](docs/development/integration.md) descreve ambiente próprio com HTTPS, Docker Compose, segredos e dados sintéticos separados. Gateway/Swagger: https://localhost:5291/swagger após a inicialização. [Contratos e exemplos](docs/development/consumer-contracts.md) cobrem os seis serviços, versões, paginação, limites, erros e processos pendentes.
 
-## Situação
+A regressão é executada por Test-Backend.ps1 e pela CI, com TRX distintos por projeto. A [verificação P09](docs/verification/p09.md) registra 249 casos únicos com resultado final aprovado, a rodada inicial com falhas, a reexecução completa e o recorte final de OpenAPI. O roteiro real demonstra recuperação, histórico bloqueado, retorno por reserva, indicadores e publicação independente de Finance.
 
-P00–P06 concluídas: Identity, Catalog e Engagements .NET 10 com bancos PostgreSQL privados, autenticação Keycloak, funções locais, Gateway YARP e BFF com sessão no servidor. Catalog oferece publicação do próprio Artist, perfil/mídia públicos, descoberta, pesquisa aproximada e favoritos persistentes. Engagements oferece solicitações, snapshots de artista/flash, versões de proposta e aceite idempotente, com autorização e proteção concorrente. Messaging acrescenta conversas autorizadas, interlocutor/situação oficial, histórico incremental, envio idempotente, Inbox e bloqueio local. A Outbox integra Atendimentos via RabbitMQ com recuperação. Scheduling acrescenta disponibilidade por data/fuso IANA, reservas idempotentes, proteção GiST contra conflitos e recibo técnico de confirmação. M1/M2/M3 atingidos no recorte backend; P07 permanece pendente. Nenhuma implementação do protótipo foi copiada.
+Nuvem, produção, frontends, acessibilidade visual, carga e distribuição mobile continuam fora deste aceite técnico local. As evidências históricas de cada incremento permanecem em docs/verification/.
 
-A validação da P06 terminou com 192 casos únicos com resultado final aprovado, incluindo PostgreSQL, RabbitMQ e Keycloak reais. Houve reexecução direcionada após atualizar a expectativa das tabelas de Atendimentos; a [verificação P06](docs/verification/p06.md) registra todas as rodadas. Build Release sem avisos/erros, restauração bloqueada, Compose e hosts locais verificados. Consulte [evidências da P05](docs/verification/p05.md) e [execução de Messaging](docs/development/messaging.md). Consulte [evidências e limites da P04](docs/verification/p04.md) e [execução de Engagements](docs/development/engagements.md).
+## Contribuição
 
-Consulte [execução e contratos de Catalog](docs/development/catalog.md), [evidências da P03](docs/verification/p03.md), [execução de Identity, Gateway e BFF](docs/development/authentication.md), [evidências da P02](docs/verification/p02.md) e o [histórico da P01](docs/verification/p01.md).
-
-Nome do repositório aprovado: `InkLink-Platform`. Repositório criado em https://github.com/vitorvianna05/InkLink-Platform.
-
-## Contribuição e commits
-
-Consulte [CONTRIBUTING.md](CONTRIBUTING.md) para ativar o hook e o template de commits semânticos com resumo. As instruções para agentes ficam em AGENTS.md.
-
-P05 possui implementação inicial de conversas, Outbox e Inbox em validação. Consulte [pendências e evidências](docs/verification/p05.md) antes de considerar a etapa concluída.
-
-P06: Agenda backend concluída, com disponibilidade por data/fuso IANA, reservas autorizadas/idempotentes, exclusão concorrente em PostgreSQL e Outbox com recibo técnico. [Execução](docs/development/scheduling.md) e [evidências](docs/verification/p06.md): 192 casos com resultado final aprovado, incluindo reexecução direcionada da expectativa de esquema. Próxima etapa: P07.
-
-Documentação interativa antecipada: [guia do Gateway](docs/development/gateway-documentation.md), com seleção dos serviços em http://127.0.0.1:5191/swagger e autenticação Code/PKCE em desenvolvimento/testes.
-
-Incremento GW concluído: documentação interativa dos serviços pelo Gateway, com login Code/PKCE. [Evidências](docs/verification/gateway-documentation.md): 49 testes finais aprovados e conferência dos cinco documentos reais. Próximo passo: T07.01.
-
-## Ciclo integrado de atendimento — P07
-
-Encerramento, barreiras de escrita e reserva e retorno por novo agendamento: [execução e diagnóstico](docs/development/lifecycle.md), [decisão 0013](docs/decisions/0013-p07-lifecycle.md) e [evidências P07](docs/verification/p07.md). São 215 casos com resultado final aprovado nos recortes/reexecuções documentados. Próximo incremento: P08.
-
-Revisão P07: corrigidas recuperação de ativação, coordenação em Application e propagação de correlação; 59 testes do recorte aprovados conforme as evidências. Aplicar também LifecycleCorrelationAndRecovery em Engagements.
-
-## Gestão financeira — P08
-
-Backend de receitas/custos manuais, estornos imutáveis e dashboard por artista/período; conclusão de sessões em Scheduling e conversas atuais em Messaging. [Políticas](docs/decisions/0014-p08-finance.md), [execução e APIs](docs/development/finance.md) e [evidências](docs/verification/p08.md). São 66 testes aprovados no recorte P08, com migrações e health/Swagger locais verificados. Este é o estado atual, posterior aos registros históricos acima. Próxima etapa: P09; M5 e frontends permanecem pendentes.
+Usar Conventional Commits com resumo no corpo, conforme [CONTRIBUTING.md](CONTRIBUTING.md) e [AGENTS.md](AGENTS.md). Repositório: [InkLink-Platform](https://github.com/vitorvianna05/InkLink-Platform).

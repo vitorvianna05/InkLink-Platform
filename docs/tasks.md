@@ -138,7 +138,7 @@ Cada linha abaixo é uma tarefa com ID estável, dependências diretas, entregá
 
 **Evidência:** suíte completa com 171 aprovados (22 de Messaging), sem falhas/ignorados, build Release sem avisos/erros, RabbitMQ/Keycloak/PostgreSQL reais e Compose local verificados. Nomes e situação oficial integrados; bloqueio é barreira local. M3 foi concluído com P06; encerramento distribuído permanece em P07.
 
-**Revisão de conformidade P05 (03/11/2026):** abertura em Application; orçamento durável de dez tentativas no consumidor e diagnóstico/reprocessamento; rastreamento W3C e métricas de eventos. Contratos e operação atualizados na decisão 0010 e na verificação P05. T09.03 continua responsável pela verificação operacional mais ampla.
+**Revisão de conformidade P05 (03/11/2026):** abertura em Application; orçamento durável de dez tentativas no consumidor e diagnóstico/reprocessamento; rastreamento W3C e métricas de eventos. Contratos e operação atualizados na decisão 0010 e na verificação P05. A verificação operacional mais ampla foi consolidada em T09.03.
 
 **Conclusão de P05:** conversas autorizadas, autoria preservada e integração recuperável com bloqueio local verificado.
 
@@ -163,7 +163,7 @@ Cada linha abaixo é uma tarefa com ID estável, dependências diretas, entregá
 
 ### Incremento GW — Documentação interativa antecipada
 
-Após P06 e antes de P07, conforme decisão 0012. Referências RNF06–RNF08 e contratos públicos já entregues. Situação: concluído; [evidências](verification/gateway-documentation.md). A consolidação T09.01 permanece pendente.
+Após P06 e antes de P07, conforme decisão 0012. Referências RNF06–RNF08 e contratos públicos já entregues. Situação: concluído; [evidências](verification/gateway-documentation.md). A consolidação T09.01 foi entregue na P09; consultar as evidências correspondentes.
 
 | ID / tarefa | Dependências | Entregável | Aceite e verificação |
 | --- | --- | --- | --- |
@@ -206,22 +206,24 @@ Após P06 e antes de P07, conforme decisão 0012. Referências RNF06–RNF08 e c
 
 **Conclusão de P08:** resultados gerenciais verificáveis por artista e período sem confundir previsão e recebimento.
 
-**Entrega:** decisão [0014](decisions/0014-p08-finance.md), serviço Finance, conclusão de sessões em Scheduling e resumo atual em Messaging. Composição síncrona, sem projeção operacional nova; recompor não grava lançamentos. 66 testes aprovados no recorte; M5 aguarda P09. [Execução](development/finance.md).
+**Entrega:** decisão [0014](decisions/0014-p08-finance.md), serviço Finance, conclusão de sessões em Scheduling e resumo atual em Messaging. Composição síncrona, sem projeção operacional nova; recompor não grava lançamentos. 66 testes aprovados no recorte histórico; M5 foi concluído na P09. [Execução](development/finance.md).
 
 ### P09 — Validação e disponibilização do backend
 
-**Referências:** RF01–RF21 nas operações de backend; RNF01 e RNF04–RNF08. **Marco:** M5. **Situação inicial:** pendente.
+**Referências:** RF01–RF21 nas operações de backend; RNF01 e RNF04–RNF08. **Marco:** M5. **Situação:** concluída no recorte backend local; [evidências](verification/p09.md).
 
 | ID / tarefa | Dependências | Entregável | Aceite e verificação |
 | --- | --- | --- | --- |
-| T09.01 — [ ] Consolidar os contratos dos consumidores | T08.06 | Documentação e exemplos de APIs, eventos, paginação, limites, erros e operações em processamento; revisar e ampliar o catálogo interativo antecipado em TGW.01–TGW.04. | Exemplos de sucesso e falha são verificáveis sem o protótipo; a política de compatibilidade está registrada. |
-| T09.02 — [ ] Executar regressão integrada e revisão de acesso | T09.01 | Suíte e relatório dos fluxos das duas funções, incluindo autorização nos serviços. | Roteiro de P07 e indicadores de P08 passam em ambiente integrado; critérios não atendidos são identificados em vez de omitidos. |
-| T09.03 — [ ] Verificar observabilidade e recuperação | T09.02 | Cenários de interrupção com correlação, Outbox pendente e processos incompletos visíveis. | Uma operação pode ser rastreada entre serviços sem expor conteúdo privado; retomada não duplica escrita ou perde fatos. |
-| T09.04 — [ ] Preparar ambiente de integração reproduzível | T09.03 | Ambiente com HTTPS, configurações, migrações e dados sintéticos separados; instruções de execução. | Ambiente limpo inicia os componentes necessários, sem credenciais versionadas ou dependência de armazenamento do navegador. |
-| T09.05 — [ ] Demonstrar implantação independente | T09.04 | Publicação de um serviço com contrato compatível e verificação pós-publicação. | O serviço pode ser atualizado sem republicar todos os demais e mantendo os fluxos existentes; instruções registram o procedimento. |
-| T09.06 — [ ] Registrar aceite do marco backend | T09.05 | Checklist dos requisitos demonstrados, evidências e limitações da entrega. | Falhas críticas de acesso, conflito de reserva ou bloqueio de chat impedem M5. Só após esse aceite P10 pode começar. |
+| T09.01 — [x] Consolidar os contratos dos consumidores | T08.06 | Documentação e exemplos de APIs, eventos, paginação, limites, erros e operações em processamento; revisar e ampliar o catálogo interativo antecipado em TGW.01–TGW.04. | Exemplos de sucesso e falha são verificáveis sem o protótipo; a política de compatibilidade está registrada. |
+| T09.02 — [x] Executar regressão integrada e revisão de acesso | T09.01 | Suíte e relatório dos fluxos das duas funções, incluindo autorização nos serviços. | Roteiro de P07 e indicadores de P08 passam em ambiente integrado; critérios não atendidos são identificados em vez de omitidos. |
+| T09.03 — [x] Verificar observabilidade e recuperação | T09.02 | Cenários de interrupção com correlação, Outbox pendente e processos incompletos visíveis. | Uma operação pode ser rastreada entre serviços sem expor conteúdo privado; retomada não duplica escrita ou perde fatos. |
+| T09.04 — [x] Preparar ambiente de integração reproduzível | T09.03 | Ambiente com HTTPS, configurações, migrações e dados sintéticos separados; instruções de execução. | Ambiente limpo inicia os componentes necessários, sem credenciais versionadas ou dependência de armazenamento do navegador. |
+| T09.05 — [x] Demonstrar implantação independente | T09.04 | Publicação de um serviço com contrato compatível e verificação pós-publicação. | O serviço pode ser atualizado sem republicar todos os demais e mantendo os fluxos existentes; instruções registram o procedimento. |
+| T09.06 — [x] Registrar aceite do marco backend | T09.05 | Checklist dos requisitos demonstrados, evidências e limitações da entrega. | Falhas críticas de acesso, conflito de reserva ou bloqueio de chat impedem M5. Só após esse aceite P10 pode começar. |
 
 **Conclusão de P09:** backend integrado pronto para consumo real pelos frontends; não exige antecipar toda a infraestrutura de escala futura.
+
+**Aceite M5:** critérios técnicos atendidos em ambiente isolado aprovado na [decisão 0015](decisions/0015-p09-backend-validation.md). 249 casos únicos com resultado final aprovado, roteiro HTTPS real e publicação independente verificados. [Contratos](development/consumer-contracts.md) e [execução](development/integration.md). Próximo passo: T10.01.
 
 ## 3. Etapas de frontend após o backend
 
@@ -286,7 +288,7 @@ Após P06 e antes de P07, conforme decisão 0012. Referências RNF06–RNF08 e c
 
 ## 4. Próximo lote e acompanhamento
 
-P00 foi concluída no nível de decisões e revisão. A [revisão T00.07](decisions/0006-p00-review.md) consolida os registros de T00.01 a T00.06 e o escopo do primeiro incremento. P01 foi implementada e verificada conforme [evidências](verification/p01.md), incluindo Docker e PostgreSQL real. P02 foi concluída conforme [evidências](verification/p02.md). P03 foi concluída conforme [evidências](verification/p03.md). P04 foi concluída conforme [evidências](verification/p04.md), com o fluxo aprovado pelo responsável. P05 foi concluída conforme [evidências](verification/p05.md). P06 foi concluída conforme [evidências](verification/p06.md). O incremento GW foi concluído conforme [evidências](verification/gateway-documentation.md). P07 foi concluída conforme [evidências](verification/p07.md). P08 foi concluída conforme [evidências](verification/p08.md). O próximo passo é T09.01; P09 e os frontends permanecem pendentes.
+P00 foi concluída no nível de decisões e revisão. A [revisão T00.07](decisions/0006-p00-review.md) consolida os registros de T00.01 a T00.06 e o escopo do primeiro incremento. P01 foi implementada e verificada conforme [evidências](verification/p01.md), incluindo Docker e PostgreSQL real. P02 foi concluída conforme [evidências](verification/p02.md). P03 foi concluída conforme [evidências](verification/p03.md). P04 foi concluída conforme [evidências](verification/p04.md), com o fluxo aprovado pelo responsável. P05 foi concluída conforme [evidências](verification/p05.md). P06 foi concluída conforme [evidências](verification/p06.md). O incremento GW foi concluído conforme [evidências](verification/gateway-documentation.md). P07 foi concluída conforme [evidências](verification/p07.md). P08 foi concluída conforme [evidências](verification/p08.md). P09 foi concluída conforme [evidências](verification/p09.md), atingindo M5 no recorte backend local. O próximo passo é T10.01; os frontends permanecem pendentes.
 
 O broker e a primeira integração confiável foram definidos/verificados em P05; stack móvel mantém tarefas próprias. A pesquisa inicial foi definida em P03, conforme decisão 0008. Essas escolhas não eram pré-requisitos do primeiro incremento de Identity.
 
