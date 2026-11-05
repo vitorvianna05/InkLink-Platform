@@ -115,13 +115,13 @@ main { max-width: 1320px; margin: 0 auto; padding: 32px var(--gutter) 72px; min-
 .icon-button { width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); display: inline-grid; place-items: center; cursor: pointer; }
 .site-header .icon-button { background: transparent; border-color: rgb(255 255 255 / 25%); color: #fff; }
 .icon-button.favorite.active { color: var(--red); border-color: var(--red); }
-.card-title > div { flex: 1; min-width: 0; }
 
 /* Cards de artistas */
 .artist-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
 .artist-card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--line); padding: 20px; display: grid; gap: 12px; }
 .artist-card h3 { font-size: 20px; }
 .card-title { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+.card-title > div { flex: 1; min-width: 0; }
 .location { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 14px; margin: 0; }
 .pill-row { display: flex; flex-wrap: wrap; gap: 6px; }
 .pill { display: inline-flex; padding: 4px 12px; border-radius: 999px; background: #f1ece8; font-size: 13px; font-weight: 500; }
@@ -155,6 +155,9 @@ main { max-width: 1320px; margin: 0 auto; padding: 32px var(--gutter) 72px; min-
 .notice.warning { background: #fff4e0; color: #6b3d00; }
 .notice.error { background: #fde8e9; color: #8c1219; }
 .notice.success { background: #e6f4ec; color: #14532d; }
+/* Dados mantidos após falha de atualização em segundo plano. */
+.stale-notice { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 20px; }
+.stale-notice .button { min-height: 38px; padding: 0 14px; }
 
 /* Explorar */
 .search-form { background: var(--surface); border: 1px solid var(--line); border-radius: 24px; padding: clamp(18px, 3vw, 32px); display: grid; gap: 18px; }

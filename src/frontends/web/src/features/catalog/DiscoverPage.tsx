@@ -47,7 +47,7 @@ export function DiscoverPage() {
           </h2>
           {featured.isPending ? (
             <Loading label="Carregando artistas…" />
-          ) : featured.isError ? (
+          ) : featured.isLoadingError ? (
             <ErrorState error={featured.error} onRetry={() => void featured.refetch()} />
           ) : featured.data.items.length === 0 ? (
             <EmptyState title="Ainda não há artistas publicados no catálogo." />

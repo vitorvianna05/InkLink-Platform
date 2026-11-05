@@ -90,7 +90,7 @@ function Content({ session, perspective }: { session: Session; perspective: Pers
   );
 
   if (conversation.isPending) return <Loading label="Abrindo conversa…" />;
-  if (conversation.isError) {
+  if (conversation.isLoadingError) {
     return (
       <>
         {back}

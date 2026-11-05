@@ -117,7 +117,7 @@ export function ExplorePage() {
             <small className="field-hint">Compara com o preço inicial de referência, não com o orçamento final.</small>
           </label>
         </div>
-        {options.isError && <p className="notice warning">Não foi possível carregar as opções de estilo e cidade. A busca por texto continua disponível.</p>}
+        {options.isLoadingError && <p className="notice warning">Não foi possível carregar as opções de estilo e cidade. A busca por texto continua disponível.</p>}
         <div className="form-actions">
           <button type="button" className="text-button" onClick={clear}>
             <X size={14} aria-hidden="true" /> Limpar busca
@@ -147,7 +147,7 @@ export function ExplorePage() {
           </p>
           {results.isPending ? (
             <Loading label="Buscando artistas…" />
-          ) : results.isError ? (
+          ) : results.isLoadingError ? (
             <ErrorState error={results.error} onRetry={() => void results.refetch()} />
           ) : artists.length === 0 ? (
             <EmptyState title="Ainda não encontramos essa conexão.">

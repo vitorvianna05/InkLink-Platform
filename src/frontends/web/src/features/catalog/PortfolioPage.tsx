@@ -229,7 +229,7 @@ function ArtworkManager({ artistId, kind }: { artistId: string; kind: ArtworkKin
       </SectionHeading>
       {works.isPending ? (
         <Loading />
-      ) : works.isError ? (
+      ) : works.isLoadingError ? (
         <ErrorState error={works.error} onRetry={() => void works.refetch()} />
       ) : items.length === 0 ? (
         <EmptyState title={`Nenhum item em ${kindLabels[kind].title.toLowerCase()}.`} />
@@ -303,7 +303,7 @@ function Content({ session }: { session: Session }) {
       )}
       {ready && artist.isPending ? (
         <Loading />
-      ) : ready && artist.isError && !(artist.error instanceof ApiError && artist.error.status === 404) ? (
+      ) : ready && artist.isLoadingError && !(artist.error instanceof ApiError && artist.error.status === 404) ? (
         <ErrorState error={artist.error} onRetry={() => void artist.refetch()} />
       ) : (
         <ProfileForm key={artist.data?.id ?? 'new'} initial={artist.data ?? null} onPublished={onPublished} />

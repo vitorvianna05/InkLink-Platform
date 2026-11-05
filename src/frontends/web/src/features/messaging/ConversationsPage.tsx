@@ -26,7 +26,7 @@ function List({ session, perspective }: { session: Session; perspective: Perspec
   const conversations = useConversations();
   const base = perspective === 'artist' ? '/estudio/mensagens' : '/mensagens';
   if (conversations.isPending) return <Loading label="Carregando conversas…" />;
-  if (conversations.isError) return <ErrorState error={conversations.error} onRetry={() => void conversations.refetch()} />;
+  if (conversations.isLoadingError) return <ErrorState error={conversations.error} onRetry={() => void conversations.refetch()} />;
   const items = conversations.data
     .filter((c) => belongsTo(c, perspective, session.profile.id))
     .sort((a, b) => (b.lastMessage?.createdAt ?? b.createdAt).localeCompare(a.lastMessage?.createdAt ?? a.createdAt));

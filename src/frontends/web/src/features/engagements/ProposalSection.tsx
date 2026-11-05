@@ -126,7 +126,7 @@ export function ProposalSection({ engagement, perspective }: { engagement: Engag
         <summary>Histórico de propostas</summary>
         {proposals.isPending ? (
           <Loading />
-        ) : proposals.isError ? (
+        ) : proposals.isLoadingError ? (
           <ErrorState error={proposals.error} onRetry={() => void proposals.refetch()} />
         ) : proposals.data.items.length === 0 ? (
           <p className="muted">Nenhuma proposta registrada.</p>

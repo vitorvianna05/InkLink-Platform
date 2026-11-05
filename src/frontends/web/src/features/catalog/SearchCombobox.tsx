@@ -88,7 +88,7 @@ export function SearchCombobox({ value, onChange }: Props) {
             <li className="suggestion-status" role="presentation">
               Buscando sugestões…
             </li>
-          ) : suggestions.isError ? (
+          ) : suggestions.isLoadingError ? (
             <li className="suggestion-status" role="presentation">
               Não foi possível carregar sugestões agora.
             </li>

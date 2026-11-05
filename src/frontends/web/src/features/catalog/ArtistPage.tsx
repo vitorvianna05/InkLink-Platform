@@ -16,7 +16,7 @@ import { FavoriteButton } from './ArtistCardView';
 function ArtworkList({ artistId, kind, onWant, requestDisabled = false }: { artistId: string; kind: ArtworkKind; onWant?: (flash: Artwork) => void; requestDisabled?: boolean }) {
   const works = useArtworks(artistId, kind);
   if (works.isPending) return <Loading label="Carregando trabalhos…" />;
-  if (works.isError) return <ErrorState error={works.error} onRetry={() => void works.refetch()} />;
+  if (works.isLoadingError) return <ErrorState error={works.error} onRetry={() => void works.refetch()} />;
   const items = works.data.pages.flatMap((page) => page.items);
   if (items.length === 0) {
     return <EmptyState title={kind === 'flashes' ? 'Este artista ainda não publicou flashes.' : 'Este artista ainda não publicou tatuagens realizadas.'} />;
@@ -100,7 +100,7 @@ export function ArtistPage() {
   );
 
   if (artist.isPending) return <Loading label="Carregando perfil…" />;
-  if (artist.isError) {
+  if (artist.isLoadingError) {
     return (
       <>
         {back}

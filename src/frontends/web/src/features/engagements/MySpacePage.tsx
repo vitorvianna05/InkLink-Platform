@@ -23,7 +23,7 @@ function Requests() {
   const conversations = useConversations();
   const photos = new Map((conversations.data ?? []).map((c) => [c.engagementId, c.counterpart.photoThumbnailUrl]));
   if (engagements.isPending) return <Loading label="Carregando seus pedidos…" />;
-  if (engagements.isError) return <ErrorState error={engagements.error} onRetry={() => void engagements.refetch()} />;
+  if (engagements.isLoadingError) return <ErrorState error={engagements.error} onRetry={() => void engagements.refetch()} />;
   const items = [...engagements.data].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   return (
     <>
@@ -69,7 +69,7 @@ function UpcomingReservations() {
       <SectionHeading eyebrow="SEUS PRÓXIMOS CAPÍTULOS" title="Sessões agendadas" count={reservations.data?.length} />
       {reservations.isPending ? (
         <Loading label="Carregando sua agenda…" />
-      ) : reservations.isError ? (
+      ) : reservations.isLoadingError ? (
         <ErrorState error={reservations.error} onRetry={() => void reservations.refetch()} />
       ) : reservations.data.length === 0 ? (
         <EmptyState title="Nenhuma sessão confirmada nos próximos 90 dias." icon={<CalendarDays size={26} aria-hidden="true" />}>
@@ -110,7 +110,7 @@ function Favorites() {
       </SectionHeading>
       {favorites.isPending ? (
         <Loading label="Carregando favoritos…" />
-      ) : favorites.isError ? (
+      ) : favorites.isLoadingError ? (
         <ErrorState error={favorites.error} onRetry={() => void favorites.refetch()} />
       ) : favorites.data.length === 0 ? (
         <EmptyState title="Você ainda não salvou nenhum artista.">

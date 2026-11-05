@@ -16,7 +16,7 @@ import { ProposalSection } from './ProposalSection';
 function ConversationLink({ engagement, perspective }: { engagement: Engagement; perspective: Perspective }) {
   const conversations = useConversations();
   if (conversations.isPending) return <Loading label="Procurando a conversa…" />;
-  if (conversations.isError) return <ErrorState error={conversations.error} onRetry={() => void conversations.refetch()} />;
+  if (conversations.isLoadingError) return <ErrorState error={conversations.error} onRetry={() => void conversations.refetch()} />;
   const conversation = conversations.data.find((c) => c.engagementId === engagement.id);
   if (!conversation) {
     return (
@@ -59,7 +59,7 @@ function EngagementReservations({ engagement, perspective }: { engagement: Engag
       <h2 id="sessions-title">Sessões</h2>
       {reservations.isPending ? (
         <Loading />
-      ) : reservations.isError ? (
+      ) : reservations.isLoadingError ? (
         <ErrorState error={reservations.error} onRetry={() => void reservations.refetch()} />
       ) : items.length === 0 ? (
         <p className="muted">
@@ -104,7 +104,7 @@ function Content({ perspective }: { perspective: Perspective }) {
   );
 
   if (engagement.isPending) return <Loading label="Carregando atendimento…" />;
-  if (engagement.isError) {
+  if (engagement.isLoadingError) {
     return (
       <>
         {back}
