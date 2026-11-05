@@ -34,7 +34,7 @@ O BFF usa Authorization Code com PKCE S256 e o middleware OIDC do ASP.NET Core, 
 
 Tickets com tokens ficam criptografados no PostgreSQL privado do BFF. Data Protection mantém chaves compartilhadas no mesmo contexto operacional e protege seu conteúdo com um certificado configurado, com chave privada disponível exclusivamente às instâncias autorizadas do BFF. Cookie e tokens são compatíveis com múltiplas instâncias que compartilhem banco, application name e certificado. O BFF não acessa tabelas de Identity.
 
-A sessão dura no máximo cinco minutos e nunca ultrapassa a expiração do access token. Não há renovação automática nem sliding expiration nesta etapa; ao expirar, o usuário reinicia o login. Se o provedor retornar refresh token, ele permanece somente no ticket protegido e não é usado para estender essa sessão.
+A sessão dura no máximo cinco minutos e nunca ultrapassa a expiração do access token. Não há renovação automática nem sliding expiration nesta etapa; ao expirar, o usuário reinicia o login. Se o provedor retornar refresh token, ele permanece somente no ticket protegido e não é usado para estender essa sessão. Revisado pela [decisão 0019](0019-p10-session-renewal.md): a sessão passou a durar até 30 minutos sem uso e 8 horas no total, com renovação do access token no servidor.
 
 Logout exige POST autenticado e antiforgery válido. Remove o ticket durável antes de iniciar o logout OIDC. GET não encerra sessão. Operações de escrita encaminhadas pelo BFF também exigem antiforgery, com cookie Secure/HttpOnly/SameSite=Strict e header X-CSRF-TOKEN. O BFF encaminha o access token do ticket ao Gateway; não aceita token fornecido pelo navegador para substituir a identidade da sessão.
 
