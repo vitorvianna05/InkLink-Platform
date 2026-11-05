@@ -11,7 +11,7 @@ const accepted = ['image/jpeg', 'image/png', 'image/webp'];
 const maxBytes = 5 * 1024 * 1024;
 
 /** Foto de perfil (T10.18): uma por conta, enviada por upload. */
-export function ProfilePhotoDialog({ session, open, onClose }: { session: Session; open: boolean; onClose: () => void }) {
+export function ProfilePhotoDialog({ session, open, onClose, returnFocus }: { session: Session; open: boolean; onClose: () => void; returnFocus?: () => HTMLElement | null }) {
   const client = useQueryClient();
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -57,7 +57,7 @@ export function ProfilePhotoDialog({ session, open, onClose }: { session: Sessio
   const current = session.profile.photoUrl ?? null;
 
   return (
-    <Dialog open={open} onClose={onClose} title="Foto de perfil" eyebrow="SUA CONTA">
+    <Dialog open={open} onClose={onClose} title="Foto de perfil" eyebrow="SUA CONTA" returnFocus={returnFocus}>
       <div className="stack">
         <div className="photo-preview">
           {preview ? <img src={preview} alt="Prévia da nova foto" /> : <Avatar className="avatar large" name={session.profile.displayName} photoUrl={current} />}

@@ -4,7 +4,7 @@ import { mockBackend } from './mock-backend';
 const widths = [360, 768, 1280];
 
 const clientPages = ['/', '/explorar?buscar=1', '/artistas/a1', '/meu-espaco', '/mensagens', '/mensagens/c1', '/atendimentos/e1'];
-const artistPages = ['/estudio', '/estudio/agenda?dia=2030-01-15', '/estudio/mensagens', '/estudio/financeiro', '/estudio/portfolio'];
+const artistPages = ['/estudio', '/estudio/agenda?dia=2030-01-15', '/estudio/mensagens', '/estudio/financeiro', '/estudio/portfolio', '/estudio/atendimentos/e1'];
 
 async function expectNoHorizontalOverflow(page: Page) {
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
@@ -92,6 +92,39 @@ test('abas do perfil respondem às setas', async ({ page }) => {
   await expect(page.getByRole('tab', { name: 'Flashes' })).toBeFocused();
 });
 
+test('diálogo da foto de perfil recebe o foco e o devolve ao menu da conta', async ({ page }) => {
+  await mockBackend(page, 'client');
+  await page.goto('/meu-espaco');
+  const trigger = page.getByRole('button', { name: 'Abrir menu da conta' });
+  await trigger.click();
+  await page.getByRole('button', { name: 'Foto de perfil' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Foto de perfil' });
+  await expect(dialog).toBeVisible();
+  expect(await dialog.evaluate((node) => node.contains(document.activeElement))).toBe(true);
+  await expect(dialog.getByLabel('Escolher imagem')).toBeAttached();
+  await page.keyboard.press('Escape');
+  await expect(dialog).toBeHidden();
+  await expect(page.getByRole('button', { name: 'Abrir menu da conta' })).toBeFocused();
+});
+
+test('envio de obra no Portfólio é operável por teclado e sinaliza obra legada', async ({ page }) => {
+  await mockBackend(page, 'artist');
+  await page.goto('/estudio/portfolio');
+  const flashes = page.locator('section').filter({ has: page.getByRole('heading', { name: /^Flashes/ }) });
+  await expect(flashes.getByText('Imagem externa: envie um arquivo')).toBeVisible();
+  const add = flashes.getByRole('button', { name: /Adicionar/ });
+  await add.focus();
+  await page.keyboard.press('Enter');
+  const dialog = page.getByRole('dialog', { name: 'Nova flash' });
+  await expect(dialog).toBeVisible();
+  expect(await dialog.evaluate((node) => node.contains(document.activeElement))).toBe(true);
+  await expect(dialog.getByLabel('Imagem')).toBeAttached();
+  await expect(dialog.getByLabel('Texto alternativo')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(dialog).toBeHidden();
+  await expect(add).toBeFocused();
+});
+
 for (const width of widths) {
   test(`página de login ${width}px sem sobreposição e com layout dividido`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
@@ -117,7 +150,8 @@ for (const width of widths) {
     await mockBackend(page, 'client');
     await page.goto('/meu-espaco');
     const trigger = page.getByRole('button', { name: 'Abrir menu da conta' });
-    await expect(trigger).toContainText('JV');
+    // Foto de perfil (T10.18) no lugar das iniciais.
+    await expect(trigger.locator('img')).toHaveAttribute('src', /^data:image/);
     await trigger.focus();
     await page.keyboard.press('Enter');
     const panel = page.locator('.user-menu-panel');

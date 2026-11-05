@@ -244,7 +244,7 @@ Cada frontend entregue e o backend devem possuir processos documentados de execu
 
 **Critérios de aceite:** é possível executar e compilar os componentes da entrega seguindo as instruções do novo projeto, incluindo configuração, empacotamento e distribuição específicos de iOS e Android quando esses aplicativos forem entregues. No ambiente publicado, as páginas se comunicam com o backend configurado por HTTPS, e os principais fluxos funcionam após recarregar um endereço válido. Infraestrutura, domínio e processo de entrega serão definidos posteriormente. A hospedagem estática do protótipo no Cloudflare Pages não determina a infraestrutura da nova aplicação.
 
-A P09 demonstrou execução integrada local com HTTPS e publicação independente de serviço, conforme a [decisão 0015](decisions/0015-p09-backend-validation.md) e [evidências](verification/p09.md). Esse aceite M5 cobre o backend; não antecipa interfaces ou publicação de produção. A conexão local do website React ao BFF está descrita no [guia de integração web](development/web-integration.md), com evidências e pendências de homologação em [P10](verification/p10.md).
+A P09 demonstrou execução integrada local com HTTPS e publicação independente de serviço, conforme a [decisão 0015](decisions/0015-p09-backend-validation.md) e [evidências](verification/p09.md). Esse aceite M5 cobre o backend; não antecipa interfaces ou publicação de produção. A conexão local do website React ao BFF está descrita no [guia de integração web](development/web-integration.md), com evidências da homologação local em [P10](verification/p10.md).
 
 ### RNF08 — Separação de ambientes e configurações
 

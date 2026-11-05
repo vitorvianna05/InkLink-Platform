@@ -327,7 +327,7 @@ T09.01 consolidou exemplos e compatibilidade dos contratos atuais; incrementos f
 
 ### P10 — Implementar o website em React
 
-**Prioridade:** após a validação do backend integrado. **Dependências:** M5 / P09. **Situação:** em andamento; website implementado e verificado com testes automatizados e no navegador, quatro cenários com backend real aprovados; homologação restante de T10.10 pendente. [Evidências](verification/p10.md) e [decisão 0016](decisions/0016-p10-website.md).
+**Prioridade:** após a validação do backend integrado. **Dependências:** M5 / P09. **Situação:** concluída em 05/11/2026; M6 atingido no recorte local. [Evidências](verification/p10.md) e [decisão 0016](decisions/0016-p10-website.md).
 
 **Objetivo:** construir a experiência web sobre os serviços reais, usando o protótipo apenas como referência visual e de navegação.
 
@@ -348,12 +348,14 @@ T09.01 consolidou exemplos e compatibilidade dos contratos atuais; incrementos f
 - [x] Substituir a URL do portfólio por upload de imagens e incluir foto de perfil para cliente e artista, com a foto do cliente visível apenas aos artistas em contato, conforme T10.17–T10.18.
 - [x] Renovar a sessão web no BFF, com 30 minutos sem uso e 8 horas no total, revisando a decisão 0007, conforme T10.19–T10.20 ([decisão 0019](decisions/0019-p10-session-renewal.md)).
 - [x] Aplicar o tema InkLink na tela de login do Keycloak, conforme T10.21.
-- [ ] Executar testes de integração com o backend e o roteiro completo pelo navegador.
-- [ ] Documentar e validar a publicação do website no ambiente escolhido. Instruções documentadas; validação pendente.
+- [x] Executar testes de integração com o backend e o roteiro completo pelo navegador.
+- [x] Documentar e validar a publicação do website no ambiente escolhido: homologação local pelo Caddy (`deploy/Caddyfile`), verificada por `Test-WebPublication.ps1` e pelo roteiro real contra o build publicado.
 
 **Critério de conclusão:** cliente e artista executam os fluxos da entrega pelo website, com dados persistidos no backend. Não são reaproveitados o estado global, os personagens ou o armazenamento do protótipo como mecanismo de aplicação real.
 
 **Rastreabilidade:** RF01–RF21 conforme os fluxos entregues; RNF01–RNF08, especialmente RNF02 e RNF03.
+
+**Aceite M6:** cliente e artista executam pelo website os fluxos da entrega sobre os seis serviços reais, com dados persistidos: descoberta, pesquisa, perfil, favoritos, pedido, proposta e aceite, conversas, agenda com conflito, encerramento recusado e definitivo, conclusão de sessão, lançamentos, imagens e foto de perfil. Responsividade e teclado verificados em 360, 768 e 1280 px; publicação homologada localmente pelo Caddy, com o roteiro real repetido contra o build publicado (9 de 9 cenários). Domínio, nuvem e operação de produção continuam fora deste aceite.
 
 ### P11 — Preparar a base móvel em React Native
 
@@ -435,7 +437,7 @@ A conclusão de uma etapa não significa a conclusão automática das etapas dep
 
 ## 8. Próxima ação
 
-P00–P09 e o incremento GW estão concluídos nos recortes documentados. M1–M5 atingidos no backend; a [verificação P09](verification/p09.md) consolida o aceite técnico local, seus resultados e limitações. P10 possui o website React e quatro cenários de integração HTTPS real aprovados; o próximo passo é concluir a homologação restante de T10.10, conforme a verificação P10. M6, aplicativos móveis e operação de produção permanecem pendentes.
+P00–P09 e o incremento GW estão concluídos nos recortes documentados. M1–M5 atingidos no backend; a [verificação P09](verification/p09.md) consolida o aceite técnico local, seus resultados e limitações. P10 foi concluída e M6 atingido no recorte local, conforme a [verificação P10](verification/p10.md). Aplicativos móveis (P11–P13) e operação de produção permanecem pendentes.
 
 GetMyProfile possui transporte autenticado, atualização controlada de nome, vínculo externo/interno e funções locais. Keycloak, Gateway e BFF estão integrados e verificados em P02. Os próximos fluxos continuam priorizando backend, com autorização própria em cada serviço.
 

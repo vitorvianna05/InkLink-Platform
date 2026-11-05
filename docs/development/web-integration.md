@@ -84,9 +84,13 @@ O roteiro altera somente os dados sintéticos: salva favorito, acrescenta mensag
 
 A configuração é a mesma que se usa em qualquer host:
 - **Mesma origem:** o build estático, `/bff`, `/api` e os retornos OIDC encaminhados ao BFF, com TLS verificado e o Host preservado (assim o `redirect_uri` registrado no realm continua válido), e `/media` encaminhado ao armazenamento.
-- **SPA:** rotas desconhecidas recebem `index.html` (recarga de endereço profundo).
-- **Cache:** `/assets/*` com cache imutável e `index.html` sem cache.
+- **SPA:** rotas desconhecidas recebem `index.html` (recarga de endereço profundo). `/assets/*` não tem esse fallback: um arquivo ausente, como um chunk antigo depois de nova publicação, responde 404, e não HTML.
+- **Cache:** arquivos existentes de `/assets/*` com cache imutável; `index.html` e as rotas da SPA com `no-cache`.
 - **Cabeçalhos de segurança:** HSTS, `nosniff`, `X-Frame-Options`, `Referrer-Policy` e `Permissions-Policy`.
+
+`./src/frontends/web/scripts/Test-WebPublication.ps1` verifica essas regras no build publicado: fallback e `no-cache` das rotas, cache imutável e 404 em `/assets`, cabeçalhos de segurança, encaminhamento ao BFF e ao Gateway, retorno OIDC sem fallback, redirecionamento do login, `/media` público e recusa do privado sem assinatura. O encaminhamento de `/media` remove `X-Forwarded-Host`: o SeaweedFS o usa para recompor o host da assinatura, e endereços assinados falhariam com `SignatureDoesNotMatch`.
+
+Para encerrar, use Ctrl+C no terminal ou `docker stop inklink-web-publication`: fechar a aba do terminal não para o contêiner, e a porta 5173 continua ocupada.
 
 Em produção, troque os upstreams e o certificado por variáveis de ambiente. Configure `Bff:WebOrigin` vazio quando BFF e website compartilharem a origem, e aponte `PublicBaseUrl` para o domínio público do R2 em vez de `/media` (decisão 0018). Com o contêiner ativo, o roteiro real pode ser repetido contra o build publicado.
 
