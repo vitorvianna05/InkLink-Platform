@@ -172,10 +172,9 @@ export function UserMenu({ links, inStudio }: { links: NavItem[]; inStudio: bool
         <ProfilePhotoDialog
           session={account}
           open={photoOpen}
-          onClose={() => {
-            setPhotoOpen(false);
-            button.current?.focus();
-          }}
+          onClose={() => setPhotoOpen(false)}
+          // O item "Foto de perfil" some com o menu: o foco volta ao botão da conta.
+          returnFocus={() => button.current}
         />
       )}
     </div>
