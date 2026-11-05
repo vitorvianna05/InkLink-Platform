@@ -167,7 +167,7 @@ function Content({ session }: { session: Session }) {
       </div>
       {!valid ? null : entries.isPending ? (
         <Loading />
-      ) : entries.isError ? (
+      ) : entries.isLoadingError ? (
         <ErrorState error={entries.error} onRetry={() => void entries.refetch()} />
       ) : entries.data.length === 0 ? (
         <EmptyState title="Nenhum lançamento neste período." />

@@ -33,7 +33,7 @@ internal sealed class SecurityGatewayHost(SecurityFixture fixture, HttpMessageHa
         });
 }
 
-internal sealed class SecurityBffHost(SecurityFixture fixture, HttpMessageHandler upstream, RecordedLogs? logs = null, bool failRoute = false) : WebApplicationFactory<BffProgram>
+internal sealed class SecurityBffHost(SecurityFixture fixture, HttpMessageHandler upstream, RecordedLogs? logs = null, bool failRoute = false, TimeProvider? time = null) : WebApplicationFactory<BffProgram>
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder) => builder.UseEnvironment("Testing")
         .UseSecuritySettings(new Dictionary<string, string?>
@@ -51,6 +51,7 @@ internal sealed class SecurityBffHost(SecurityFixture fixture, HttpMessageHandle
         .ConfigureTestServices(services =>
         {
             services.AddSingleton<IForwarderHttpClientFactory>(new ProxyClientFactory(upstream));
+            if (time is not null) services.AddSingleton(time);
             if (logs is not null) services.AddSingleton<ILoggerProvider>(logs);
             if (failRoute) services.AddTransient<IStartupFilter, TestFailureFilter>();
             services.Configure<OpenIdConnectOptions>("oidc", options => options.BackchannelHttpHandler = fixture.CreateProviderHandler());

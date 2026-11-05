@@ -31,7 +31,7 @@ export function LifecycleSection({ engagement, perspective }: { engagement: Enga
   const [confirming, setConfirming] = useState(false);
 
   if (lifecycle.isPending) return <Loading label="Consultando a situação do atendimento…" />;
-  if (lifecycle.isError) return <ErrorState error={lifecycle.error} onRetry={() => void lifecycle.refetch()} />;
+  if (lifecycle.isLoadingError) return <ErrorState error={lifecycle.error} onRetry={() => void lifecycle.refetch()} />;
 
   const status = lifecycle.data;
   const closing = status.state === 'Closing';

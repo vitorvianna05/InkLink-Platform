@@ -133,9 +133,7 @@ public sealed class NegotiationApiTests(EngagementFixture fixture)
     public async Task Flash_snapshot_survives_catalog_change_and_deletion()
     {
         var artistId = await ArtistAsync(); using var catalog = fixture.Catalog.CreateClient(); catalog.DefaultRequestHeaders.Authorization = new("Bearer", fixture.Token("bob"));
-        var flashResponse = await catalog.PostAsJsonAsync("/api/v1/artists/me/flashes", new { title = "Flor", imageUrl = "https://images.example.test/flower.png", alternativeText = "Flor preta", style = "Blackwork", referencePrice = 500 });
-        Assert.Equal(HttpStatusCode.Created, flashResponse.StatusCode);
-        var flash = (await flashResponse.Content.ReadFromJsonAsync<JsonObject>())!["id"]!.GetValue<Guid>();
+        var flash = await fixture.SeedLegacyArtworkAsync(artistId, flash: true, "Flor", "https://images.example.test/flower.png", "Flor preta", "Blackwork", 500);
         using var client = Client(); var key = Guid.NewGuid(); var e = await RequestAsync(client, artistId, flash, key);
         Assert.Equal("Flor", e.Catalog.Flash!.Title);
         Assert.Equal(HttpStatusCode.NoContent, (await catalog.DeleteAsync($"/api/v1/artists/me/flashes/{flash}")).StatusCode);
@@ -236,13 +234,10 @@ public sealed class NegotiationApiTests(EngagementFixture fixture)
     public async Task Flash_from_other_artist_or_tattoo_is_rejected_without_creating_request()
     {
         var bob = await ArtistAsync(); var alice = await ArtistAsync("alice");
-        using var publication = fixture.Catalog.CreateClient(); publication.DefaultRequestHeaders.Authorization = new("Bearer", fixture.Token("alice"));
-        var response = await publication.PostAsJsonAsync("/api/v1/artists/me/flashes", new { title = "Outro", imageUrl = "https://images.example.test/other.png", alternativeText = "Outro flash", style = "Blackwork" });
-        var flash = (await response.Content.ReadFromJsonAsync<JsonObject>())!["id"]!.GetValue<Guid>();
+        var flash = await fixture.SeedLegacyArtworkAsync(alice, flash: true, "Outro", "https://images.example.test/other.png", "Outro flash", "Blackwork");
         using var client = Client("carol");
         Assert.Equal(HttpStatusCode.NotFound, (await PostAsync(client, "/api/v2/engagements", new RequestInput(bob, "Ideia", "Braço", 12, flash), Guid.NewGuid())).StatusCode);
-        var tattoo = await publication.PostAsJsonAsync("/api/v1/artists/me/tattoos", new { title = "Realizada", imageUrl = "https://images.example.test/tattoo.png", alternativeText = "Tatuagem", style = "Blackwork" });
-        var tattooId = (await tattoo.Content.ReadFromJsonAsync<JsonObject>())!["id"]!.GetValue<Guid>();
+        var tattooId = await fixture.SeedLegacyArtworkAsync(alice, flash: false, "Realizada", "https://images.example.test/tattoo.png", "Tatuagem", "Blackwork");
         Assert.Equal(HttpStatusCode.NotFound, (await PostAsync(client, "/api/v2/engagements", new RequestInput(alice, "Ideia", "Braço", 12, tattooId), Guid.NewGuid())).StatusCode);
         Assert.Empty((await client.GetFromJsonAsync<Page<EngagementView>>("/api/v2/engagements"))!.Items);
     }

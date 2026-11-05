@@ -16,9 +16,20 @@ public sealed class ConversationPresentationDirectory(HttpClient engagements, Pa
             if (context is null || context.Id != conversation.EngagementId || context.ClientId != conversation.ClientId
                 || context.ArtistAccountId != conversation.ArtistAccountId || context.State is not ("Negotiating" or "Agreed" or "Closing" or "Closed")
                 || string.IsNullOrWhiteSpace(context.Catalog?.Name) || (participant != context.ClientId && participant != context.ArtistAccountId)) throw Unavailable();
-            var counterpart = participant == context.ClientId
-                ? new Counterpart(context.ArtistAccountId, context.Catalog.Name)
-                : new Counterpart(context.ClientId, await profiles.NameAsync(context.ClientId, cancellationToken));
+            Counterpart counterpart;
+            if (participant == context.ClientId)
+            {
+                // A foto pública do artista é opcional: indisponibilidade da Identity não impede a conversa.
+                ParticipantProfile? artist = null;
+                try { artist = await profiles.ProfileAsync(context.ArtistAccountId, cancellationToken); }
+                catch (MessagingFailure) { }
+                counterpart = new Counterpart(context.ArtistAccountId, context.Catalog.Name, artist?.PhotoUrl, artist?.PhotoThumbnailUrl);
+            }
+            else
+            {
+                var client = await profiles.ProfileAsync(context.ClientId, cancellationToken);
+                counterpart = new Counterpart(context.ClientId, client.DisplayName, client.PhotoUrl, client.PhotoThumbnailUrl);
+            }
             return new(counterpart, context.State);
         }
         catch (Exception exception) when (exception is HttpRequestException or System.Text.Json.JsonException or TaskCanceledException && !cancellationToken.IsCancellationRequested)

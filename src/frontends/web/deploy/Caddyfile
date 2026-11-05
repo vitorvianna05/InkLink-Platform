@@ -1,0 +1,56 @@
+# Publicação do website InkLink (T10.10): uma única origem HTTPS serve o build estático e encaminha
+# o BFF e o armazenamento de imagens. Em produção, /media pode ser substituído pelo domínio público
+# do Cloudflare R2 (decisão 0018); os endereços vêm de variáveis de ambiente.
+{
+	auto_https off
+	admin off
+}
+
+{$INKLINK_SITE_ADDRESS:https://localhost:5173} {
+	tls {$INKLINK_TLS_CERT} {$INKLINK_TLS_KEY}
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		-Server
+	}
+
+	# BFF: sessão, APIs e retornos OIDC. O Host do BFF é preservado para que o redirect_uri
+	# registrado no realm continue válido; TLS do upstream é verificado com o certificado informado.
+	@bff path /bff/* /api/* /signin-oidc* /signout-callback-oidc*
+	handle @bff {
+		reverse_proxy {$INKLINK_BFF_UPSTREAM} {
+			header_up Host {$INKLINK_BFF_HOST}
+			transport http {
+				tls_server_name {$INKLINK_BFF_TLS_NAME:localhost}
+				tls_trust_pool file {$INKLINK_BFF_CA}
+			}
+		}
+	}
+
+	# Imagens públicas e endereços assinados: prefixo removido e Host do endpoint S3 preservado,
+	# como no proxy local do Vite. Cookies e credenciais do site nunca seguem para o armazenamento.
+	handle_path /media/* {
+		reverse_proxy {$INKLINK_MEDIA_UPSTREAM} {
+			header_up Host {$INKLINK_MEDIA_HOST}
+			header_up -Cookie
+			header_up -Authorization
+		}
+	}
+
+	# SPA: arquivos versionados com cache longo; rotas desconhecidas recebem index.html.
+	handle {
+		root * /srv
+		@assets path /assets/*
+		header @assets Cache-Control "public, max-age=31536000, immutable"
+		# header roda antes de try_files: o matcher precisa cobrir também as rotas profundas da SPA.
+		@html not path /assets/*
+		header @html Cache-Control "no-cache"
+		try_files {path} /index.html
+		file_server
+	}
+}

@@ -55,31 +55,174 @@ public sealed class CatalogApiTests(CatalogFixture fixture)
     }
 
     [Fact]
-    public async Task Media_are_distinct_owned_validated_and_have_a_resolvable_location()
+    public async Task Media_are_uploaded_owned_validated_and_served_as_public_variants()
     {
         using var scenario = await fixture.CreateAsync();
         var artist = await scenario.PublishAsync();
-        var media = new { title = "Rosa", imageUrl = "https://images.example.test/rosa.jpg", alternativeText = "Desenho de uma rosa", style = "Blackwork", referencePrice = 450m };
-        var flash = await scenario.Http.PostAsJsonAsync("/api/v1/artists/me/flashes", media);
+        var flash = await scenario.UploadArtworkAsync("flashes", "Rosa", TestImages.Png(1200, 900), price: "450");
         Assert.Equal(HttpStatusCode.Created, flash.StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await scenario.Http.GetAsync(flash.Headers.Location)).StatusCode);
-        var id = (await flash.Content.ReadFromJsonAsync<JsonObject>())!["id"]!.GetValue<Guid>();
+        var created = (await flash.Content.ReadFromJsonAsync<JsonObject>())!;
+        var id = created["id"]!.GetValue<Guid>();
+        var imageUrl = created["imageUrl"]!.GetValue<string>();
+        Assert.StartsWith($"https://localhost:5173/media/inklink-catalog-media/artworks/{artist:N}/", imageUrl);
+        Assert.EndsWith("/1600.webp", imageUrl);
+        Assert.EndsWith("/480.webp", created["thumbnailUrl"]!.GetValue<string>());
+        Assert.False(created["externalImage"]!.GetValue<bool>());
+        Assert.Equal(HttpStatusCode.OK, (await scenario.StorageGetAsync(imageUrl)).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await scenario.StorageGetAsync(created["thumbnailUrl"]!.GetValue<string>())).StatusCode);
+        Assert.Equal(0, await scenario.CleanupCountAsync());
+
         var tattoos = (await scenario.Http.GetFromJsonAsync<JsonObject>($"/api/v1/artists/{artist}/tattoos"))!;
         Assert.Empty(tattoos["items"]!.AsArray());
         var flashes = (await scenario.Http.GetFromJsonAsync<JsonObject>($"/api/v1/artists/{artist}/flashes"))!;
-        Assert.Single(flashes["items"]!.AsArray());
+        Assert.Equal(imageUrl, flashes["items"]![0]!["imageUrl"]!.GetValue<string>());
         Assert.Equal(HttpStatusCode.NotFound, (await scenario.Http.GetAsync($"/api/v1/artists/{Guid.NewGuid()}/flashes/{id}")).StatusCode);
+
         await scenario.PublishAsync("bob", "Outro artista");
-        Assert.Equal(HttpStatusCode.NotFound, (await scenario.Http.PutAsJsonAsync($"/api/v1/artists/me/flashes/{id}", media)).StatusCode);
-        Assert.Equal(HttpStatusCode.NotFound, (await scenario.Http.DeleteAsync($"/api/v1/artists/me/flashes/{id}")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await scenario.UploadArtworkAsync("flashes", "Rosa", TestImages.Png(800, 800), id: id)).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await scenario.Http.DeleteAsync($"/api/v2/artists/me/flashes/{id}")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await scenario.StorageGetAsync(imageUrl)).StatusCode);
+
         scenario.SignIn("alice");
-        var invalid = await scenario.Http.PostAsJsonAsync("/api/v1/artists/me/flashes", new { media.title, imageUrl = "http://images.example.test/a.jpg", media.alternativeText, media.style, media.referencePrice });
-        Assert.Equal(HttpStatusCode.BadRequest, invalid.StatusCode);
-        var problem = (await invalid.Content.ReadFromJsonAsync<JsonObject>())!;
-        Assert.NotNull(problem["errors"]?["imageUrl"]); Assert.NotNull(problem["traceId"]); Assert.NotNull(problem["code"]);
-        Assert.Equal(HttpStatusCode.NoContent, (await scenario.Http.PutAsJsonAsync($"/api/v1/artists/me/flashes/{id}", media)).StatusCode);
-        Assert.Equal(HttpStatusCode.NoContent, (await scenario.Http.DeleteAsync($"/api/v1/artists/me/flashes/{id}")).StatusCode);
+        // Dados inválidos são recusados antes de qualquer envio: nenhuma reserva de objeto é criada.
+        var invalidPrice = await scenario.UploadArtworkAsync("tattoos", "Trabalho", TestImages.Png(800, 800), price: "450");
+        Assert.Equal(HttpStatusCode.BadRequest, invalidPrice.StatusCode);
+        Assert.Equal(0, await scenario.CleanupCountAsync());
+        foreach (var content in new[] { null, "GIF89a\u0001\u0000"u8.ToArray(), TestImages.Png(900, 500) })
+        {
+            var invalid = await scenario.UploadArtworkAsync("flashes", "Rosa", content);
+            Assert.Equal(HttpStatusCode.BadRequest, invalid.StatusCode);
+            var problem = (await invalid.Content.ReadFromJsonAsync<JsonObject>())!;
+            Assert.NotNull(problem["errors"]?["image"]); Assert.NotNull(problem["traceId"]); Assert.NotNull(problem["code"]);
+        }
+        Assert.Equal(HttpStatusCode.UnsupportedMediaType, (await scenario.Http.PostAsJsonAsync("/api/v2/artists/me/flashes", new { title = "Rosa" })).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await scenario.UploadArtworkAsync("flashes", "Rosa", TestImages.Png(800, 800), extra: ("imageUrl", "https://images.example.test/a.jpg"))).StatusCode);
+        // As escritas v1 por URL foram retiradas (decisão 0018): 410 com o código e o caminho de migração.
+        foreach (var retired in new[]
+        {
+            await scenario.Http.PostAsJsonAsync("/api/v1/artists/me/flashes", new { title = "Rosa", imageUrl = "https://images.example.test/a.jpg" }),
+            await scenario.Http.PutAsJsonAsync($"/api/v1/artists/me/tattoos/{Guid.CreateVersion7()}", new { title = "Rosa", imageUrl = "https://images.example.test/a.jpg" }),
+        })
+        {
+            Assert.Equal(HttpStatusCode.Gone, retired.StatusCode);
+            var gone = (await retired.Content.ReadFromJsonAsync<JsonObject>())!;
+            Assert.Equal("catalog.artwork_url_writes_retired", gone["code"]!.GetValue<string>());
+            Assert.Contains("/api/v2/artists/me/", gone["title"]!.GetValue<string>());
+            retired.Dispose();
+        }
+        // A remoção v1 continua disponível e não aparece misturada às rotas retiradas.
+        Assert.Equal(HttpStatusCode.NotFound, (await scenario.Http.DeleteAsync($"/api/v1/artists/me/flashes/{Guid.CreateVersion7()}")).StatusCode);
+
+        // Atualizar sem arquivo mantém a imagem; com arquivo, troca e agenda a remoção da anterior.
+        Assert.Equal(HttpStatusCode.NoContent, (await scenario.UploadArtworkAsync("flashes", "Rosa vermelha", null, id: id, price: "500")).StatusCode);
+        var kept = (await scenario.Http.GetFromJsonAsync<JsonObject>($"/api/v1/artists/{artist}/flashes/{id}"))!;
+        Assert.Equal(imageUrl, kept["imageUrl"]!.GetValue<string>());
+        Assert.Equal("Rosa vermelha", kept["title"]!.GetValue<string>());
+        Assert.Equal(HttpStatusCode.NoContent, (await scenario.UploadArtworkAsync("flashes", "Rosa vermelha", TestImages.Png(1000, 1000), id: id, price: "500")).StatusCode);
+        var replaced = (await scenario.Http.GetFromJsonAsync<JsonObject>($"/api/v1/artists/{artist}/flashes/{id}"))!["imageUrl"]!.GetValue<string>();
+        Assert.NotEqual(imageUrl, replaced);
+        Assert.Equal(2, await scenario.CleanupCountAsync());
+        Assert.Equal(2, await scenario.RunCleanupAsync());
+        Assert.Equal(HttpStatusCode.NotFound, (await scenario.StorageGetAsync(imageUrl)).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await scenario.StorageGetAsync(replaced)).StatusCode);
+
+        Assert.Equal(HttpStatusCode.NoContent, (await scenario.Http.DeleteAsync($"/api/v2/artists/me/flashes/{id}")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await scenario.Http.GetAsync(flash.Headers.Location)).StatusCode);
+        Assert.Equal(2, await scenario.RunCleanupAsync());
+        Assert.Equal(HttpStatusCode.NotFound, (await scenario.StorageGetAsync(replaced)).StatusCode);
+    }
+
+    [Fact]
+    public async Task Uploaded_objects_without_a_saved_artwork_are_removed_after_the_reservation()
+    {
+        using var scenario = await fixture.CreateAsync();
+        var artist = await scenario.PublishAsync();
+        string key;
+        using (var scope = scenario.Host.Services.CreateScope())
+            key = await scope.ServiceProvider.GetRequiredService<IArtworkImages>().StoreAsync(artist, TestImages.Png(800, 800), default);
+        var url = $"https://localhost:5173/media/inklink-catalog-media/{key}/1600.webp";
+        Assert.Equal(HttpStatusCode.OK, (await scenario.StorageGetAsync(url)).StatusCode);
+        Assert.Equal(2, await scenario.CleanupCountAsync());
+        Assert.Equal(0, await scenario.RunCleanupAsync());
+        await using (var connection = new NpgsqlConnection(scenario.OwnerConnection))
+        {
+            await connection.OpenAsync();
+            await using var expire = new NpgsqlCommand("UPDATE catalog.object_cleanups SET \"DueAt\" = now() - interval '1 minute'", connection);
+            await expire.ExecuteNonQueryAsync();
+        }
+        Assert.Equal(2, await scenario.RunCleanupAsync());
+        Assert.Equal(HttpStatusCode.NotFound, (await scenario.StorageGetAsync(url)).StatusCode);
+    }
+
+    [Fact]
+    public async Task Legacy_external_artworks_stay_visible_until_their_image_is_replaced()
+    {
+        using var scenario = await fixture.CreateAsync();
+        var artist = await scenario.PublishAsync();
+        var id = Guid.CreateVersion7();
+        await using (var connection = new NpgsqlConnection(scenario.OwnerConnection))
+        {
+            await connection.OpenAsync();
+            await using var insert = new NpgsqlCommand("INSERT INTO catalog.artworks (\"Id\", \"ArtistId\", \"Kind\", \"Title\", \"ImageUrl\", \"AlternativeText\", \"Style\") VALUES (@id, @artist, 0, 'Antiga', 'https://images.example.test/a.jpg', 'Tatuagem antiga', 'Blackwork')", connection);
+            insert.Parameters.AddWithValue("id", id);
+            insert.Parameters.AddWithValue("artist", artist);
+            await insert.ExecuteNonQueryAsync();
+        }
+        var legacy = (await scenario.Http.GetFromJsonAsync<JsonObject>($"/api/v1/artists/{artist}/tattoos/{id}"))!;
+        Assert.True(legacy["externalImage"]!.GetValue<bool>());
+        Assert.Equal("https://images.example.test/a.jpg", legacy["imageUrl"]!.GetValue<string>());
+        Assert.Equal("https://images.example.test/a.jpg", legacy["thumbnailUrl"]!.GetValue<string>());
+        Assert.Equal(HttpStatusCode.NoContent, (await scenario.UploadArtworkAsync("tattoos", "Antiga", TestImages.Png(800, 800), id: id)).StatusCode);
+        var uploaded = (await scenario.Http.GetFromJsonAsync<JsonObject>($"/api/v1/artists/{artist}/tattoos/{id}"))!;
+        Assert.False(uploaded["externalImage"]!.GetValue<bool>());
+        Assert.Equal(0, await scenario.CleanupCountAsync());
+    }
+
+    [Fact]
+    public async Task Artist_photo_projection_keeps_the_newest_revision_on_cards_profile_and_favorites()
+    {
+        using var scenario = await fixture.CreateAsync();
+        var artist = await scenario.PublishAsync("alice");
+        using var identity = fixture.Identity.CreateClient();
+        identity.DefaultRequestHeaders.Authorization = new("Bearer", fixture.Tokens["alice"]);
+        var owner = (await identity.GetFromJsonAsync<JsonObject>("/api/v1/profiles/me"))!["id"]!.GetValue<Guid>();
+        static InkLink.Catalog.Application.Profiles.ProfilePhotoEnvelope Event(Guid profile, int revision, string? url, string? thumbnail = "same", string type = "identity.profile-photo-changed.v1") =>
+            new(Guid.CreateVersion7(), type, 1, DateTimeOffset.UtcNow, "test", null,
+                new(profile, revision, url, thumbnail == "same" ? url?.Replace("512", "128", StringComparison.Ordinal) : thumbnail));
+        async Task Project(InkLink.Catalog.Application.Profiles.ProfilePhotoEnvelope envelope)
+        {
+            await using var services = scenario.Host.Services.CreateAsyncScope();
+            await services.ServiceProvider.GetRequiredService<InkLink.Catalog.Application.Profiles.ProjectArtistPhoto>().ExecuteAsync(envelope, default);
+        }
+        var newer = "https://localhost:5173/media/inklink-identity-media/profiles/a/2/512.webp";
+        await Project(Event(owner, 2, newer));
+        await Project(Event(owner, 1, "https://localhost:5173/media/inklink-identity-media/profiles/a/1/512.webp"));
+        await Project(Event(owner, 2, newer));
+
+        var profile = (await scenario.Http.GetFromJsonAsync<JsonObject>($"/api/v1/artists/{artist}"))!;
+        Assert.Equal(newer, profile["photoUrl"]!.GetValue<string>());
+        Assert.EndsWith("/128.webp", profile["photoThumbnailUrl"]!.GetValue<string>());
+        var card = (await scenario.Http.GetFromJsonAsync<JsonObject>("/api/v1/artists"))!["items"]!.AsArray().Single(item => item!["id"]!.GetValue<Guid>() == artist)!;
+        Assert.Equal(newer, card["photoUrl"]!.GetValue<string>());
+        scenario.SignIn("unprovisioned");
+        Assert.Equal(HttpStatusCode.NoContent, (await scenario.Http.PutAsync("/api/v1/favorites/" + artist, null)).StatusCode);
+        var favorite = (await scenario.Http.GetFromJsonAsync<JsonObject>("/api/v1/favorites"))!["items"]![0]!;
+        Assert.Equal(newer, favorite["photoUrl"]!.GetValue<string>());
+
+        // Remoção da foto (revisão 3) volta às iniciais; eventos inválidos são recusados sem alterar a projeção.
+        await Project(Event(owner, 3, null));
+        Assert.Null((await scenario.Http.GetFromJsonAsync<JsonObject>($"/api/v1/artists/{artist}"))!["photoUrl"]);
+        foreach (var invalid in new[]
+        {
+            Event(owner, 4, newer, type: "identity.other.v1"),
+            Event(owner, 4, "http://insecure.example.test/512.webp"),
+            Event(owner, 0, newer),
+            Event(owner, 4, newer, thumbnail: null),
+            Event(Guid.Empty, 4, newer),
+        })
+            await Assert.ThrowsAsync<InkLink.Catalog.Application.Profiles.InvalidPhotoEvent>(() => Project(invalid));
+        Assert.Null((await scenario.Http.GetFromJsonAsync<JsonObject>($"/api/v1/artists/{artist}"))!["photoUrl"]);
     }
 
     [Fact]
@@ -243,7 +386,7 @@ public sealed class CatalogApiTests(CatalogFixture fixture)
         var artist = await scenario.PublishAsync();
         for (var index = 0; index < 2; index++)
         {
-            var created = await scenario.Http.PostAsJsonAsync("/api/v1/artists/me/tattoos", new { title = "Trabalho " + index, imageUrl = "https://images.example.test/a.jpg", alternativeText = "Tatuagem", style = "Blackwork" });
+            var created = await scenario.UploadArtworkAsync("tattoos", "Trabalho " + index, TestImages.Png(640, 640));
             Assert.Equal(HttpStatusCode.Created, created.StatusCode);
         }
         var first = (await scenario.Http.GetFromJsonAsync<JsonObject>($"/api/v1/artists/{artist}/tattoos?limit=1"))!;

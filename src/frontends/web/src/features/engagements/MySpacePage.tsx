@@ -2,11 +2,13 @@ import { ArrowRight, CalendarDays, MessageCircle } from 'lucide-react';
 import { Link } from 'react-router';
 import { ArtistGrid } from '@/features/catalog/ArtistCardView';
 import { useFavorites } from '@/features/catalog/api';
+import { useConversations } from '@/features/messaging/api';
 import { useCalendar } from '@/features/scheduling/api';
 import { RequireSession } from '@/features/session/guards';
 import type { Session } from '@/features/session/session';
 import { addDays, todayIn } from '@/shared/lib/dates';
-import { civilDate, engagementStateLabel, initials, money, time } from '@/shared/lib/format';
+import { civilDate, engagementStateLabel, money, time } from '@/shared/lib/format';
+import { Avatar } from '@/shared/ui/Avatar';
 import { PageHeading, SectionHeading } from '@/shared/ui/PageHeading';
 import { EmptyState, ErrorState, Loading } from '@/shared/ui/States';
 import { useEngagements } from './api';
@@ -17,8 +19,11 @@ export function statusTone(state: string): string {
 
 function Requests() {
   const engagements = useEngagements('client');
+  // Foto pública do artista, quando a conversa do atendimento já existe; sem ela, as iniciais.
+  const conversations = useConversations();
+  const photos = new Map((conversations.data ?? []).map((c) => [c.engagementId, c.counterpart.photoThumbnailUrl]));
   if (engagements.isPending) return <Loading label="Carregando seus pedidos…" />;
-  if (engagements.isError) return <ErrorState error={engagements.error} onRetry={() => void engagements.refetch()} />;
+  if (engagements.isLoadingError) return <ErrorState error={engagements.error} onRetry={() => void engagements.refetch()} />;
   const items = [...engagements.data].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   return (
     <>
@@ -35,9 +40,7 @@ function Requests() {
           {items.map((engagement) => (
             <li key={engagement.id}>
               <Link className="list-item" to={`/atendimentos/${engagement.id}`}>
-                <span className="avatar light" aria-hidden="true">
-                  {initials(engagement.catalog.name)}
-                </span>
+                <Avatar className="avatar light" name={engagement.catalog.name} photoUrl={photos.get(engagement.id)} />
                 <div className="grow">
                   <h3>{engagement.idea.length > 90 ? `${engagement.idea.slice(0, 90)}…` : engagement.idea}</h3>
                   <p>
@@ -66,7 +69,7 @@ function UpcomingReservations() {
       <SectionHeading eyebrow="SEUS PRÓXIMOS CAPÍTULOS" title="Sessões agendadas" count={reservations.data?.length} />
       {reservations.isPending ? (
         <Loading label="Carregando sua agenda…" />
-      ) : reservations.isError ? (
+      ) : reservations.isLoadingError ? (
         <ErrorState error={reservations.error} onRetry={() => void reservations.refetch()} />
       ) : reservations.data.length === 0 ? (
         <EmptyState title="Nenhuma sessão confirmada nos próximos 90 dias." icon={<CalendarDays size={26} aria-hidden="true" />}>
@@ -107,7 +110,7 @@ function Favorites() {
       </SectionHeading>
       {favorites.isPending ? (
         <Loading label="Carregando favoritos…" />
-      ) : favorites.isError ? (
+      ) : favorites.isLoadingError ? (
         <ErrorState error={favorites.error} onRetry={() => void favorites.refetch()} />
       ) : favorites.data.length === 0 ? (
         <EmptyState title="Você ainda não salvou nenhum artista.">

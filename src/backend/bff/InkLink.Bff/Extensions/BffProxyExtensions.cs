@@ -11,6 +11,7 @@ internal static class BffProxyExtensions
         services.AddReverseProxy().LoadFromMemory(
             [new RouteConfig { RouteId = "web-catalog-public", ClusterId = "gateway", Order = 0, Match = new RouteMatch { Path = "/api/v1/artists/{**remainder}", Methods = ["GET", "HEAD"] }, AuthorizationPolicy = "anonymous" },
              new RouteConfig { RouteId = "web-api", Order = 1, ClusterId = "gateway", Match = new RouteMatch { Path = "/api/v1/{**remainder}" }, AuthorizationPolicy = "default" },
+             new RouteConfig { RouteId = "web-catalog-publication-v2", Order = 1, ClusterId = "gateway", Match = new RouteMatch { Path = "/api/v2/artists/me/{**remainder}" }, AuthorizationPolicy = "default" },
              new RouteConfig { RouteId = "web-engagements-v2", Order = 1, ClusterId = "gateway", Match = new RouteMatch { Path = "/api/v2/engagements/{**remainder}" }, AuthorizationPolicy = "default" }],
             [new ClusterConfig { ClusterId = "gateway", Destinations = new Dictionary<string, DestinationConfig> { ["gateway"] = new() { Address = settings.GatewayAddress } },
                 HttpRequest = new() { ActivityTimeout = TimeSpan.FromSeconds(30) } }])

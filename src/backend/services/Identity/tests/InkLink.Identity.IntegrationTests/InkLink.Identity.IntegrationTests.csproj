@@ -7,6 +7,11 @@
     <ProjectReference Include="../../../../gateway/InkLink.Gateway/InkLink.Gateway.csproj" />
     <ProjectReference Include="../../../../bff/InkLink.Bff/InkLink.Bff.csproj" />
     <Content Include="../../../../identity-provider/inklink-realm.json" Link="inklink-realm.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../../../../identity-provider/themes/inklink/**/*" LinkBase="themes/inklink" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../../../../scripts/object-storage-identities.json" Link="Media/object-storage-identities.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../../../../scripts/configure-object-storage.sh" Link="Media/configure-object-storage.sh" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../../../../scripts/broker-definitions.json" Link="Media/broker-definitions.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../../../../scripts/configure-broker.sh" Link="Media/configure-broker.sh" CopyToOutputDirectory="PreserveNewest" />
     <PackageReference Include="Testcontainers" />
     <ProjectReference Include="../../src/InkLink.Identity.Api/InkLink.Identity.Api.csproj" />
   </ItemGroup>

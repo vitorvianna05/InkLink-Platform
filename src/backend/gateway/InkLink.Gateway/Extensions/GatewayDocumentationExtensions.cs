@@ -23,7 +23,7 @@ internal static class GatewayDocumentationExtensions
             documents.Add(new(name, new Uri(uri.ToString().TrimEnd('/') + "/"), prefixes));
         }
         Add("identity", "Gateway:IdentityAddress", "/api/v1/profiles");
-        Add("catalog", "Gateway:CatalogAddress", "/api/v1/artists", "/api/v1/favorites");
+        Add("catalog", "Gateway:CatalogAddress", "/api/v1/artists", "/api/v1/favorites", "/api/v2/artists");
         Add("engagements", "Gateway:EngagementsAddress", "/api/v2/engagements");
         Add("messaging", "Gateway:MessagingAddress", "/api/v1/conversations");
         Add("scheduling", "Gateway:SchedulingAddress", "/api/v1/scheduling");

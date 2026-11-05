@@ -2,6 +2,7 @@ import { Link, NavLink, Outlet, useLocation } from 'react-router';
 import { loginPath } from '@/features/session/destination';
 import { SessionNotices } from '@/features/session/guards';
 import { useSession } from '@/features/session/session';
+import { StaleDataNotice } from '@/shared/ui/StaleDataNotice';
 import { UserMenu, type NavItem } from './UserMenu';
 
 const clientLinks: NavItem[] = [
@@ -60,6 +61,7 @@ export function Layout() {
         </div>
       </header>
       <main id="conteudo" tabIndex={-1}>
+        <StaleDataNotice />
         <Outlet />
       </main>
       <footer className="site-footer">

@@ -85,7 +85,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     resetCsrfToken();
     setExpired(false);
     setSigningIn(false);
-    await queryClient.resetQueries({ queryKey: ['session'] });
+    // Recarrega a sessão em segundo plano, sem voltar ao estado "carregando": as páginas protegidas
+    // continuam montadas e o formulário em edição é preservado após o novo login (decisão 0016).
+    await queryClient.refetchQueries({ queryKey: ['session'] });
     await queryClient.invalidateQueries();
   }, [queryClient]);
 
@@ -162,7 +164,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }, [queryClient]);
 
   const value = useMemo<SessionContextValue>(() => {
-    const status: Status = query.isPending ? 'loading' : query.isError ? 'error' : authenticated ? 'authenticated' : 'anonymous';
+    const status: Status = query.isPending ? 'loading' : query.isLoadingError ? 'error' : authenticated ? 'authenticated' : 'anonymous';
     return {
       status,
       session: query.data ?? null,

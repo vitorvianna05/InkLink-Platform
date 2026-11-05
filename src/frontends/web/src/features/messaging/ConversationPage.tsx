@@ -4,7 +4,8 @@ import { Link, useParams } from 'react-router';
 import { RequireArtist, RequireSession } from '@/features/session/guards';
 import type { Session } from '@/features/session/session';
 import { ApiError, newIdempotencyKey } from '@/shared/api/http';
-import { dateTime, initials } from '@/shared/lib/format';
+import { dateTime } from '@/shared/lib/format';
+import { Avatar } from '@/shared/ui/Avatar';
 import { describeError, EmptyState, ErrorState, Loading } from '@/shared/ui/States';
 import { useConversation, useMessageHistory, useSendMessage } from './api';
 import { belongsTo, conversationStatus } from './ConversationsPage';
@@ -89,7 +90,7 @@ function Content({ session, perspective }: { session: Session; perspective: Pers
   );
 
   if (conversation.isPending) return <Loading label="Abrindo conversa…" />;
-  if (conversation.isError) {
+  if (conversation.isLoadingError) {
     return (
       <>
         {back}
@@ -127,9 +128,7 @@ function Content({ session, perspective }: { session: Session; perspective: Pers
       <div className="conversation-layout" style={{ marginTop: 16 }}>
         <section className="chat-panel" aria-labelledby="chat-title">
           <div className="chat-heading">
-            <span className="avatar" aria-hidden="true">
-              {initials(data.counterpart.displayName)}
-            </span>
+            <Avatar className="avatar" name={data.counterpart.displayName} photoUrl={data.counterpart.photoThumbnailUrl} />
             <div className="grow">
               <h1 id="chat-title" style={{ fontSize: 20 }}>
                 {data.counterpart.displayName}

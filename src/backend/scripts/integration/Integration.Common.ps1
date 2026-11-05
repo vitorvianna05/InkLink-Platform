@@ -57,6 +57,8 @@ function Get-IntegrationEnvironment {
         $values.ObjectStorage__AccessKeyId="inklink-$lower";$values.ObjectStorage__SecretAccessKey=$secrets['OBJECT_STORAGE_'+$Service.ToUpperInvariant()+'_SECRET']
         $values.ObjectStorage__PublicBucket="inklink-$lower-media";$values.ObjectStorage__PublicBaseUrl="https://localhost:5173/media/inklink-$lower-media"
         if($Service -eq 'Identity'){$values.ObjectStorage__PrivateBucket='inklink-identity-private';$values.ObjectStorage__SignedUrlBaseUrl='https://localhost:5173/media'}
+        # Evento de foto (Identity publica; Catálogo projeta a foto pública do artista).
+        $values.Broker__Uri=$(if($Service -eq 'Identity'){"amqp://inklink_identity_publisher:$($secrets.INKLINK_IDENTITY_PUBLISHER_PASSWORD)@127.0.0.1:5773/"}else{"amqp://inklink_catalog_consumer:$($secrets.INKLINK_CATALOG_CONSUMER_PASSWORD)@127.0.0.1:5773/"})
     }
     switch($Service){
         Gateway {foreach($backend in 'Identity','Catalog','Engagements','Messaging','Scheduling','Finance'){$values['Gateway__'+$backend+'Address']="https://localhost:$($IntegrationServices[$backend])/"}}

@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace InkLink.Catalog.Infrastructure.Queries;
 
-public sealed class EfEngagementContextReader(CatalogDbContext database) : IEngagementContextReader
+public sealed class EfEngagementContextReader(CatalogDbContext database, Media.ArtworkImageUrls urls) : IEngagementContextReader
 {
     public async Task<EngagementContext> ReadAsync(Guid artistId, Guid? flashId, CancellationToken cancellationToken)
     {
@@ -19,7 +19,7 @@ public sealed class EfEngagementContextReader(CatalogDbContext database) : IEnga
         {
             var artwork = await database.Artworks.AsNoTracking().SingleOrDefaultAsync(a => a.Id == flashId && a.ArtistId == artistId && a.Kind == ArtworkKind.Flash, cancellationToken)
                 ?? throw new CatalogFailure(CatalogError.NotFound, "catalog.flash_not_found");
-            flash = new(artwork.Id, artwork.Title, artwork.ImageUrl, artwork.AlternativeText, artwork.Style, artwork.ReferencePrice);
+            flash = new(artwork.Id, artwork.Title, urls.Resolve(artwork.ImageKey, artwork.ImageUrl).Detail, artwork.AlternativeText, artwork.Style, artwork.ReferencePrice);
         }
         return new(artist.Id, artist.OwnerId, artist.Name, artist.Studio, artist.City, artist.StartingPrice, flash);
     }

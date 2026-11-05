@@ -3,7 +3,8 @@ import { Link } from 'react-router';
 import { RequireArtist, RequireSession } from '@/features/session/guards';
 import type { Session } from '@/features/session/session';
 import type { Conversation } from '@/shared/api/contracts';
-import { dateTime, engagementStateLabel, initials } from '@/shared/lib/format';
+import { dateTime, engagementStateLabel } from '@/shared/lib/format';
+import { Avatar } from '@/shared/ui/Avatar';
 import { PageHeading, SectionHeading } from '@/shared/ui/PageHeading';
 import { EmptyState, ErrorState, Loading } from '@/shared/ui/States';
 import { useConversations } from './api';
@@ -25,7 +26,7 @@ function List({ session, perspective }: { session: Session; perspective: Perspec
   const conversations = useConversations();
   const base = perspective === 'artist' ? '/estudio/mensagens' : '/mensagens';
   if (conversations.isPending) return <Loading label="Carregando conversas…" />;
-  if (conversations.isError) return <ErrorState error={conversations.error} onRetry={() => void conversations.refetch()} />;
+  if (conversations.isLoadingError) return <ErrorState error={conversations.error} onRetry={() => void conversations.refetch()} />;
   const items = conversations.data
     .filter((c) => belongsTo(c, perspective, session.profile.id))
     .sort((a, b) => (b.lastMessage?.createdAt ?? b.createdAt).localeCompare(a.lastMessage?.createdAt ?? a.createdAt));
@@ -56,9 +57,7 @@ function List({ session, perspective }: { session: Session; perspective: Perspec
             return (
               <li key={conversation.id}>
                 <Link className="list-item" to={`${base}/${conversation.id}`}>
-                  <span className="avatar light" aria-hidden="true">
-                    {initials(conversation.counterpart.displayName)}
-                  </span>
+                  <Avatar className="avatar light" name={conversation.counterpart.displayName} photoUrl={conversation.counterpart.photoThumbnailUrl} />
                   <div className="grow">
                     <h3>{conversation.counterpart.displayName}</h3>
                     <p>{conversation.lastMessage ? conversation.lastMessage.body : 'Nenhuma mensagem ainda.'}</p>

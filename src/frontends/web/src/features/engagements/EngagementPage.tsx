@@ -6,6 +6,7 @@ import { RequireArtist, RequireSession } from '@/features/session/guards';
 import type { Engagement } from '@/shared/api/contracts';
 import { addDays, todayIn } from '@/shared/lib/dates';
 import { civilDate, engagementStateLabel, money, time } from '@/shared/lib/format';
+import { Avatar } from '@/shared/ui/Avatar';
 import { ErrorState, Loading } from '@/shared/ui/States';
 import { useEngagement, type Perspective } from './api';
 import { LifecycleSection } from './LifecycleSection';
@@ -15,7 +16,7 @@ import { ProposalSection } from './ProposalSection';
 function ConversationLink({ engagement, perspective }: { engagement: Engagement; perspective: Perspective }) {
   const conversations = useConversations();
   if (conversations.isPending) return <Loading label="Procurando a conversa…" />;
-  if (conversations.isError) return <ErrorState error={conversations.error} onRetry={() => void conversations.refetch()} />;
+  if (conversations.isLoadingError) return <ErrorState error={conversations.error} onRetry={() => void conversations.refetch()} />;
   const conversation = conversations.data.find((c) => c.engagementId === engagement.id);
   if (!conversation) {
     return (
@@ -33,6 +34,21 @@ function ConversationLink({ engagement, perspective }: { engagement: Engagement;
   );
 }
 
+/** Interlocutor do atendimento, com a foto entregue pela conversa (decisão 0018); sem conversa, nome e iniciais. */
+function Counterpart({ engagement, perspective }: { engagement: Engagement; perspective: Perspective }) {
+  const conversations = useConversations();
+  const counterpart = conversations.data?.find((c) => c.engagementId === engagement.id)?.counterpart;
+  const name = counterpart?.displayName ?? (perspective === 'artist' ? 'Cliente' : engagement.catalog.name);
+  return (
+    <p className="row counterpart">
+      <Avatar className="avatar small" name={name} photoUrl={counterpart?.photoThumbnailUrl} />
+      <span>
+        {perspective === 'artist' ? 'Cliente' : 'Artista'}: <strong>{name}</strong>
+      </span>
+    </p>
+  );
+}
+
 function EngagementReservations({ engagement, perspective }: { engagement: Engagement; perspective: Perspective }) {
   const from = addDays(todayIn(), -31);
   const reservations = useCalendar(perspective, from, addDays(from, 93));
@@ -43,7 +59,7 @@ function EngagementReservations({ engagement, perspective }: { engagement: Engag
       <h2 id="sessions-title">Sessões</h2>
       {reservations.isPending ? (
         <Loading />
-      ) : reservations.isError ? (
+      ) : reservations.isLoadingError ? (
         <ErrorState error={reservations.error} onRetry={() => void reservations.refetch()} />
       ) : items.length === 0 ? (
         <p className="muted">
@@ -88,7 +104,7 @@ function Content({ perspective }: { perspective: Perspective }) {
   );
 
   if (engagement.isPending) return <Loading label="Carregando atendimento…" />;
-  if (engagement.isError) {
+  if (engagement.isLoadingError) {
     return (
       <>
         {back}
@@ -116,6 +132,7 @@ function Content({ perspective }: { perspective: Perspective }) {
             {data.bodyRegion} · {data.approximateSizeCm} cm · {data.catalog.studio}, {data.catalog.city}
           </span>
         </p>
+        <Counterpart engagement={data} perspective={perspective} />
       </div>
       {data.catalog.flash && (
         <figure className="list-item" style={{ marginBottom: 20 }}>

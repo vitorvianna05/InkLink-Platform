@@ -7,6 +7,7 @@ import { useConversations } from '@/features/messaging/api';
 import { useSession } from '@/features/session/session';
 import type { Artwork, ArtworkKind } from '@/shared/api/contracts';
 import { engagementStateLabel, money } from '@/shared/lib/format';
+import { Avatar } from '@/shared/ui/Avatar';
 import { EmptyState, ErrorState, Loading } from '@/shared/ui/States';
 import { Tabs } from '@/shared/ui/Tabs';
 import { useArtist, useArtworks } from './api';
@@ -15,7 +16,7 @@ import { FavoriteButton } from './ArtistCardView';
 function ArtworkList({ artistId, kind, onWant, requestDisabled = false }: { artistId: string; kind: ArtworkKind; onWant?: (flash: Artwork) => void; requestDisabled?: boolean }) {
   const works = useArtworks(artistId, kind);
   if (works.isPending) return <Loading label="Carregando trabalhos…" />;
-  if (works.isError) return <ErrorState error={works.error} onRetry={() => void works.refetch()} />;
+  if (works.isLoadingError) return <ErrorState error={works.error} onRetry={() => void works.refetch()} />;
   const items = works.data.pages.flatMap((page) => page.items);
   if (items.length === 0) {
     return <EmptyState title={kind === 'flashes' ? 'Este artista ainda não publicou flashes.' : 'Este artista ainda não publicou tatuagens realizadas.'} />;
@@ -25,7 +26,7 @@ function ArtworkList({ artistId, kind, onWant, requestDisabled = false }: { arti
       <div className="work-grid">
         {items.map((work) => (
           <figure key={work.id}>
-            <img src={work.imageUrl} alt={work.alternativeText} loading="lazy" />
+            <img src={work.thumbnailUrl ?? work.imageUrl} alt={work.alternativeText} loading="lazy" />
             <figcaption>
               <strong>{work.title}</strong>
               <span>
@@ -99,7 +100,7 @@ export function ArtistPage() {
   );
 
   if (artist.isPending) return <Loading label="Carregando perfil…" />;
-  if (artist.isError) {
+  if (artist.isLoadingError) {
     return (
       <>
         {back}
@@ -118,6 +119,7 @@ export function ArtistPage() {
       {back}
       <div className="profile-header" style={{ marginTop: 16 }}>
         <div>
+          <Avatar className="avatar large" name={profile.name} photoUrl={profile.photoUrl} />
           <span className="eyebrow">{profile.studio}</span>
           <h1 style={{ fontSize: 'clamp(32px, 5vw, 56px)' }}>{profile.name}</h1>
           <p className="location">

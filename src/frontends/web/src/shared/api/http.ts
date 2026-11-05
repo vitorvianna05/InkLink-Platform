@@ -121,7 +121,9 @@ function withQuery(path: string, query?: RequestOptions['query']): string {
 async function send(path: string, options: RequestOptions, retryCsrf: boolean): Promise<Response> {
   const method = options.method ?? 'GET';
   const headers: Record<string, string> = { Accept: 'application/json' };
-  if (options.body !== undefined) headers['Content-Type'] = 'application/json';
+  // FormData (upload de imagens) define o próprio Content-Type com o boundary do multipart.
+  const multipart = options.body instanceof FormData;
+  if (options.body !== undefined && !multipart) headers['Content-Type'] = 'application/json';
   if (options.idempotencyKey) headers['Idempotency-Key'] = options.idempotencyKey;
   if (method !== 'GET') headers['X-CSRF-TOKEN'] = await readCsrfToken();
 
@@ -131,7 +133,7 @@ async function send(path: string, options: RequestOptions, retryCsrf: boolean): 
       method,
       headers,
       credentials: 'same-origin',
-      body: options.body === undefined ? undefined : JSON.stringify(options.body),
+      body: options.body === undefined ? undefined : multipart ? (options.body as FormData) : JSON.stringify(options.body),
       signal: options.signal,
     });
   } catch (error) {

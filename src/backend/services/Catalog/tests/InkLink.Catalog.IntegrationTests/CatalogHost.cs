@@ -15,7 +15,12 @@ internal sealed class CatalogHost(CatalogFixture fixture, string connection, boo
         .UseSecuritySettings(SecurityConfiguration.Identity(fixture.Security).Concat(new Dictionary<string, string?>
         {
             ["CatalogDatabase:ConnectionString"] = connection,
-            ["Catalog:IdentityAddress"] = "http://identity.test/"
+            ["Catalog:IdentityAddress"] = "http://identity.test/",
+            ["ObjectStorage:ServiceUrl"] = fixture.StorageEndpoint.ToString(),
+            ["ObjectStorage:AccessKeyId"] = "inklink-catalog",
+            ["ObjectStorage:SecretAccessKey"] = fixture.StorageSecret,
+            ["ObjectStorage:PublicBucket"] = "inklink-catalog-media",
+            ["ObjectStorage:PublicBaseUrl"] = "https://localhost:5173/media/inklink-catalog-media"
         }))
         .ConfigureTestServices(services =>
         {

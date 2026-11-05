@@ -56,7 +56,7 @@ Crie uma conta no console administrativo do realm inklink, com senha definida pe
 | --- | --- |
 | GET /api/v1/profiles/me | Access token de usuário aprovado: 200 com id, displayName e roles. 401 sem token válido; 403 para chamador técnico/não autorizado. |
 | PUT /api/v1/profiles/me | Apenas displayName. 204 ao atualizar; 400 para nome vazio, JSON inválido ou campos extras; 401/403 conforme autenticação. |
-| GET /api/v1/internal/profiles/{id} | Somente cliente técnico autorizado com identity.profile.read. 200 com id/displayName, 404 se inexistente, 401/403 se não autorizado. |
+| GET /api/v1/internal/profiles/{id} | Somente cliente técnico autorizado com identity.profile.read. 200 com id/displayName, 404 se inexistente, 401/403 se não autorizado. Com `include=photo`, inclui `photoUrl`/`photoThumbnailUrl` (assinados e de curta duração quando a foto é privada); hoje só Messaging pede a foto, depois de validar a participação. |
 | GET /bff/login | Inicia OIDC por código, PKCE S256, state/nonce e PAR quando anunciado pelo provedor. Sem `returnUrl`, retorna para /bff/session. Com `returnUrl` (caminho local), retorna ao website nesse caminho, prefixado por `Bff:WebOrigin` quando configurado; valor inválido responde 400 `login.return_url_invalid`. Falha do provedor nesse fluxo volta a `/entrar?erro=login`. |
 | GET /bff/session | 200 com authenticated e name da identidade federada; 401 sem sessão válida. Perfil e funções atuais são consultados em Identity. Não devolve tokens. |
 | GET /bff/antiforgery | Sessão válida: devolve requestToken e cookie antiforgery. |
@@ -68,7 +68,7 @@ O OpenAPI de Identity, em /openapi/v1.json durante Development/Testing, declara 
 
 O navegador envia cookies ao BFF. Para PUT e POST, primeiro obtenha requestToken e envie-o em X-CSRF-TOKEN, preservando o cookie antiforgery. O BFF troca qualquer Authorization recebido pelo access token do ticket armazenado no servidor; Gateway remove cookies e headers de identidade não confiáveis antes de encaminhar.
 
-A sessão tem limite fixo de cinco minutos, reduzido à validade do access token se necessário. Sem renovação automática; a expiração retorna 401 e exige novo login. Tickets e material de Data Protection são compartilhados no banco privado e protegidos pelo certificado configurado. Logout invalida o ticket em todas as instâncias do BFF; não depende apenas de apagar o cookie.
+A sessão termina após 30 minutos sem uso ou 8 horas depois do login ([decisão 0019](../decisions/0019-p10-session-renewal.md)). O BFF renova o access token no servidor quando faltam 60 segundos para vencer, com refresh token de uso único, e serializa a renovação por sessão com bloqueio consultivo do PostgreSQL. Refresh token revogado ou expirado encerra a sessão com 401; a expiração exige novo login. Tickets e material de Data Protection são compartilhados no banco privado e protegidos pelo certificado configurado. Logout invalida o ticket em todas as instâncias do BFF; não depende apenas de apagar o cookie.
 
 ## Ativação administrativa de Artist
 

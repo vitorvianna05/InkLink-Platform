@@ -41,7 +41,7 @@ function AvailabilityEditor({ date, timeZone }: { date: string; timeZone: string
   }
 
   if (availability.isPending) return <Loading label="Carregando disponibilidade…" />;
-  if (availability.isError) return <ErrorState error={availability.error} onRetry={() => void availability.refetch()} />;
+  if (availability.isLoadingError) return <ErrorState error={availability.error} onRetry={() => void availability.refetch()} />;
 
   return (
     <form
@@ -139,7 +139,7 @@ function ReservationForm({ date, timeZone, preselected }: { date: string; timeZo
       <p className="muted">Somente atendimentos com proposta aceita podem ser agendados. O backend valida disponibilidade e conflitos.</p>
       {engagements.isPending ? (
         <Loading />
-      ) : engagements.isError ? (
+      ) : engagements.isLoadingError ? (
         <ErrorState error={engagements.error} onRetry={() => void engagements.refetch()} />
       ) : agreed.length === 0 ? (
         <p className="notice">Nenhum atendimento com proposta aceita aguardando agendamento.</p>
@@ -326,7 +326,7 @@ function Content({ session }: { session: Session }) {
       <div className="agenda-layout">
         <div className="stack">
           <MonthCalendar month={month} selected={selected} today={today} marked={marked} onMonthChange={setMonth} onSelect={select} />
-          {calendar.isError && <ErrorState error={calendar.error} onRetry={() => void calendar.refetch()} />}
+          {calendar.isLoadingError && <ErrorState error={calendar.error} onRetry={() => void calendar.refetch()} />}
         </div>
         <div className="stack">
           <h2 style={{ textTransform: 'capitalize' }}>{longDate.format(parseLocalDate(selected))}</h2>

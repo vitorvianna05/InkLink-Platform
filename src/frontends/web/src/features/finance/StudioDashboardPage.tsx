@@ -8,6 +8,7 @@ import { RequireArtist } from '@/features/session/guards';
 import type { Session } from '@/features/session/session';
 import { todayIn } from '@/shared/lib/dates';
 import { civilDate, dateTime, engagementStateLabel, money, percentage } from '@/shared/lib/format';
+import { Avatar } from '@/shared/ui/Avatar';
 import { PageHeading, SectionHeading } from '@/shared/ui/PageHeading';
 import { EmptyState, ErrorState, Loading } from '@/shared/ui/States';
 import { useDashboard } from './api';
@@ -18,7 +19,7 @@ function Indicators({ period }: { period: Period }) {
   const dashboard = useDashboard(period.from, period.to, valid);
   if (!valid) return null;
   if (dashboard.isPending) return <Loading label="Calculando indicadores…" />;
-  if (dashboard.isError) return <ErrorState error={dashboard.error} onRetry={() => void dashboard.refetch()} />;
+  if (dashboard.isLoadingError) return <ErrorState error={dashboard.error} onRetry={() => void dashboard.refetch()} />;
   const d = dashboard.data;
   const empty = d.financial.received === 0 && d.financial.costs === 0 && d.completedSessions === 0 && d.scheduledReservations === 0;
   return (
@@ -84,8 +85,9 @@ function Clients() {
   const engagements = useEngagements('artist');
   const conversations = useConversations();
   if (engagements.isPending) return <Loading label="Carregando atendimentos…" />;
-  if (engagements.isError) return <ErrorState error={engagements.error} onRetry={() => void engagements.refetch()} />;
-  const names = new Map((conversations.data ?? []).map((c) => [c.engagementId, c.counterpart.displayName]));
+  if (engagements.isLoadingError) return <ErrorState error={engagements.error} onRetry={() => void engagements.refetch()} />;
+  // Interlocutor da conversa do atendimento: nome e foto do cliente, entregues pela Messaging após validar a participação.
+  const counterparts = new Map((conversations.data ?? []).map((c) => [c.engagementId, c.counterpart]));
   const items = [...engagements.data].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   if (items.length === 0) return <EmptyState title="Nenhum pedido recebido ainda." />;
   return (
@@ -93,8 +95,9 @@ function Clients() {
       {items.map((e) => (
         <li key={e.id}>
           <Link className="list-item" to={`/estudio/atendimentos/${e.id}`}>
+            <Avatar className="avatar light" name={counterparts.get(e.id)?.displayName ?? 'Cliente'} photoUrl={counterparts.get(e.id)?.photoThumbnailUrl} />
             <div className="grow">
-              <h3>{names.get(e.id) ?? 'Cliente'}</h3>
+              <h3>{counterparts.get(e.id)?.displayName ?? 'Cliente'}</h3>
               <p>
                 {e.idea.length > 80 ? `${e.idea.slice(0, 80)}…` : e.idea} · {e.bodyRegion} · {e.approximateSizeCm} cm
               </p>

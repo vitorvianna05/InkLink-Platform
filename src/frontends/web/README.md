@@ -43,7 +43,7 @@ O servidor do Vite encaminha `/bff`, `/api`, `/signin-oidc` e `/signout-callback
 
 - O BFF não aceita `returnUrl` e redireciona `/bff/login` para `/bff/session` (JSON). Para preservar a página, o login abre `/bff/login` em uma janela própria; a aba principal consulta `/bff/session` a cada 1,5 s e fecha a janela quando a sessão existe. Bloqueio de pop-up é informado com instrução.
 - O Keycloak devolve o fluxo para `https://localhost:<porta do BFF>/signin-oidc`. Cookies não são isolados por porta, então a sessão criada no BFF vale para o website em `localhost`. O host deve ser o mesmo (`localhost`), não `127.0.0.1`.
-- A sessão do BFF dura até 5 minutos, sem renovação. Ao receber 401, a interface abre o aviso de sessão expirada sem descartar a página ou o formulário; as chaves de idempotência são mantidas para que o reenvio não duplique a operação.
+- A sessão do BFF termina após 30 minutos sem uso ou 8 horas depois do login; o access token é renovado no servidor ([decisão 0019](../../../docs/decisions/0019-p10-session-renewal.md)). Ao receber 401, a interface abre o aviso de sessão expirada sem descartar a página ou o formulário; as chaves de idempotência são mantidas para que o reenvio não duplique a operação.
 - Função Artist: `GET /api/v1/scheduling/artist-context` responde 200 para artistas e 403 para os demais. Não existe troca de personagens; a área Estúdio só aparece quando o backend confirma a função.
 - Escritas enviam `X-CSRF-TOKEN` obtido em `/bff/antiforgery`; `csrf.invalid` renova o token uma vez. Logout é `POST /bff/logout`.
 

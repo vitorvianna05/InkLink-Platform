@@ -5,11 +5,18 @@ using Microsoft.EntityFrameworkCore;
 
 namespace InkLink.Catalog.Infrastructure.Queries;
 
-internal sealed class EfCatalogQueries(CatalogDbContext database) : ICatalogQueries
+internal sealed class EfCatalogQueries(CatalogDbContext database, Media.ArtworkImageUrls urls, Media.ArtistPhotoLookup photos) : ICatalogQueries
 {
-    public Task<ArtistProfile?> FindArtistAsync(Guid id, CancellationToken cancellationToken) => database.Artists.AsNoTracking()
-        .Where(artist => artist.Id == id).Select(artist => new ArtistProfile(artist.Id, artist.Name, artist.Studio, artist.City, artist.Biography, artist.Styles, artist.StartingPrice))
-        .SingleOrDefaultAsync(cancellationToken);
+    public async Task<ArtistProfile?> FindArtistAsync(Guid id, CancellationToken cancellationToken)
+    {
+        var profile = await database.Artists.AsNoTracking()
+            .Where(artist => artist.Id == id).Select(artist => new ArtistProfile(artist.Id, artist.Name, artist.Studio, artist.City, artist.Biography, artist.Styles, artist.StartingPrice, null, null))
+            .SingleOrDefaultAsync(cancellationToken);
+        if (profile is null) return null;
+        return (await photos.ForArtistsAsync([id], cancellationToken)).TryGetValue(id, out var photo)
+            ? profile with { PhotoUrl = photo.PhotoUrl, PhotoThumbnailUrl = photo.ThumbnailUrl }
+            : profile;
+    }
 
     public async Task<QuerySlice<ArtistCard>> SearchAsync(SearchCriteria criteria, PagePosition? after, CancellationToken cancellationToken)
     {
@@ -39,7 +46,8 @@ internal sealed class EfCatalogQueries(CatalogDbContext database) : ICatalogQuer
         var page = rows.Take(criteria.Limit).ToArray();
         var next = rows.Count > criteria.Limit ? new PagePosition(page[^1].Rank, page[^1].NormalizedName, page[^1].Id) : null;
         await transaction.CommitAsync(cancellationToken);
-        return new(page.Select(value => new ArtistCard(value.Id, value.Name, value.Studio, value.City, value.Styles, value.StartingPrice)).ToArray(), next, total);
+        var cards = await photos.ApplyAsync(page.Select(value => new ArtistCard(value.Id, value.Name, value.Studio, value.City, value.Styles, value.StartingPrice)).ToArray(), cancellationToken);
+        return new(cards, next, total);
     }
 
     public async Task<IReadOnlyList<Suggestion>> SuggestAsync(string term, int limit, CancellationToken cancellationToken)
@@ -71,15 +79,23 @@ internal sealed class EfCatalogQueries(CatalogDbContext database) : ICatalogQuer
         var query = database.Artworks.AsNoTracking().Where(artwork => artwork.ArtistId == artistId && artwork.Kind == kind);
         var total = await query.CountAsync(cancellationToken);
         if (after is not null) query = query.Where(artwork => artwork.Id.CompareTo(after.Id) > 0);
-        var rows = await query.OrderBy(artwork => artwork.Id).Take(limit + 1)
-            .Select(artwork => new ArtworkView(artwork.Id, artwork.Title, artwork.ImageUrl, artwork.AlternativeText, artwork.Style, artwork.ReferencePrice)).ToListAsync(cancellationToken);
+        var rows = (await query.OrderBy(artwork => artwork.Id).Take(limit + 1).ToListAsync(cancellationToken)).Select(View).ToList();
         var page = rows.Take(limit).ToArray();
         return new(page, rows.Count > limit ? new PagePosition(0, "", page[^1].Id) : null, total);
     }
 
-    public Task<ArtworkView?> FindArtworkAsync(Guid artistId, Guid artworkId, bool flashes, CancellationToken cancellationToken) =>
-        database.Artworks.AsNoTracking().Where(artwork => artwork.Id == artworkId && artwork.ArtistId == artistId && artwork.Kind == (flashes ? ArtworkKind.Flash : ArtworkKind.Tattoo))
-            .Select(artwork => new ArtworkView(artwork.Id, artwork.Title, artwork.ImageUrl, artwork.AlternativeText, artwork.Style, artwork.ReferencePrice)).SingleOrDefaultAsync(cancellationToken);
+    public async Task<ArtworkView?> FindArtworkAsync(Guid artistId, Guid artworkId, bool flashes, CancellationToken cancellationToken)
+    {
+        var artwork = await database.Artworks.AsNoTracking()
+            .SingleOrDefaultAsync(artwork => artwork.Id == artworkId && artwork.ArtistId == artistId && artwork.Kind == (flashes ? ArtworkKind.Flash : ArtworkKind.Tattoo), cancellationToken);
+        return artwork is null ? null : View(artwork);
+    }
+
+    private ArtworkView View(Artwork artwork)
+    {
+        var (detail, thumbnail, external) = urls.Resolve(artwork.ImageKey, artwork.ImageUrl);
+        return new(artwork.Id, artwork.Title, detail, artwork.AlternativeText, artwork.Style, artwork.ReferencePrice, thumbnail, external);
+    }
 
     private sealed class RankedArtist
     {

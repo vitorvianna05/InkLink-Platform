@@ -67,4 +67,5 @@ foreach ($client in $realm.clients) {
         $null = Invoke-KeycloakAdmin "$baseUri/admin/realms/inklink/clients/$($existing.id)/optional-client-scopes/$($scope.id)" -Method Put
     }
 }
+& "$PSScriptRoot/Sync-KeycloakRealm.ps1" -BaseUri $baseUri -AdminPassword $settings.KEYCLOAK_ADMIN_PASSWORD
 Write-Host 'Local client and scope configuration synchronized. Existing users were preserved.'

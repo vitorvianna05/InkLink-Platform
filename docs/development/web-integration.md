@@ -71,7 +71,24 @@ Pop-Location
 
 playwright.integration.config.ts é separado das checagens visuais simuladas; não utiliza page.route/MSW nem ignora erros TLS. As verificações diretas de API são feitas por fetch no próprio navegador, na origem do website e com os cookies da sessão: o cliente Node do Playwright não aceita o certificado de desenvolvimento do ASP.NET Core (autoassinado, CA:FALSE) como raiz, mesmo com NODE_EXTRA_CA_CERTS. Lê as contas e senha dos artefatos ignorados da P09, sem copiá-las para código, parâmetros de linha de comando ou relatórios. Traces, vídeo e screenshots estão desabilitados para não persistir o tráfego de autenticação. Não versionar artefatos de execução ou estado de sessão.
 
-O roteiro verifica catálogo/sugestões, login por popup, favorito com recarga, envio e persistência de mensagem, histórico bloqueado, pedido originado em flash, dashboard/agenda do artista e negação de acesso a terceiro. Altera somente os dados sintéticos: salva favorito, acrescenta mensagem, cria pedido e define disponibilidade futura do artista sintético; não apaga bancos ou reinicia serviços. O total de testes web é separado da suíte .NET. Responsividade/teclado continuam na suíte e2e visual; concluir esse roteiro reduz a pendência T10.10, mas não demonstra sozinho expiração temporal, reserva/encerramento completos e publicação de produção.
+O roteiro tem três arquivos em `e2e-real/`, com auxiliares comuns em `support.ts`:
+- **`backend.spec.ts`:** catálogo e sugestões; login por `/entrar` e pela tela de credenciais com o tema InkLink; favorito com recarga; envio e persistência de mensagem; histórico bloqueado; pedido originado em flash; dashboard e agenda do artista; saída pelo menu; negação de acesso a terceiro.
+- **`lifecycle.spec.ts`:** ciclo completo pelo website, com duas contas: pedido, proposta, aceite, reserva confirmada e conflito, encerramento recusado por sessão futura, conclusão da sessão depois do término real, lançamento de recebimento e encerramento definitivo. Também cobre a sessão perdida durante um formulário: aviso, novo login em janela própria e reenvio sem duplicar a mensagem.
+- **`media.spec.ts`:** obra enviada pelo Portfólio e servida em `/media`; foto do cliente privada e assinada, vista pelo artista na conversa e recusada sem assinatura; foto do artista projetada no perfil público pelo evento da Identity.
+
+O roteiro altera somente os dados sintéticos: salva favorito, acrescenta mensagens, cria pedidos, obras e fotos, define disponibilidade do dia e registra reserva, conclusão e lançamento do artista sintético. Não apaga bancos nem reinicia serviços. O ciclo completo espera o término real de uma reserva de um minuto, de 3 a 4 minutos no total, e não deve rodar perto da meia-noite no fuso do artista. Responsividade e teclado continuam na suíte e2e visual.
+
+## Homologação da publicação
+
+`./src/frontends/web/scripts/Start-WebPublication.ps1` faz o build de produção e o serve pelo Caddy (`src/frontends/web/deploy/Caddyfile`) em https://localhost:5173, com o certificado local e o ambiente P09 ativo. Pare o servidor de desenvolvimento antes, porque a porta é a mesma.
+
+A configuração é a mesma que se usa em qualquer host:
+- **Mesma origem:** o build estático, `/bff`, `/api` e os retornos OIDC encaminhados ao BFF, com TLS verificado e o Host preservado (assim o `redirect_uri` registrado no realm continua válido), e `/media` encaminhado ao armazenamento.
+- **SPA:** rotas desconhecidas recebem `index.html` (recarga de endereço profundo).
+- **Cache:** `/assets/*` com cache imutável e `index.html` sem cache.
+- **Cabeçalhos de segurança:** HSTS, `nosniff`, `X-Frame-Options`, `Referrer-Policy` e `Permissions-Policy`.
+
+Em produção, troque os upstreams e o certificado por variáveis de ambiente. Configure `Bff:WebOrigin` vazio quando BFF e website compartilharem a origem, e aponte `PublicBaseUrl` para o domínio público do R2 em vez de `/media` (decisão 0018). Com o contêiner ativo, o roteiro real pode ser repetido contra o build publicado.
 
 ## Diagnóstico
 

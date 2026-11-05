@@ -78,7 +78,9 @@ export function useMessageHistory(conversationId: string) {
         setState((current) => ({ ...current, status: 'ready', error: null }));
       } catch (error) {
         if (error instanceof DOMException && error.name === 'AbortError') return;
-        setState((current) => ({ ...current, status: current.status === 'ready' && error instanceof ApiError && error.isTransient ? 'ready' : 'error', error }));
+        // Falha transitória ou sessão expirada (o aviso de novo login já aparece) mantêm o histórico carregado.
+        const keep = error instanceof ApiError && (error.isTransient || error.isSessionExpired);
+        setState((current) => ({ ...current, status: current.status === 'ready' && keep ? 'ready' : 'error', error }));
       } finally {
         busy.current = false;
       }

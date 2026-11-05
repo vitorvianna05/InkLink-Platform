@@ -41,7 +41,7 @@ export function SessionNotices() {
   return (
     <>
       <Dialog open={expired} title="Sua sessão expirou" eyebrow="SEGURANÇA" onClose={dismissExpired}>
-        <p>Por segurança, a sessão do InkLink dura poucos minutos. Entre novamente para continuar de onde parou; nada desta página será perdido.</p>
+        <p>Por segurança, a sessão do InkLink termina após 30 minutos sem uso ou 8 horas depois do login. Entre novamente para continuar de onde parou; nada desta página será perdido.</p>
         <button type="button" className="button red full" onClick={reauthenticate} disabled={signingIn} data-autofocus>
           {signingIn ? 'Aguardando login…' : 'Entrar novamente'}
         </button>

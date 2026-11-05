@@ -19,6 +19,9 @@ export interface Page<T> {
 export interface Profile {
   id: Uuid;
   displayName: string;
+  /** Foto de perfil (512 px) e miniatura (128 px); endereços assinados de curta duração quando privada. */
+  photoUrl?: string | null;
+  photoThumbnailUrl?: string | null;
 }
 
 // Catalog
@@ -29,6 +32,9 @@ export interface ArtistCard {
   city: string;
   styles: string[];
   startingPrice: number;
+  /** Foto pública do artista, projetada a partir da Identity (decisão 0018). */
+  photoUrl?: string | null;
+  photoThumbnailUrl?: string | null;
 }
 
 export interface ArtistProfile extends ArtistCard {
@@ -38,10 +44,15 @@ export interface ArtistProfile extends ArtistCard {
 export interface Artwork {
   id: Uuid;
   title: string;
+  /** Variante de detalhe (1600 px) ou URL externa legada. */
   imageUrl: string;
   alternativeText: string;
   style: string;
   referencePrice: number | null;
+  /** Variante de card (480 px); igual a imageUrl em obras legadas. Opcional para respostas anteriores. */
+  thumbnailUrl?: string;
+  /** Obra publicada por URL antes do upload (decisão 0018): a imagem deve ser substituída. */
+  externalImage?: boolean;
 }
 
 export type ArtworkKind = 'tattoos' | 'flashes';
@@ -63,10 +74,11 @@ export interface ArtistInput {
 
 export interface ArtworkInput {
   title: string;
-  imageUrl: string;
   alternativeText: string;
   style: string;
   referencePrice: number | null;
+  /** Arquivo da imagem; obrigatório na criação e opcional na edição (mantém a atual). */
+  image: File | null;
 }
 
 // Engagements
@@ -161,7 +173,7 @@ export interface Conversation {
   writingBlocked: boolean;
   createdAt: Instant;
   lastMessage: Message | null;
-  counterpart: { id: Uuid; displayName: string };
+  counterpart: { id: Uuid; displayName: string; photoUrl?: string | null; photoThumbnailUrl?: string | null };
   engagementState: EngagementState;
 }
 

@@ -1,6 +1,6 @@
 # Armazenamento de objetos (imagens)
 
-Implementa a preparação da [decisão 0018](../decisions/0018-p10-images.md) (T10.16). Os serviços donos das imagens usam o building block `InkLink.ObjectStorage`, que fala a API S3. O mesmo adaptador aponta para o SeaweedFS no ambiente local e para o Cloudflare R2 em produção, mudando apenas a configuração. Catalog e Identity passam a usá-lo em T10.17 e T10.18.
+Implementa a preparação da [decisão 0018](../decisions/0018-p10-images.md) (T10.16). Os serviços donos das imagens usam o building block `InkLink.ObjectStorage`, que fala a API S3. O mesmo adaptador aponta para o SeaweedFS no ambiente local e para o Cloudflare R2 em produção, mudando apenas a configuração. Catalog o usa para as obras (T10.17) e Identity para as fotos de perfil (T10.18).
 
 ## Ambientes
 
@@ -63,3 +63,12 @@ Em produção, as imagens são lidas diretamente do domínio público do R2.
 4. Configurar `ServiceUrl` com o endpoint da conta, `Region=auto`, `PublicBaseUrl` com o domínio público e `SignedUrlBaseUrl` vazio.
 
 Credenciais nunca vão para o repositório nem para o frontend.
+
+## Obras e fotos (T10.17–T10.18)
+
+- **Envio:** o serviço dono normaliza a imagem (`InkLink.Imaging`), grava reservas de limpeza com prazo de 1 hora e envia as variantes. A gravação da obra ou da foto confirma as reservas na mesma transação; objetos substituídos ou removidos entram na fila de limpeza com prazo imediato.
+- **Limpeza:** `ObjectCleanupWorker` (Catalog e Identity) remove os objetos vencidos a cada 30 segundos, com `FOR UPDATE SKIP LOCKED` e nova tentativa com espera crescente.
+- **Chaves:** `artworks/<artista>/<uuid>/{1600,480}.webp` no bucket do Catálogo e `profiles/<perfil>/<uuid>/{512,128}.webp` nos buckets da Identity. A foto é pública para contas Artist e privada para as demais.
+- **Projeção:** a Identity publica `identity.profile-photo-changed.v1` por Outbox na exchange `inklink.identity.events.v1`; o Catálogo consome a fila `inklink.catalog.profile-photos.v1` com o usuário `inklink_catalog_consumer`. As senhas `INKLINK_IDENTITY_PUBLISHER_PASSWORD` e `INKLINK_CATALOG_CONSUMER_PASSWORD` são geradas pelos scripts de inicialização. Falhas transitórias voltam pela exchange `inklink.catalog.profile-photos.retry.v1` (escrita permitida só a esse usuário) até dez tentativas; depois, a mensagem fica em `inklink.catalog.profile-photos.invalid.v1` para diagnóstico.
+- **Testes de outros serviços:** em `Testing`, sem a seção `ObjectStorage`, o Catálogo e a Identity sobem sem armazenamento: as leituras seguem e os envios respondem 503.
+

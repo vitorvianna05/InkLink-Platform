@@ -1,13 +1,100 @@
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { Message } from '@/shared/api/contracts';
 import { conversation, message } from '@/test/fixtures';
 import { artist, client, page, problem, renderApp, signedIn } from '@/test/render';
 import { server } from '@/test/server';
 
 describe('conversas', () => {
+  it('novo login após sessão expirada preserva o texto e reenvia com a mesma chave', async () => {
+    signedIn(client);
+    const keys: string[] = [];
+    const history: Message[] = [];
+    server.use(
+      http.get('/api/v1/conversations/c1', () => HttpResponse.json(conversation())),
+      http.get('/api/v1/conversations/c1/messages', () => HttpResponse.json(page([...history], { resumeCursor: 'resume' }))),
+      http.get('/api/v1/conversations', () => HttpResponse.json(page([conversation()]))),
+      http.post('/api/v1/conversations/c1/messages', async ({ request }) => {
+        keys.push(request.headers.get('Idempotency-Key') ?? '');
+        if (keys.length === 1) return problem(401, 'session.required');
+        const body = (await request.json()) as { body: string };
+        const created = message(1, client.id, body.body);
+        history.push(created);
+        return HttpResponse.json(created, { status: 201 });
+      }),
+    );
+    const popup = { closed: false, close: vi.fn(() => { popup.closed = true; }) };
+    vi.spyOn(window, 'open').mockImplementation(() => popup as unknown as Window);
+    renderApp('/mensagens/c1');
+    const input = await screen.findByLabelText('Mensagem');
+    await userEvent.type(input, 'Texto que não pode se perder');
+    await userEvent.click(screen.getByRole('button', { name: 'Enviar mensagem' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Sua sessão expirou' });
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Entrar novamente' }));
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Sua sessão expirou' })).not.toBeInTheDocument(), { timeout: 4000 });
+    expect(screen.getByLabelText('Mensagem')).toHaveValue('Texto que não pode se perder');
+    await userEvent.click(screen.getByRole('button', { name: 'Enviar mensagem' }));
+    expect(await within(await screen.findByRole('log')).findByText('Texto que não pode se perder')).toBeInTheDocument();
+    expect(keys).toHaveLength(2);
+    expect(keys[1]).toBe(keys[0]);
+    expect(popup.close).toHaveBeenCalled();
+  }, 15_000); // Aguarda a consulta real de /bff/session a cada 1,5 s.
+
+  it('sessão que expira durante a atualização em segundo plano mantém a conversa e o rascunho', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      signedIn(client);
+      let expired = false;
+      server.use(
+        http.get('/api/v1/conversations/c1', () => (expired ? problem(401, 'session.required') : HttpResponse.json(conversation()))),
+        http.get('/api/v1/conversations/c1/messages', () =>
+          expired ? problem(401, 'session.required') : HttpResponse.json(page([message(1, artist.id, 'Oi, Júlia!')], { resumeCursor: 'resume' })),
+        ),
+      );
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+      renderApp('/mensagens/c1');
+      const input = await screen.findByLabelText('Mensagem');
+      expect(await screen.findByText('Oi, Júlia!')).toBeInTheDocument();
+      await user.type(input, 'Rascunho em andamento');
+      expired = true;
+      // As atualizações periódicas do histórico (4 s) e da conversa (15 s) recebem 401.
+      await vi.advanceTimersByTimeAsync(16_000);
+      expect(await screen.findByRole('dialog', { name: 'Sua sessão expirou' })).toBeInTheDocument();
+      expect(screen.getByLabelText('Mensagem')).toHaveValue('Rascunho em andamento');
+      expect(screen.getByText('Oi, Júlia!')).toBeInTheDocument();
+      expect(screen.queryByText('Não foi possível atualizar o histórico agora. Tentaremos novamente.')).not.toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('falha na atualização em segundo plano mantém a conversa e avisa que os dados podem estar desatualizados', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      signedIn(client);
+      let unavailable = false;
+      server.use(
+        http.get('/api/v1/conversations/c1', () => (unavailable ? problem(503, 'dependency.unavailable') : HttpResponse.json(conversation()))),
+        http.get('/api/v1/conversations/c1/messages', () => HttpResponse.json(page([message(1, artist.id, 'Oi, Júlia!')], { resumeCursor: 'resume' }))),
+      );
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+      renderApp('/mensagens/c1');
+      expect(await screen.findByText('Oi, Júlia!')).toBeInTheDocument();
+      expect(screen.queryByText(/pode estar desatualizado/)).not.toBeInTheDocument();
+      unavailable = true;
+      await vi.advanceTimersByTimeAsync(16_000);
+      expect(await screen.findByText(/pode estar desatualizado/)).toBeInTheDocument();
+      expect(screen.getByLabelText('Mensagem')).toBeInTheDocument();
+      unavailable = false;
+      await user.click(screen.getByRole('button', { name: 'Atualizar agora' }));
+      await waitFor(() => expect(screen.queryByText(/pode estar desatualizado/)).not.toBeInTheDocument());
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('lista e leitura são páginas distintas e a listagem identifica o artista', async () => {
     signedIn(client);
     server.use(

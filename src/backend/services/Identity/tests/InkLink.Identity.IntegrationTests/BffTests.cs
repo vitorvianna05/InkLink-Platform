@@ -59,7 +59,10 @@ public sealed class BffTests(SecurityFixture fixture)
         var serverTicket = await first.Services.GetRequiredService<ITicketStore>().RetrieveAsync(sessionId);
         var accessToken = serverTicket!.Properties.GetTokenValue("access_token")!;
         Assert.False(string.IsNullOrWhiteSpace(accessToken));
-        Assert.True(serverTicket.Properties.ExpiresUtc <= new DateTimeOffset(new Microsoft.IdentityModel.JsonWebTokens.JsonWebToken(accessToken).ValidTo));
+        // Decisão 0019: validade deslizante de 30 minutos, limite total de 8 horas e refresh token só no servidor.
+        Assert.True(serverTicket.Properties.ExpiresUtc <= DateTimeOffset.UtcNow.AddMinutes(30).AddSeconds(5));
+        Assert.True(DateTimeOffset.Parse(serverTicket.Properties.Items["inklink.absolute"]!, System.Globalization.CultureInfo.InvariantCulture) <= DateTimeOffset.UtcNow.AddHours(8).AddSeconds(5));
+        Assert.False(string.IsNullOrWhiteSpace(serverTicket.Properties.GetTokenValue("refresh_token")));
         await using (var database = await first.Services.GetRequiredService<IDbContextFactory<BffDbContext>>().CreateDbContextAsync())
         {
             var row = await database.Sessions.SingleAsync(row => row.Id == sessionId);
@@ -100,6 +103,43 @@ public sealed class BffTests(SecurityFixture fixture)
         await database.Sessions.Where(session => session.Id == sessionId)
             .ExecuteUpdateAsync(setters => setters.SetProperty(session => session.ExpiresAt, DateTimeOffset.UtcNow.AddSeconds(-1)));
         Assert.Equal(HttpStatusCode.Unauthorized, (await browser.GetAsync("/bff/session")).StatusCode);
+    }
+
+    [Fact]
+    public async Task Login_page_uses_the_inklink_theme_and_keeps_the_keycloak_form()
+    {
+        using var identity = new SecurityIdentityHost(fixture);
+        using var gateway = new SecurityGatewayHost(fixture, identity.Server.CreateHandler());
+        using var bff = new SecurityBffHost(fixture, gateway.Server.CreateHandler());
+        using var browser = new TestBrowser(bff);
+        var challenge = await browser.GetAsync("/bff/login?returnUrl=%2F");
+        using var provider = new HttpClient(fixture.CreateProviderHandler(browser.Cookies));
+        var page = await provider.GetAsync(challenge.Headers.Location);
+        for (var redirect = 0; redirect < 10 && page.StatusCode == HttpStatusCode.Redirect; redirect++)
+            page = await provider.GetAsync(new Uri(page.RequestMessage!.RequestUri!, page.Headers.Location!));
+        var html = await page.Content.ReadAsStringAsync();
+        Assert.Equal(HttpStatusCode.OK, page.StatusCode);
+        Assert.Contains("lang=\"pt-BR\"", html);
+        Assert.Contains("class=\"inklink-login\"", html);
+        Assert.Contains("Conectando histórias.", html);
+        Assert.Contains("css/inklink.css", html);
+        Assert.Contains("Entre na sua conta InkLink", html);
+        foreach (var id in new[] { "kc-form-login", "username", "password", "kc-login" })
+            Assert.Contains($"id=\"{id}\"", html);
+        Assert.DoesNotContain("fonts.googleapis.com", html);
+
+        // Manrope e DM Sans são servidas pelo próprio tema (sem recursos externos) e chegam como WOFF2 válidos.
+        var stylesheet = Regex.Match(html, "href=\"([^\"]*css/inklink[.]css)\"").Groups[1].Value;
+        var cssUri = new Uri(page.RequestMessage!.RequestUri!, System.Net.WebUtility.HtmlDecode(stylesheet));
+        var css = await provider.GetStringAsync(cssUri);
+        foreach (var font in new[] { "manrope-latin-wght-normal.woff2", "dm-sans-latin-wght-normal.woff2" })
+        {
+            Assert.Contains($"url(../fonts/{font})", css);
+            var bytes = await provider.GetByteArrayAsync(new Uri(cssUri, $"../fonts/{font}"));
+            Assert.Equal("wOF2"u8.ToArray(), bytes[..4]);
+        }
+        Assert.DoesNotContain("http://", css);
+        Assert.DoesNotContain("https://", css);
     }
 
     [Fact]

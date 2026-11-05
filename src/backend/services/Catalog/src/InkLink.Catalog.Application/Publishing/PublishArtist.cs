@@ -5,15 +5,21 @@ using InkLink.Catalog.Domain;
 namespace InkLink.Catalog.Application.Publishing;
 
 public sealed record ArtistInput(string? Name, string? Studio, string? City, string? Biography, string[]? Styles, decimal? StartingPrice);
-public sealed record ArtworkInput(string? Title, string? ImageUrl, string? AlternativeText, string? Style, decimal? ReferencePrice);
+/// <summary>Dados descritivos da obra; a imagem chega como arquivo (decisão 0018).</summary>
+public sealed record ArtworkInput(string? Title, string? AlternativeText, string? Style, decimal? ReferencePrice);
+/// <summary>Objetos confirmados por esta gravação e objetos que deixam de ser usados.</summary>
+public sealed record ImageChange(IReadOnlyList<string> Confirmed, IReadOnlyList<string> Obsolete)
+{
+    public static readonly ImageChange None = new([], []);
+}
 public sealed record PublishedArtist(ArtistProfile Profile, bool Created);
 public interface IArtistStore
 {
     Task<Artist?> FindByOwnerAsync(Guid ownerId, CancellationToken cancellationToken);
     Task SaveArtistAsync(Artist artist, bool created, CancellationToken cancellationToken);
     Task<Artwork?> FindArtworkAsync(Guid artistId, Guid artworkId, ArtworkKind kind, CancellationToken cancellationToken);
-    Task SaveArtworkAsync(Artwork artwork, bool created, CancellationToken cancellationToken);
-    Task DeleteArtworkAsync(Artwork artwork, CancellationToken cancellationToken);
+    Task SaveArtworkAsync(Artwork artwork, bool created, ImageChange images, CancellationToken cancellationToken);
+    Task DeleteArtworkAsync(Artwork artwork, IReadOnlyList<string> obsoleteObjects, CancellationToken cancellationToken);
 }
 
 public sealed class PublishArtist(ICurrentCatalogAccount current, IArtistStore store)

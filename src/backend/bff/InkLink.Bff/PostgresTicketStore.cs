@@ -6,14 +6,16 @@ using Microsoft.EntityFrameworkCore;
 
 namespace InkLink.Bff;
 
-public sealed class PostgresTicketStore(IDbContextFactory<BffDbContext> databases, IDataProtectionProvider protection) : ITicketStore
+public sealed class PostgresTicketStore(IDbContextFactory<BffDbContext> databases, IDataProtectionProvider protection, TimeProvider time) : ITicketStore
 {
     private readonly IDataProtector protector = protection.CreateProtector("InkLink.Bff.Ticket.v1");
     public async Task<string> StoreAsync(AuthenticationTicket ticket)
     {
         var key = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+        // A própria chave segue no ticket protegido: a renovação a usa para bloquear e reler a sessão (decisão 0019).
+        ticket.Properties.Items[BffSessionRenewal.SessionKeyItem] = key;
         await using var database = await databases.CreateDbContextAsync();
-        await database.Sessions.Where(session => session.ExpiresAt < DateTimeOffset.UtcNow).ExecuteDeleteAsync();
+        await database.Sessions.Where(session => session.ExpiresAt < time.GetUtcNow()).ExecuteDeleteAsync();
         database.Sessions.Add(new() { Id = key, ProtectedTicket = Protect(ticket), ExpiresAt = ticket.Properties.ExpiresUtc!.Value });
         await database.SaveChangesAsync();
         return key;
@@ -30,7 +32,7 @@ public sealed class PostgresTicketStore(IDbContextFactory<BffDbContext> database
     {
         await using var database = await databases.CreateDbContextAsync();
         var session = await database.Sessions.AsNoTracking().SingleOrDefaultAsync(session => session.Id == key);
-        if (session is null || session.ExpiresAt <= DateTimeOffset.UtcNow) return null;
+        if (session is null || session.ExpiresAt <= time.GetUtcNow()) return null;
         try { return TicketSerializer.Default.Deserialize(protector.Unprotect(session.ProtectedTicket)); }
         catch (CryptographicException) { return null; }
     }

@@ -32,18 +32,24 @@ public sealed class CatalogTests
     public void Price_invariant_is_enforced(decimal price) => Assert.Throws<InvalidCatalogData>(() => Artist.Create(Guid.NewGuid(), "A", "B", "C", "D", ["E"], price));
 
     [Theory]
-    [InlineData("http://images.example.test/a.jpg")]
-    [InlineData("https://user:password@images.example.test/a.jpg")]
-    [InlineData("https://images.example.test/a.jpg?token=private")]
-    [InlineData("https://localhost/a.jpg")]
-    [InlineData("data:image/png;base64,abc")]
-    public void Invalid_or_temporary_media_is_rejected(string url) => Assert.Throws<InvalidCatalogData>(() => Artwork.Create(Guid.NewGuid(), ArtworkKind.Flash, "Desenho", url, "Descrição", "Blackwork", 10));
+    [InlineData("")]
+    [InlineData("   ")]
+    public void Artwork_requires_an_uploaded_image(string key) => Assert.Throws<InvalidCatalogData>(() => Artwork.Create(Guid.NewGuid(), ArtworkKind.Flash, "Desenho", "Descrição", "Blackwork", 10, key));
+
+    [Fact]
+    public void Replacing_the_image_returns_the_previous_upload()
+    {
+        var artwork = Artwork.Create(Guid.NewGuid(), ArtworkKind.Tattoo, "Tattoo", "Descrição", "Blackwork", null, "artworks/a/1");
+        Assert.Equal("artworks/a/1", artwork.ReplaceImage("artworks/a/2"));
+        Assert.Equal("artworks/a/2", artwork.ImageKey);
+        Assert.False(artwork.HasExternalImage);
+    }
 
     [Fact]
     public void Artwork_kind_and_reference_price_remain_distinct()
     {
-        Assert.Throws<InvalidCatalogData>(() => Artwork.Create(Guid.NewGuid(), ArtworkKind.Tattoo, "Tattoo", "https://images.example.test/a.jpg", "Descrição", "Blackwork", 100));
-        var flash = Artwork.Create(Guid.NewGuid(), ArtworkKind.Flash, "Flash", "https://images.example.test/a.jpg", "Descrição", "Blackwork", 100);
+        Assert.Throws<InvalidCatalogData>(() => Artwork.Create(Guid.NewGuid(), ArtworkKind.Tattoo, "Tattoo", "Descrição", "Blackwork", 100, "artworks/a/1"));
+        var flash = Artwork.Create(Guid.NewGuid(), ArtworkKind.Flash, "Flash", "Descrição", "Blackwork", 100, "artworks/a/1");
         Assert.Equal(ArtworkKind.Flash, flash.Kind);
         Assert.Equal(7, flash.Id.Version);
     }
@@ -76,7 +82,7 @@ public sealed class CatalogTests
         public Task<Artist?> FindByOwnerAsync(Guid id, CancellationToken ct) { Read = true; return Task.FromResult<Artist?>(null); }
         public Task SaveArtistAsync(Artist artist, bool created, CancellationToken ct) => Task.CompletedTask;
         public Task<Artwork?> FindArtworkAsync(Guid artistId, Guid artworkId, ArtworkKind kind, CancellationToken ct) => Task.FromResult<Artwork?>(null);
-        public Task SaveArtworkAsync(Artwork artwork, bool created, CancellationToken ct) => Task.CompletedTask;
-        public Task DeleteArtworkAsync(Artwork artwork, CancellationToken ct) => Task.CompletedTask;
+        public Task SaveArtworkAsync(Artwork artwork, bool created, ImageChange images, CancellationToken ct) => Task.CompletedTask;
+        public Task DeleteArtworkAsync(Artwork artwork, IReadOnlyList<string> obsoleteObjects, CancellationToken ct) => Task.CompletedTask;
     }
 }

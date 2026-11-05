@@ -14,12 +14,13 @@ function Get-UserToken {param([string]$Actor)
     $script:Tokens[$Actor]=@{Token=$token.access_token;Until=[DateTimeOffset]::UtcNow.AddSeconds($token.expires_in)}
     return $token.access_token
 }
-function Invoke-Api {param([string]$Actor,[string]$Method,[string]$Path,[object]$Body=$null,[int[]]$Expected=@(200),[string]$Key='')
+function Invoke-Api {param([string]$Actor,[string]$Method,[string]$Path,[object]$Body=$null,[int[]]$Expected=@(200),[string]$Key='',[hashtable]$Form=$null)
     $headers=@{traceparent=('00-'+$script:Trace+'-'+[Guid]::NewGuid().ToString('N').Substring(0,16)+'-01')}
     if($Actor){$headers.Authorization='Bearer '+(Get-UserToken $Actor)}
     if($Method -eq 'Post'){$headers['Idempotency-Key']=$(if($Key){$Key}else{[Guid]::NewGuid().ToString()})}
     $options=@{Uri=('https://localhost:5291'+$Path);Method=$Method;Headers=$headers;TimeoutSec=20;SkipHttpErrorCheck=$true}
     if($null -ne $Body){$options.Body=$Body|ConvertTo-Json -Depth 15;$options.ContentType='application/json'}
+    if($null -ne $Form){$options.Form=$Form}
     $response=Invoke-WebRequest @options
     if([int]$response.StatusCode -notin $Expected){
         $failureCode='unknown'
@@ -51,7 +52,7 @@ function Verify-PreservedData {param($Data)
     $null=Invoke-Api other Get ('/api/v1/finance/entries/'+$Data.receipt) -Expected @(403)
 }
 New-Item -ItemType Directory -Force -Path "$IntegrationRoot/contracts"|Out-Null
-$prefixes=@{identity=@('/api/v1/profiles');catalog=@('/api/v1/artists','/api/v1/favorites');engagements=@('/api/v2/engagements');messaging=@('/api/v1/conversations');scheduling=@('/api/v1/scheduling');finance=@('/api/v1/finance')}
+$prefixes=@{identity=@('/api/v1/profiles');catalog=@('/api/v1/artists','/api/v1/favorites','/api/v2/artists');engagements=@('/api/v2/engagements');messaging=@('/api/v1/conversations');scheduling=@('/api/v1/scheduling');finance=@('/api/v1/finance')}
 foreach($service in $prefixes.Keys){
     $doc=Invoke-RestMethod "https://localhost:5291/swagger/documents/$service.json" -TimeoutSec 15
     Check ($doc.servers[0].url -eq '/') "$service OpenAPI uses Gateway origin"
@@ -84,8 +85,11 @@ $owner=@{IdentityDatabase__ConnectionString=('Host=127.0.0.1;Port=55329;Database
 $adminDll="$IntegrationRepo/src/backend/services/Identity/tools/InkLink.Identity.Admin/bin/Release/net10.0/InkLink.Identity.Admin.dll"
 $null=Start-IntegrationDotnet -Arguments @($adminDll,'grant-artist','https://localhost:5289/realms/inklink',$ids.artist) -Environment $owner -Log "$IntegrationRoot/activate-artist.log" -Wait
 $artist=Invoke-Api artist Put '/api/v1/artists/me' @{name="Artista $run";studio='Integração';city='São Paulo';biography='Dados sintéticos P09';styles=@('Blackwork');startingPrice=300} @(200,201)
-$flash=Invoke-Api artist Post '/api/v1/artists/me/flashes' @{title='Flash de integração';imageUrl='https://example.test/flash.jpg';alternativeText='Desenho sintético';style='Blackwork';referencePrice=450} @(201)
-$null=Invoke-Api artist Post '/api/v1/artists/me/tattoos' @{title='Trabalho de integração';imageUrl='https://example.test/tattoo.jpg';alternativeText='Trabalho sintético';style='Blackwork'} @(201)
+# Obras por upload (decisão 0018): imagem sintética versionada, enviada como multipart à API v2.
+$syntheticImage=Get-Item -LiteralPath "$PSScriptRoot/assets/synthetic-artwork.png"
+$flash=Invoke-Api artist Post '/api/v2/artists/me/flashes' -Expected @(201) -Form @{title='Flash de integração';alternativeText='Desenho sintético';style='Blackwork';referencePrice='450';image=$syntheticImage}
+$null=Invoke-Api artist Post '/api/v2/artists/me/tattoos' -Expected @(201) -Form @{title='Trabalho de integração';alternativeText='Trabalho sintético';style='Blackwork';image=$syntheticImage}
+Check ($flash.imageUrl -like 'https://localhost:5173/media/inklink-catalog-media/artworks/*/1600.webp') 'Uploaded artwork is served from object storage'
 $found=Invoke-Api '' Get ('/api/v1/artists/search?term='+$run)
 Check (@($found.items|Where-Object id -eq $artist.id).Count -eq 1) 'Public search finds synthetic artist'
 $null=Invoke-Api client Put ('/api/v1/favorites/'+$artist.id) -Expected @(204)

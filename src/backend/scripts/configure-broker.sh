@@ -29,3 +29,17 @@ if [ -n "${RABBITMQ_SCHEDULING_PUBLISHER_PASS:-}" ] && [ -n "${RABBITMQ_RESERVAT
   rabbitmqctl set_permissions -p / inklink_scheduling_publisher '^$' '^inklink\.scheduling\.events\.v1$' '^$' >/dev/null
   rabbitmqctl set_permissions -p / inklink_reservation_consumer '^$' '^inklink\.engagements\.reservations\.retry\.v1$' '^inklink\.engagements\.reservations\.v1$' >/dev/null
 fi
+
+# Fotos de perfil (decisão 0018): Identity publica; Catálogo consome a projeção da foto do artista.
+if [ -n "${RABBITMQ_IDENTITY_PUBLISHER_PASS:-}" ] && [ -n "${RABBITMQ_CATALOG_CONSUMER_PASS:-}" ]; then
+  for username in inklink_identity_publisher inklink_catalog_consumer; do
+    if [ "$username" = inklink_identity_publisher ]; then password="$RABBITMQ_IDENTITY_PUBLISHER_PASS"; else password="$RABBITMQ_CATALOG_CONSUMER_PASS"; fi
+    if rabbitmqctl list_users -q | cut -f1 | grep -qx "$username"; then
+      rabbitmqctl change_password "$username" "$password" >/dev/null
+    else
+      rabbitmqctl add_user "$username" "$password" >/dev/null
+    fi
+  done
+  rabbitmqctl set_permissions -p / inklink_identity_publisher '^$' '^inklink\.identity\.events\.v1$' '^$' >/dev/null
+  rabbitmqctl set_permissions -p / inklink_catalog_consumer '^$' '^inklink\.catalog\.profile-photos\.retry\.v1$' '^inklink\.catalog\.profile-photos\.v1$' >/dev/null
+fi

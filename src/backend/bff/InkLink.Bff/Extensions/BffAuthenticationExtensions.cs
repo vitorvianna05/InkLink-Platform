@@ -1,7 +1,7 @@
-using System.Globalization;
 using InkLink.Authentication;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.IdentityModel.JsonWebTokens;
 
 namespace InkLink.Bff.Extensions;
@@ -10,7 +10,9 @@ internal static class BffAuthenticationExtensions
 {
     public static IServiceCollection AddBffAuthentication(this IServiceCollection services, BffSettings settings)
     {
+        services.AddSingleton(TimeProvider.System);
         services.AddSingleton<ITicketStore, PostgresTicketStore>();
+        services.AddSingleton<BffSessionRenewal>();
         services.AddAuthentication(options =>
         {
             options.DefaultAuthenticateScheme = "session";
@@ -23,10 +25,12 @@ internal static class BffAuthenticationExtensions
             options.Cookie.HttpOnly = true;
             options.Cookie.SameSite = SameSiteMode.Lax;
             options.Cookie.Path = "/";
+            // Validade deslizante e limite total são controlados por BffSessionRenewal (decisão 0019).
             options.SlidingExpiration = false;
-            options.ExpireTimeSpan = TimeSpan.FromMinutes(5);
+            options.ExpireTimeSpan = BffSessionRenewal.IdleTimeout;
             options.Events.OnRedirectToLogin = context => ApiErrors.WriteAsync(context.HttpContext, 401, "session.required");
             options.Events.OnRedirectToAccessDenied = context => ApiErrors.WriteAsync(context.HttpContext, 403, "authorization.denied");
+            options.Events.OnValidatePrincipal = context => context.HttpContext.RequestServices.GetRequiredService<BffSessionRenewal>().ValidateAsync(context);
         }).AddOpenIdConnect("oidc", options =>
         {
             options.Authority = settings.Authority;
@@ -45,24 +49,22 @@ internal static class BffAuthenticationExtensions
             options.Events.OnTicketReceived = context =>
             {
                 if (context.Properties is null) { context.Fail("Login properties are required."); return Task.CompletedTask; }
-                var maximum = DateTimeOffset.UtcNow.AddMinutes(5);
-                var value = context.Properties.GetTokenValue("expires_at");
-                if (!DateTimeOffset.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var expiration))
-                {
-                    context.Fail("Token expiry is required.");
-                    return Task.CompletedTask;
-                }
                 var accessToken = context.Properties.GetTokenValue("access_token");
                 if (string.IsNullOrWhiteSpace(accessToken) || !new JsonWebTokenHandler().CanReadToken(accessToken))
                 {
                     context.Fail("A JWT access token is required.");
                     return Task.CompletedTask;
                 }
-                var tokenExpiration = new DateTimeOffset(new JsonWebToken(accessToken).ValidTo);
-                if (tokenExpiration <= DateTimeOffset.UtcNow) { context.Fail("Access token has expired."); return Task.CompletedTask; }
-                if (tokenExpiration < expiration) expiration = tokenExpiration;
-                context.Properties.ExpiresUtc = expiration < maximum ? expiration : maximum;
-                context.Properties.AllowRefresh = false;
+                if (string.IsNullOrWhiteSpace(context.Properties.GetTokenValue("refresh_token")))
+                {
+                    context.Fail("A refresh token is required for the renewable session.");
+                    return Task.CompletedTask;
+                }
+                var time = context.HttpContext.RequestServices.GetRequiredService<TimeProvider>();
+                var now = time.GetUtcNow();
+                if (new DateTimeOffset(new JsonWebToken(accessToken).ValidTo) <= now) { context.Fail("Access token has expired."); return Task.CompletedTask; }
+                // 30 minutos sem uso e 8 horas no total; o access token é renovado no servidor (decisão 0019).
+                BffSessionRenewal.Start(context.Properties, now);
                 return Task.CompletedTask;
             };
             options.Events.OnRemoteFailure = context =>
@@ -83,7 +85,12 @@ internal static class BffAuthenticationExtensions
                 return Task.CompletedTask;
             };
         });
-        services.AddOptions<CookieAuthenticationOptions>("session").Configure<ITicketStore>((options, store) => options.SessionStore = store);
+        services.AddOptions<CookieAuthenticationOptions>("session").Configure<ITicketStore, TimeProvider>((options, store, time) =>
+        {
+            options.SessionStore = store;
+            options.TimeProvider = time;
+        });
+        services.AddOptions<OpenIdConnectOptions>("oidc").Configure<TimeProvider>((options, time) => options.TimeProvider = time);
         services.AddAuthorization();
         return services;
     }
