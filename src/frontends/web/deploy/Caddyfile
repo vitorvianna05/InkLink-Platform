@@ -37,19 +37,27 @@
 	handle_path /media/* {
 		reverse_proxy {$INKLINK_MEDIA_UPSTREAM} {
 			header_up Host {$INKLINK_MEDIA_HOST}
+			# O SeaweedFS usa X-Forwarded-Host para recompor o host da assinatura: sem removê-lo, endereços
+			# assinados (foto privada, decisão 0018) falham com SignatureDoesNotMatch.
+			header_up -X-Forwarded-Host
 			header_up -Cookie
 			header_up -Authorization
 		}
 	}
 
-	# SPA: arquivos versionados com cache longo; rotas desconhecidas recebem index.html.
+	# Arquivos versionados: cache longo só para o que existe. Um chunk antigo ausente após nova publicação
+	# responde 404, nunca index.html, para que o navegador não guarde HTML no endereço de um script.
+	handle /assets/* {
+		root * /srv
+		@asset file
+		header @asset Cache-Control "public, max-age=31536000, immutable"
+		file_server
+	}
+
+	# SPA: rotas desconhecidas recebem index.html, sempre revalidado (header roda antes de try_files).
 	handle {
 		root * /srv
-		@assets path /assets/*
-		header @assets Cache-Control "public, max-age=31536000, immutable"
-		# header roda antes de try_files: o matcher precisa cobrir também as rotas profundas da SPA.
-		@html not path /assets/*
-		header @html Cache-Control "no-cache"
+		header Cache-Control "no-cache"
 		try_files {path} /index.html
 		file_server
 	}
