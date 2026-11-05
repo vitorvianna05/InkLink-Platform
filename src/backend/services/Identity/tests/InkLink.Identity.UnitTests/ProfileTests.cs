@@ -25,7 +25,7 @@ public sealed class ProfileTests
     public async Task Missing_identity_does_not_read_database(string? value)
     {
         var reader = new Reader();
-        var handler = new GetMyProfile(new Current(value is null ? null : Guid.Parse(value)), reader);
+        var handler = new GetMyProfile(new Current(value is null ? null : Guid.Parse(value)), reader, new NoPhotos());
         Assert.Equal(ProfileStatus.Unauthenticated, (await handler.ExecuteAsync()).Status);
         Assert.Null(reader.RequestedId);
     }
@@ -36,7 +36,7 @@ public sealed class ProfileTests
         var profile = Profile.Create("Júlia");
         var reader = new Reader { Profile = profile };
         using var cancellation = new CancellationTokenSource();
-        var result = await new GetMyProfile(new Current(profile.Id), reader).ExecuteAsync(cancellation.Token);
+        var result = await new GetMyProfile(new Current(profile.Id), reader, new NoPhotos()).ExecuteAsync(cancellation.Token);
         Assert.Equal(new ProfileResponse(profile.Id, "Júlia"), result.Profile);
         Assert.Equal(profile.Id, reader.RequestedId);
         Assert.Equal(cancellation.Token, reader.Token);
@@ -45,9 +45,30 @@ public sealed class ProfileTests
     [Fact]
     public async Task Unknown_identity_has_no_profile()
     {
-        var result = await new GetMyProfile(new Current(Guid.CreateVersion7()), new Reader()).ExecuteAsync();
+        var result = await new GetMyProfile(new Current(Guid.CreateVersion7()), new Reader(), new NoPhotos()).ExecuteAsync();
         Assert.Equal(ProfileStatus.NotFound, result.Status);
         Assert.Null(result.Profile);
+    }
+
+    [Fact]
+    public void Photo_changes_return_the_previous_photo_and_advance_the_revision()
+    {
+        var profile = Profile.Create("Júlia");
+        Assert.Null(profile.SetPhoto("profiles/a/1", isPublic: false));
+        Assert.Equal(1, profile.PhotoRevision);
+        Assert.Equal(new StoredPhoto("profiles/a/1", false), profile.SetPhoto("profiles/a/2", isPublic: true));
+        Assert.True(profile.PhotoPublic);
+        Assert.Equal(new StoredPhoto("profiles/a/2", true), profile.RemovePhoto());
+        Assert.Null(profile.PhotoKey);
+        Assert.Null(profile.RemovePhoto());
+        Assert.Equal(3, profile.PhotoRevision);
+    }
+
+    private sealed class NoPhotos : IProfilePhotos
+    {
+        public Task<string> StoreAsync(Guid profileId, byte[] content, bool isPublic, CancellationToken cancellationToken) => throw new PhotoStorageUnavailable();
+        public IReadOnlyList<string> Objects(string key) => [];
+        public Task<PhotoUrls?> ResolveAsync(string? key, bool isPublic, CancellationToken cancellationToken) => Task.FromResult<PhotoUrls?>(null);
     }
 
     private sealed record Current(Guid? UserId) : ICurrentUser;

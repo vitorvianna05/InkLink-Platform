@@ -129,6 +129,100 @@ public sealed class CatalogApiTests(CatalogFixture fixture)
 
         Assert.Equal(HttpStatusCode.NoContent, (await scenario.Http.DeleteAsync($"/api/v2/artists/me/flashes/{id}")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await scenario.Http.GetAsync(flash.Headers.Location)).StatusCode);
+        Assert.Equal(2, await scenario.RunCleanupAsync());
+        Assert.Equal(HttpStatusCode.NotFound, (await scenario.StorageGetAsync(replaced)).StatusCode);
+    }
+
+    [Fact]
+    public async Task Uploaded_objects_without_a_saved_artwork_are_removed_after_the_reservation()
+    {
+        using var scenario = await fixture.CreateAsync();
+        var artist = await scenario.PublishAsync();
+        string key;
+        using (var scope = scenario.Host.Services.CreateScope())
+            key = await scope.ServiceProvider.GetRequiredService<IArtworkImages>().StoreAsync(artist, TestImages.Png(800, 800), default);
+        var url = $"https://localhost:5173/media/inklink-catalog-media/{key}/1600.webp";
+        Assert.Equal(HttpStatusCode.OK, (await scenario.StorageGetAsync(url)).StatusCode);
+        Assert.Equal(2, await scenario.CleanupCountAsync());
+        Assert.Equal(0, await scenario.RunCleanupAsync());
+        await using (var connection = new NpgsqlConnection(scenario.OwnerConnection))
+        {
+            await connection.OpenAsync();
+            await using var expire = new NpgsqlCommand("UPDATE catalog.object_cleanups SET \"DueAt\" = now() - interval '1 minute'", connection);
+            await expire.ExecuteNonQueryAsync();
+        }
+        Assert.Equal(2, await scenario.RunCleanupAsync());
+        Assert.Equal(HttpStatusCode.NotFound, (await scenario.StorageGetAsync(url)).StatusCode);
+    }
+
+    [Fact]
+    public async Task Legacy_external_artworks_stay_visible_until_their_image_is_replaced()
+    {
+        using var scenario = await fixture.CreateAsync();
+        var artist = await scenario.PublishAsync();
+        var id = Guid.CreateVersion7();
+        await using (var connection = new NpgsqlConnection(scenario.OwnerConnection))
+        {
+            await connection.OpenAsync();
+            await using var insert = new NpgsqlCommand("INSERT INTO catalog.artworks (\"Id\", \"ArtistId\", \"Kind\", \"Title\", \"ImageUrl\", \"AlternativeText\", \"Style\") VALUES (@id, @artist, 0, 'Antiga', 'https://images.example.test/a.jpg', 'Tatuagem antiga', 'Blackwork')", connection);
+            insert.Parameters.AddWithValue("id", id);
+            insert.Parameters.AddWithValue("artist", artist);
+            await insert.ExecuteNonQueryAsync();
+        }
+        var legacy = (await scenario.Http.GetFromJsonAsync<JsonObject>($"/api/v1/artists/{artist}/tattoos/{id}"))!;
+        Assert.True(legacy["externalImage"]!.GetValue<bool>());
+        Assert.Equal("https://images.example.test/a.jpg", legacy["imageUrl"]!.GetValue<string>());
+        Assert.Equal("https://images.example.test/a.jpg", legacy["thumbnailUrl"]!.GetValue<string>());
+        Assert.Equal(HttpStatusCode.NoContent, (await scenario.UploadArtworkAsync("tattoos", "Antiga", TestImages.Png(800, 800), id: id)).StatusCode);
+        var uploaded = (await scenario.Http.GetFromJsonAsync<JsonObject>($"/api/v1/artists/{artist}/tattoos/{id}"))!;
+        Assert.False(uploaded["externalImage"]!.GetValue<bool>());
+        Assert.Equal(0, await scenario.CleanupCountAsync());
+    }
+
+    [Fact]
+    public async Task Artist_photo_projection_keeps_the_newest_revision_on_cards_profile_and_favorites()
+    {
+        using var scenario = await fixture.CreateAsync();
+        var artist = await scenario.PublishAsync("alice");
+        using var identity = fixture.Identity.CreateClient();
+        identity.DefaultRequestHeaders.Authorization = new("Bearer", fixture.Tokens["alice"]);
+        var owner = (await identity.GetFromJsonAsync<JsonObject>("/api/v1/profiles/me"))!["id"]!.GetValue<Guid>();
+        static InkLink.Catalog.Application.Profiles.ProfilePhotoEnvelope Event(Guid profile, int revision, string? url, string? thumbnail = "same", string type = "identity.profile-photo-changed.v1") =>
+            new(Guid.CreateVersion7(), type, 1, DateTimeOffset.UtcNow, "test", null,
+                new(profile, revision, url, thumbnail == "same" ? url?.Replace("512", "128", StringComparison.Ordinal) : thumbnail));
+        async Task Project(InkLink.Catalog.Application.Profiles.ProfilePhotoEnvelope envelope)
+        {
+            await using var services = scenario.Host.Services.CreateAsyncScope();
+            await services.ServiceProvider.GetRequiredService<InkLink.Catalog.Application.Profiles.ProjectArtistPhoto>().ExecuteAsync(envelope, default);
+        }
+        var newer = "https://localhost:5173/media/inklink-identity-media/profiles/a/2/512.webp";
+        await Project(Event(owner, 2, newer));
+        await Project(Event(owner, 1, "https://localhost:5173/media/inklink-identity-media/profiles/a/1/512.webp"));
+        await Project(Event(owner, 2, newer));
+
+        var profile = (await scenario.Http.GetFromJsonAsync<JsonObject>($"/api/v1/artists/{artist}"))!;
+        Assert.Equal(newer, profile["photoUrl"]!.GetValue<string>());
+        Assert.EndsWith("/128.webp", profile["photoThumbnailUrl"]!.GetValue<string>());
+        var card = (await scenario.Http.GetFromJsonAsync<JsonObject>("/api/v1/artists"))!["items"]!.AsArray().Single(item => item!["id"]!.GetValue<Guid>() == artist)!;
+        Assert.Equal(newer, card["photoUrl"]!.GetValue<string>());
+        scenario.SignIn("unprovisioned");
+        Assert.Equal(HttpStatusCode.NoContent, (await scenario.Http.PutAsync("/api/v1/favorites/" + artist, null)).StatusCode);
+        var favorite = (await scenario.Http.GetFromJsonAsync<JsonObject>("/api/v1/favorites"))!["items"]![0]!;
+        Assert.Equal(newer, favorite["photoUrl"]!.GetValue<string>());
+
+        // Remoção da foto (revisão 3) volta às iniciais; eventos inválidos são recusados sem alterar a projeção.
+        await Project(Event(owner, 3, null));
+        Assert.Null((await scenario.Http.GetFromJsonAsync<JsonObject>($"/api/v1/artists/{artist}"))!["photoUrl"]);
+        foreach (var invalid in new[]
+        {
+            Event(owner, 4, newer, type: "identity.other.v1"),
+            Event(owner, 4, "http://insecure.example.test/512.webp"),
+            Event(owner, 0, newer),
+            Event(owner, 4, newer, thumbnail: null),
+            Event(Guid.Empty, 4, newer),
+        })
+            await Assert.ThrowsAsync<InkLink.Catalog.Application.Profiles.InvalidPhotoEvent>(() => Project(invalid));
+        Assert.Null((await scenario.Http.GetFromJsonAsync<JsonObject>($"/api/v1/artists/{artist}"))!["photoUrl"]);
     }
 
     [Fact]

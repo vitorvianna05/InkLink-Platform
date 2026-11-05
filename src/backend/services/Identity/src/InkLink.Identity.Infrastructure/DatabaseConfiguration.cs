@@ -1,7 +1,9 @@
+using InkLink.ObjectStorage;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Options;
 using Npgsql;
@@ -37,6 +39,33 @@ public sealed class DatabaseOptionsValidator : IValidateOptions<IdentityDatabase
 
 public static class DependencyInjection
 {
+    /// <summary>
+    /// Fotos de perfil, limpeza de objetos e publicação de eventos (decisão 0018); usado somente pela API.
+    /// Em testes isolados sem armazenamento ou broker configurado, a foto fica indisponível e o Outbox não é publicado.
+    /// </summary>
+    public static IServiceCollection AddIdentityMedia(this IServiceCollection services, IConfiguration configuration, bool localEnvironment, bool testing)
+    {
+        services.TryAddSingleton(TimeProvider.System);
+        services.AddScoped<Application.IPhotoStore, Media.EfPhotoStore>();
+        var storage = configuration.GetSection("ObjectStorage");
+        if (testing && string.IsNullOrWhiteSpace(storage["ServiceUrl"]))
+        {
+            services.AddSingleton<Application.IProfilePhotos, Media.DisabledProfilePhotos>();
+        }
+        else
+        {
+            services.AddObjectStorage(storage, localEnvironment);
+            services.AddScoped<Application.IProfilePhotos, Media.ProfilePhotos>();
+            services.AddSingleton<Media.ObjectCleanupWorker>();
+            services.AddHostedService(provider => provider.GetRequiredService<Media.ObjectCleanupWorker>());
+            services.AddHealthChecks().AddObjectStorageCheck();
+        }
+        services.AddSingleton<Messaging.OutboxWorker>();
+        if (!(testing && string.IsNullOrWhiteSpace(configuration["Broker:Uri"])))
+            services.AddHostedService(provider => provider.GetRequiredService<Messaging.OutboxWorker>());
+        return services;
+    }
+
     public static IServiceCollection AddIdentityInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddSingleton<IValidateOptions<IdentityDatabaseOptions>, DatabaseOptionsValidator>();

@@ -11,22 +11,27 @@ public sealed class MessagingTokenClient(HttpClient http) { public HttpClient Ht
 // A request-scoped directory caches only within this presentation operation, never across users/requests.
 public sealed class ParticipantProfiles(HttpClient identity, MessagingTokenClient tokens, ParticipantCredentials credentials)
 {
-    private readonly ConcurrentDictionary<string, Lazy<Task<string>>> values = new();
-    public Task<string> NameAsync(Guid accountId, CancellationToken ct) =>
-        values.GetOrAdd(accountId.ToString(), _ => new Lazy<Task<string>>(() => ReadAsync(accountId, ct))).Value;
+    private readonly ConcurrentDictionary<string, Lazy<Task<ParticipantProfile>>> values = new();
+    private readonly ConcurrentDictionary<string, Lazy<Task<string>>> token = new();
 
-    private async Task<string> ReadAsync(Guid accountId, CancellationToken ct)
+    /// <summary>Nome e foto do participante (include=photo); a foto privada chega assinada e com validade curta.</summary>
+    public Task<ParticipantProfile> ProfileAsync(Guid accountId, CancellationToken ct) =>
+        values.GetOrAdd(accountId.ToString(), _ => new Lazy<Task<ParticipantProfile>>(() => ReadAsync(accountId, ct))).Value;
+
+    public async Task<string> NameAsync(Guid accountId, CancellationToken ct) => (await ProfileAsync(accountId, ct)).DisplayName;
+
+    private async Task<ParticipantProfile> ReadAsync(Guid accountId, CancellationToken ct)
     {
         try
         {
-            var token = await values.GetOrAdd("token", _ => new Lazy<Task<string>>(() => TokenAsync(ct))).Value;
-            using var request = new HttpRequestMessage(HttpMethod.Get, $"api/v1/internal/profiles/{accountId}");
+            var token = await this.token.GetOrAdd("token", _ => new Lazy<Task<string>>(() => TokenAsync(ct))).Value;
+            using var request = new HttpRequestMessage(HttpMethod.Get, $"api/v1/internal/profiles/{accountId}?include=photo");
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
             using var response = await identity.SendAsync(request, ct);
             if (!response.IsSuccessStatusCode) throw ConversationPresentationDirectory.Unavailable();
             var profile = await response.Content.ReadFromJsonAsync<Profile>(ct);
             if (profile is null || profile.Id != accountId || string.IsNullOrWhiteSpace(profile.DisplayName)) throw ConversationPresentationDirectory.Unavailable();
-            return profile.DisplayName;
+            return new(profile.DisplayName, Https(profile.PhotoUrl), Https(profile.PhotoThumbnailUrl));
         }
         catch (Exception exception) when (exception is HttpRequestException or System.Text.Json.JsonException or TaskCanceledException && !ct.IsCancellationRequested)
         { throw ConversationPresentationDirectory.Unavailable(); }
@@ -46,5 +51,8 @@ public sealed class ParticipantProfiles(HttpClient identity, MessagingTokenClien
         return !string.IsNullOrWhiteSpace(token?.AccessToken) ? token.AccessToken : throw ConversationPresentationDirectory.Unavailable();
     }
     private sealed record Token([property: JsonPropertyName("access_token")] string AccessToken);
-    private sealed record Profile(Guid Id, string DisplayName);
+    private sealed record Profile(Guid Id, string DisplayName, string? PhotoUrl, string? PhotoThumbnailUrl);
+    private static string? Https(string? value) => Uri.TryCreate(value, UriKind.Absolute, out var uri) && uri.Scheme == Uri.UriSchemeHttps ? value : null;
 }
+
+public sealed record ParticipantProfile(string DisplayName, string? PhotoUrl, string? PhotoThumbnailUrl);

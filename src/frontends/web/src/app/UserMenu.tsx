@@ -1,9 +1,10 @@
-import { LogIn, LogOut, Menu, X } from 'lucide-react';
+import { Camera, LogIn, LogOut, Menu, X } from 'lucide-react';
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react';
 import { Link, NavLink, useLocation } from 'react-router';
 import { loginPath } from '@/features/session/destination';
+import { ProfilePhotoDialog } from '@/features/session/ProfilePhotoDialog';
 import { useSession } from '@/features/session/session';
-import { initials } from '@/shared/lib/format';
+import { Avatar } from '@/shared/ui/Avatar';
 
 export interface NavItem {
   to: string;
@@ -27,6 +28,7 @@ export function UserMenu({ links, inStudio }: { links: NavItem[]; inStudio: bool
   const button = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLDivElement>(null);
   const panelId = useId();
+  const [photoOpen, setPhotoOpen] = useState(false);
   const signInHref = loginPath(location);
   const account = status === 'authenticated' && session && !expired ? session : null;
   // Atalho para a outra área: Meu espaço a partir do estúdio; Estúdio do artista somente com a função Artist.
@@ -81,11 +83,7 @@ export function UserMenu({ links, inStudio }: { links: NavItem[]; inStudio: bool
         aria-label={open ? 'Fechar menu da conta' : 'Abrir menu da conta'}
         onClick={() => setOpen(!open)}
       >
-        {account && (
-          <span className="avatar small" aria-hidden="true">
-            {initials(account.profile.displayName)}
-          </span>
-        )}
+        {account && <Avatar className="avatar small" name={account.profile.displayName} photoUrl={account.profile.photoThumbnailUrl} />}
         {open ? <X size={20} aria-hidden="true" /> : <Menu size={20} aria-hidden="true" />}
       </button>
       {open && (
@@ -111,9 +109,7 @@ export function UserMenu({ links, inStudio }: { links: NavItem[]; inStudio: bool
               </>
             ) : account ? (
               <div className="user-menu-identity">
-                <span className="avatar" aria-hidden="true">
-                  {initials(account.profile.displayName)}
-                </span>
+                <Avatar name={account.profile.displayName} photoUrl={account.profile.photoThumbnailUrl} />
                 <div>
                   <strong>{account.profile.displayName}</strong>
                   <small>{account.isArtist ? 'Artista' : 'Cliente'}</small>
@@ -152,6 +148,17 @@ export function UserMenu({ links, inStudio }: { links: NavItem[]; inStudio: bool
                 </div>
               )}
               <div className="user-menu-section">
+                <button
+                  type="button"
+                  className="user-menu-signout"
+                  onClick={() => {
+                    setOpen(false);
+                    setPhotoOpen(true);
+                  }}
+                >
+                  <Camera size={18} aria-hidden="true" />
+                  Foto de perfil
+                </button>
                 <button type="button" className="user-menu-signout" onClick={() => void handleSignOut()}>
                   <LogOut size={18} aria-hidden="true" />
                   Sair da conta
@@ -160,6 +167,16 @@ export function UserMenu({ links, inStudio }: { links: NavItem[]; inStudio: bool
             </>
           )}
         </div>
+      )}
+      {account && photoOpen && (
+        <ProfilePhotoDialog
+          session={account}
+          open={photoOpen}
+          onClose={() => {
+            setPhotoOpen(false);
+            button.current?.focus();
+          }}
+        />
       )}
     </div>
   );

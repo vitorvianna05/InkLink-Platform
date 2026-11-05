@@ -26,8 +26,8 @@ internal sealed class EfFavoriteStore(CatalogDbContext database) : IFavoriteStor
         var total = await query.CountAsync(cancellationToken);
         if (after is not null) query = query.Where(artist => artist.Id.CompareTo(after.Id) > 0);
         var rows = await query.OrderBy(artist => artist.Id).Take(limit + 1)
-            .Select(artist => new ArtistCard(artist.Id, artist.Name, artist.Studio, artist.City, artist.Styles, artist.StartingPrice)).ToListAsync(cancellationToken);
-        var page = rows.Take(limit).ToArray();
+            .Select(artist => new ArtistCard(artist.Id, artist.Name, artist.Studio, artist.City, artist.Styles, artist.StartingPrice, null, null)).ToListAsync(cancellationToken);
+        var page = (await new Media.ArtistPhotoLookup(database).ApplyAsync(rows.Take(limit).ToArray(), cancellationToken)).ToArray();
         return new(page, rows.Count > limit ? new PagePosition(0, "", page[^1].Id) : null, total);
     }
 }

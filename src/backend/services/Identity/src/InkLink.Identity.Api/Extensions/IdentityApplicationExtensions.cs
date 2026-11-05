@@ -7,6 +7,7 @@ internal static class IdentityApplicationExtensions
     public static IServiceCollection AddIdentityUseCases(this IServiceCollection services)
     {
         services.AddScoped<GetMyProfile>();
+        services.AddScoped<ChangeMyPhoto>();
         services.AddScoped<UpdateMyProfile>();
         services.AddScoped<ProvisionAccount>();
         return services;

@@ -74,6 +74,12 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .user-menu-nav { display: none; }
 .avatar { width: 38px; height: 38px; border-radius: 50%; display: inline-grid; place-items: center; background: var(--red); color: #fff; font-weight: 700; font-size: 14px; flex: none; }
 .avatar.light { background: #efe9e4; color: var(--ink); }
+/* Foto de perfil (T10.18): a imagem preenche o círculo; sem foto, as iniciais continuam. */
+.avatar.with-photo { overflow: hidden; background: #efe9e4; }
+.avatar.with-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.avatar.large { width: 96px; height: 96px; font-size: 30px; margin-bottom: 14px; }
+.photo-preview { display: grid; place-items: center; }
+.photo-preview img { width: 160px; height: 160px; border-radius: 50%; object-fit: cover; }
 
 /* Layout */
 main { max-width: 1320px; margin: 0 auto; padding: 32px var(--gutter) 72px; min-height: 70vh; }
@@ -109,6 +115,7 @@ main { max-width: 1320px; margin: 0 auto; padding: 32px var(--gutter) 72px; min-
 .icon-button { width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); display: inline-grid; place-items: center; cursor: pointer; }
 .site-header .icon-button { background: transparent; border-color: rgb(255 255 255 / 25%); color: #fff; }
 .icon-button.favorite.active { color: var(--red); border-color: var(--red); }
+.card-title > div { flex: 1; min-width: 0; }
 
 /* Cards de artistas */
 .artist-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }

@@ -6,6 +6,7 @@ import { RequireArtist, RequireSession } from '@/features/session/guards';
 import type { Engagement } from '@/shared/api/contracts';
 import { addDays, todayIn } from '@/shared/lib/dates';
 import { civilDate, engagementStateLabel, money, time } from '@/shared/lib/format';
+import { Avatar } from '@/shared/ui/Avatar';
 import { ErrorState, Loading } from '@/shared/ui/States';
 import { useEngagement, type Perspective } from './api';
 import { LifecycleSection } from './LifecycleSection';
@@ -30,6 +31,21 @@ function ConversationLink({ engagement, perspective }: { engagement: Engagement;
     <Link className="button dark" to={`${base}/${conversation.id}`}>
       <MessageCircle size={16} aria-hidden="true" /> {conversation.writingBlocked ? 'Ver histórico da conversa' : 'Abrir conversa'}
     </Link>
+  );
+}
+
+/** Interlocutor do atendimento, com a foto entregue pela conversa (decisão 0018); sem conversa, nome e iniciais. */
+function Counterpart({ engagement, perspective }: { engagement: Engagement; perspective: Perspective }) {
+  const conversations = useConversations();
+  const counterpart = conversations.data?.find((c) => c.engagementId === engagement.id)?.counterpart;
+  const name = counterpart?.displayName ?? (perspective === 'artist' ? 'Cliente' : engagement.catalog.name);
+  return (
+    <p className="row counterpart">
+      <Avatar className="avatar small" name={name} photoUrl={counterpart?.photoThumbnailUrl} />
+      <span>
+        {perspective === 'artist' ? 'Cliente' : 'Artista'}: <strong>{name}</strong>
+      </span>
+    </p>
   );
 }
 
@@ -116,6 +132,7 @@ function Content({ perspective }: { perspective: Perspective }) {
             {data.bodyRegion} · {data.approximateSizeCm} cm · {data.catalog.studio}, {data.catalog.city}
           </span>
         </p>
+        <Counterpart engagement={data} perspective={perspective} />
       </div>
       {data.catalog.flash && (
         <figure className="list-item" style={{ marginBottom: 20 }}>

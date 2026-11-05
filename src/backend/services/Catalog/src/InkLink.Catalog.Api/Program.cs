@@ -10,6 +10,7 @@ builder.Services.AddCatalogUseCases();
 builder.Services.AddCatalogAuthentication(builder.Configuration, builder.Environment);
 builder.Services.AddEngagementContextAuthorization();
 builder.Services.AddIdentityIntegration(builder.Configuration, builder.Environment);
+builder.Services.AddProfilePhotoConsumer(builder.Configuration);
 builder.Services.AddCatalogHttpContracts();
 builder.Services.AddCatalogDocumentation();
 

@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router';
 import { useSession } from '@/features/session/session';
 import type { ArtistCard } from '@/shared/api/contracts';
 import { money } from '@/shared/lib/format';
+import { Avatar } from '@/shared/ui/Avatar';
 import { useFavorites, useToggleFavorite } from './api';
 
 /** Botão de favorito persistente: visitantes são convidados a entrar. */
@@ -33,6 +34,7 @@ export function ArtistCardView({ artist }: { artist: ArtistCard }) {
   return (
     <article className="artist-card">
       <div className="card-title">
+        <Avatar className="avatar light" name={artist.name} photoUrl={artist.photoThumbnailUrl} />
         <div>
           <h3>{artist.name}</h3>
           <p className="muted">{artist.studio}</p>

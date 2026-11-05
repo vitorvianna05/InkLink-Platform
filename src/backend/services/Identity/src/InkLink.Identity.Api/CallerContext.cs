@@ -27,7 +27,8 @@ internal sealed class CallerMiddleware(RequestDelegate next)
 }
 
 internal sealed record RenameProfileRequest(string? DisplayName);
-internal sealed record MyProfileResponse(Guid Id, string DisplayName, string[] Roles);
+internal sealed record MyProfileResponse(Guid Id, string DisplayName, string[] Roles, string? PhotoUrl = null, string? PhotoThumbnailUrl = null);
+internal sealed record PhotoResponse(string PhotoUrl, string PhotoThumbnailUrl);
 
 // Routing selects this marker for every supported spelling of the own-profile endpoints.
 internal sealed class CurrentAccountEndpoint;

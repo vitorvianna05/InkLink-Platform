@@ -24,6 +24,8 @@
     <Content Include="../../../../identity-provider/themes/inklink/**/*" LinkBase="themes/inklink" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="../../../../scripts/object-storage-identities.json" Link="object-storage-identities.json" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="../../../../scripts/configure-object-storage.sh" Link="configure-object-storage.sh" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../../../../scripts/broker-definitions.json" Link="broker-definitions.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../../../../scripts/configure-broker.sh" Link="configure-broker.sh" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup><Using Include="Xunit" /></ItemGroup>
 </Project>

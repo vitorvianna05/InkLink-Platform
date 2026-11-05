@@ -240,6 +240,41 @@ public sealed class ConversationApiTests(MessagingFixture fixture)
     }
 
     [Fact]
+    public async Task Client_photo_reaches_only_the_artist_in_contact_and_third_parties_get_nothing()
+    {
+        var id = await OpenAsync(await EventAsync(Guid.NewGuid()));
+        var directory = new PhotoDirectoryHandler();
+        using var host = fixture.Host.WithWebHostBuilder(builder => builder.ConfigureTestServices(services =>
+        {
+            services.AddHttpClient<ParticipantProfiles>().ConfigurePrimaryHttpMessageHandler(() => directory);
+        }));
+        HttpClient As(string user) { var client = host.CreateClient(); client.DefaultRequestHeaders.Authorization = new("Bearer", fixture.Base.Token(user)); return client; }
+        using var alice = As("alice"); using var bob = As("bob"); using var carol = As("carol");
+        var aliceId = fixture.Base.Accounts["alice"]; var bobId = fixture.Base.Accounts["bob"];
+
+        // O artista em contato recebe a foto assinada do cliente; o cliente recebe a foto pública do artista.
+        var forArtist = (await bob.GetFromJsonAsync<ConversationView>($"/api/v1/conversations/{id}"))!;
+        Assert.Equal(aliceId, forArtist.Counterpart.Id);
+        Assert.Equal(PhotoDirectoryHandler.Url(aliceId, 512), forArtist.Counterpart.PhotoUrl);
+        Assert.Equal(PhotoDirectoryHandler.Url(aliceId, 128), forArtist.Counterpart.PhotoThumbnailUrl);
+        var listed = (await bob.GetFromJsonAsync<Page<ConversationView>>("/api/v1/conversations"))!.Items.Single(item => item.Id == id);
+        Assert.Equal(PhotoDirectoryHandler.Url(aliceId, 128), listed.Counterpart.PhotoThumbnailUrl);
+        var forClient = (await alice.GetFromJsonAsync<ConversationView>($"/api/v1/conversations/{id}"))!;
+        Assert.Equal(bobId, forClient.Counterpart.Id);
+        Assert.Equal(PhotoDirectoryHandler.Url(bobId, 512), forClient.Counterpart.PhotoUrl);
+        Assert.All(directory.Requests, request => Assert.EndsWith("?include=photo", request, StringComparison.Ordinal));
+
+        // Terceiro: nem a conversa nem a listagem expõem o cliente, inclusive trocando identificadores,
+        // e a Identity não é consultada (a participação é validada antes).
+        var before = directory.Requests.Count;
+        Assert.Equal(HttpStatusCode.NotFound, (await carol.GetAsync($"/api/v1/conversations/{id}")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await carol.GetAsync($"/api/v1/conversations/{id}/messages")).StatusCode);
+        Assert.Empty((await carol.GetFromJsonAsync<Page<ConversationView>>("/api/v1/conversations"))!.Items);
+        Assert.Equal(before, directory.Requests.Count);
+        Assert.DoesNotContain(directory.Requests, request => request.Contains(fixture.Base.Accounts["carol"].ToString(), StringComparison.Ordinal));
+    }
+
+    [Fact]
     public async Task Presentation_outage_does_not_invent_status_or_expose_a_third_party_conversation()
     {
         var id = await OpenAsync(await EventAsync(Guid.NewGuid()));
@@ -268,5 +303,22 @@ internal sealed class PresentationFailureHandler : HttpMessageHandler
     {
         Interlocked.Increment(ref calls);
         return Task.FromResult(new HttpResponseMessage(HttpStatusCode.ServiceUnavailable));
+    }
+}
+
+/// <summary>Diretório de perfis da Identity com fotos sintéticas; registra cada consulta recebida.</summary>
+internal sealed class PhotoDirectoryHandler : HttpMessageHandler
+{
+    private readonly System.Collections.Concurrent.ConcurrentQueue<string> requests = new();
+    public IReadOnlyCollection<string> Requests => requests;
+    public static string Url(Guid id, int size) => $"https://localhost:5173/media/inklink-identity-private/profiles/{id:N}/photo/{size}.webp?X-Amz-Signature=test";
+    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    {
+        requests.Enqueue(request.RequestUri!.PathAndQuery);
+        var id = Guid.Parse(request.RequestUri.AbsolutePath.Split('/')[^1]);
+        return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = System.Net.Http.Json.JsonContent.Create(new { id, displayName = "Perfil " + id.ToString("N")[..6], photoUrl = Url(id, 512), photoThumbnailUrl = Url(id, 128) }),
+        });
     }
 }

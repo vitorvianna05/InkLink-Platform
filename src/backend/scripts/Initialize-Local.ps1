@@ -8,7 +8,7 @@ if (-not (Test-Path -LiteralPath $envFile)) {
     }
     [IO.File]::WriteAllLines($envFile, $entries)
 }
-$requiredKeys = 'FINANCE_POSTGRES_PASSWORD', 'FINANCE_OWNER_PASSWORD', 'FINANCE_APP_PASSWORD', 'INKLINK_SCHEDULING_SECRET', 'SCHEDULING_POSTGRES_PASSWORD', 'SCHEDULING_OWNER_PASSWORD', 'SCHEDULING_APP_PASSWORD', 'INKLINK_SCHEDULING_PUBLISHER_PASSWORD', 'INKLINK_RESERVATION_CONSUMER_PASSWORD', 'INKLINK_MESSAGING_SECRET', 'BFF_POSTGRES_PASSWORD', 'BFF_OWNER_PASSWORD', 'BFF_APP_PASSWORD', 'KEYCLOAK_DB_PASSWORD', 'KEYCLOAK_ADMIN_PASSWORD', 'INKLINK_BFF_SECRET', 'INKLINK_CATALOG_SECRET', 'INKLINK_ENGAGEMENTS_SECRET', 'BFF_CERT_PASSWORD', 'CATALOG_POSTGRES_PASSWORD', 'CATALOG_OWNER_PASSWORD', 'CATALOG_APP_PASSWORD', 'ENGAGEMENTS_POSTGRES_PASSWORD', 'ENGAGEMENTS_OWNER_PASSWORD', 'ENGAGEMENTS_APP_PASSWORD', 'MESSAGING_POSTGRES_PASSWORD', 'MESSAGING_OWNER_PASSWORD', 'MESSAGING_APP_PASSWORD', 'INKLINK_BROKER_PASSWORD', 'INKLINK_BROKER_PUBLISHER_PASSWORD', 'INKLINK_BROKER_CONSUMER_PASSWORD', 'OBJECT_STORAGE_CATALOG_SECRET', 'OBJECT_STORAGE_IDENTITY_SECRET'
+$requiredKeys = 'FINANCE_POSTGRES_PASSWORD', 'FINANCE_OWNER_PASSWORD', 'FINANCE_APP_PASSWORD', 'INKLINK_SCHEDULING_SECRET', 'SCHEDULING_POSTGRES_PASSWORD', 'SCHEDULING_OWNER_PASSWORD', 'SCHEDULING_APP_PASSWORD', 'INKLINK_SCHEDULING_PUBLISHER_PASSWORD', 'INKLINK_RESERVATION_CONSUMER_PASSWORD', 'INKLINK_MESSAGING_SECRET', 'BFF_POSTGRES_PASSWORD', 'BFF_OWNER_PASSWORD', 'BFF_APP_PASSWORD', 'KEYCLOAK_DB_PASSWORD', 'KEYCLOAK_ADMIN_PASSWORD', 'INKLINK_BFF_SECRET', 'INKLINK_CATALOG_SECRET', 'INKLINK_ENGAGEMENTS_SECRET', 'BFF_CERT_PASSWORD', 'CATALOG_POSTGRES_PASSWORD', 'CATALOG_OWNER_PASSWORD', 'CATALOG_APP_PASSWORD', 'ENGAGEMENTS_POSTGRES_PASSWORD', 'ENGAGEMENTS_OWNER_PASSWORD', 'ENGAGEMENTS_APP_PASSWORD', 'MESSAGING_POSTGRES_PASSWORD', 'MESSAGING_OWNER_PASSWORD', 'MESSAGING_APP_PASSWORD', 'INKLINK_BROKER_PASSWORD', 'INKLINK_BROKER_PUBLISHER_PASSWORD', 'INKLINK_BROKER_CONSUMER_PASSWORD', 'OBJECT_STORAGE_CATALOG_SECRET', 'OBJECT_STORAGE_IDENTITY_SECRET', 'INKLINK_IDENTITY_PUBLISHER_PASSWORD', 'INKLINK_CATALOG_CONSUMER_PASSWORD'
 $existing = Get-Content -LiteralPath $envFile
 foreach ($name in $requiredKeys) {
     if (-not ($existing -match "^$name=")) {
@@ -82,9 +82,9 @@ if ($LASTEXITCODE -ne 0) { throw 'Unable to configure Finance.' }
 
 # Armazenamento de objetos (decisão 0018): Catalog guarda obras; Identity guarda fotos de perfil.
 $objectStorageCatalog = @{ ServiceUrl = 'http://127.0.0.1:5188'; Region = 'us-east-1'; AccessKeyId = 'inklink-catalog'; SecretAccessKey = $settings.OBJECT_STORAGE_CATALOG_SECRET; PublicBucket = 'inklink-catalog-media'; PublicBaseUrl = 'https://localhost:5173/media/inklink-catalog-media' }
-@{ ObjectStorage = $objectStorageCatalog } | ConvertTo-Json -Depth 5 | dotnet user-secrets set --project "$repoRoot/src/backend/services/Catalog/src/InkLink.Catalog.Api"
+@{ ObjectStorage = $objectStorageCatalog; Broker = @{ Uri = ('amqp://inklink_catalog_consumer:' + $settings.INKLINK_CATALOG_CONSUMER_PASSWORD + '@127.0.0.1:5673/') } } | ConvertTo-Json -Depth 5 | dotnet user-secrets set --project "$repoRoot/src/backend/services/Catalog/src/InkLink.Catalog.Api"
 if ($LASTEXITCODE -ne 0) { throw 'Unable to configure Catalog object storage.' }
 $objectStorageIdentity = @{ ServiceUrl = 'http://127.0.0.1:5188'; Region = 'us-east-1'; AccessKeyId = 'inklink-identity'; SecretAccessKey = $settings.OBJECT_STORAGE_IDENTITY_SECRET; PublicBucket = 'inklink-identity-media'; PublicBaseUrl = 'https://localhost:5173/media/inklink-identity-media'; PrivateBucket = 'inklink-identity-private'; SignedUrlBaseUrl = 'https://localhost:5173/media' }
-@{ ObjectStorage = $objectStorageIdentity } | ConvertTo-Json -Depth 5 | dotnet user-secrets set --project $apiProject
+@{ ObjectStorage = $objectStorageIdentity; Broker = @{ Uri = ('amqp://inklink_identity_publisher:' + $settings.INKLINK_IDENTITY_PUBLISHER_PASSWORD + '@127.0.0.1:5673/') } } | ConvertTo-Json -Depth 5 | dotnet user-secrets set --project $apiProject
 if ($LASTEXITCODE -ne 0) { throw 'Unable to configure Identity object storage.' }
 Write-Host 'Object storage credentials configured for Catalog and Identity.'

@@ -27,7 +27,8 @@ public interface IConversationStore
 }
 
 
-public sealed record Counterpart(Guid Id, string DisplayName);
+/// <summary>Interlocutor; a foto vem da Identity depois da validação da participação (decisão 0018).</summary>
+public sealed record Counterpart(Guid Id, string DisplayName, string? PhotoUrl = null, string? PhotoThumbnailUrl = null);
 public sealed record ConversationPresentation(Counterpart Counterpart, string EngagementState);
 public sealed record ConversationView(Guid Id, Guid EngagementId, Guid ClientId, Guid ArtistAccountId, bool WritingBlocked, DateTimeOffset CreatedAt,
     MessageView? LastMessage, Counterpart Counterpart, string EngagementState);

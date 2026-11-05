@@ -8,6 +8,7 @@ import { RequireArtist } from '@/features/session/guards';
 import type { Session } from '@/features/session/session';
 import { todayIn } from '@/shared/lib/dates';
 import { civilDate, dateTime, engagementStateLabel, money, percentage } from '@/shared/lib/format';
+import { Avatar } from '@/shared/ui/Avatar';
 import { PageHeading, SectionHeading } from '@/shared/ui/PageHeading';
 import { EmptyState, ErrorState, Loading } from '@/shared/ui/States';
 import { useDashboard } from './api';
@@ -94,7 +95,8 @@ function Clients() {
         <li key={e.id}>
           <Link className="list-item" to={`/estudio/atendimentos/${e.id}`}>
             <div className="grow">
-              <h3>{names.get(e.id) ?? 'Cliente'}</h3>
+            <Avatar className="avatar light" name={counterparts.get(e.id)?.displayName ?? 'Cliente'} photoUrl={counterparts.get(e.id)?.photoThumbnailUrl} />
+              <h3>{counterparts.get(e.id)?.displayName ?? 'Cliente'}</h3>
               <p>
                 {e.idea.length > 80 ? `${e.idea.slice(0, 80)}…` : e.idea} · {e.bodyRegion} · {e.approximateSizeCm} cm
               </p>

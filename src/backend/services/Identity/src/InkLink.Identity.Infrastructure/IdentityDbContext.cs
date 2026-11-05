@@ -7,6 +7,8 @@ public sealed class IdentityDbContext(DbContextOptions<IdentityDbContext> option
 {
     public DbSet<Profile> Profiles => Set<Profile>();
     public DbSet<ExternalAccount> ExternalAccounts => Set<ExternalAccount>();
+    public DbSet<Media.ObjectCleanup> ObjectCleanups => Set<Media.ObjectCleanup>();
+    public DbSet<Media.OutboxEvent> Outbox => Set<Media.OutboxEvent>();
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("identity");
@@ -27,6 +29,28 @@ public sealed class IdentityDbContext(DbContextOptions<IdentityDbContext> option
             entity.Property(profile => profile.Id).HasColumnName("id").ValueGeneratedNever();
             entity.Property(profile => profile.IsArtist).HasColumnName("is_artist").HasDefaultValue(false);
             entity.Property(profile => profile.DisplayName).HasColumnName("display_name").IsRequired();
+            entity.Property(profile => profile.PhotoKey).HasColumnName("photo_key").HasMaxLength(200);
+            entity.Property(profile => profile.PhotoPublic).HasColumnName("photo_public").HasDefaultValue(false);
+            entity.Property(profile => profile.PhotoRevision).HasColumnName("photo_revision").HasDefaultValue(0);
+        });
+        modelBuilder.Entity<Media.ObjectCleanup>(entity =>
+        {
+            entity.ToTable("object_cleanups");
+            entity.HasKey(item => item.Id);
+            entity.Property(item => item.Id).ValueGeneratedNever();
+            entity.Property(item => item.Key).HasMaxLength(512).IsRequired();
+            entity.HasIndex(item => item.Key).IsUnique();
+            entity.HasIndex(item => item.DueAt);
+        });
+        modelBuilder.Entity<Media.OutboxEvent>(entity =>
+        {
+            entity.ToTable("outbox");
+            entity.HasKey(item => item.Id);
+            entity.Property(item => item.Id).ValueGeneratedNever();
+            entity.Property(item => item.Type).HasMaxLength(120).IsRequired();
+            entity.Property(item => item.Payload).HasColumnType("jsonb").IsRequired();
+            entity.Property(item => item.LastError).HasMaxLength(200);
+            entity.HasIndex(item => new { item.PublishedAt, item.NextAttemptAt, item.CreatedAt });
         });
     }
 }

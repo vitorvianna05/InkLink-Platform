@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, it } from 'vitest';
@@ -49,6 +49,20 @@ describe('negociação', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Aceitar proposta' }));
     await userEvent.click(screen.getByRole('button', { name: 'Confirmar aceite' }));
     expect(await screen.findByText(/Esta proposta foi substituída/)).toBeInTheDocument();
+  });
+
+  it('atendimento identifica o interlocutor com a foto entregue pela conversa', async () => {
+    signedIn(artist, true);
+    backend(() => engagement());
+    const photo = 'https://localhost:5173/media/inklink-identity-private/profiles/c/1/128.webp?X-Amz-Signature=t';
+    server.use(
+      http.get('/api/v1/conversations', () =>
+        HttpResponse.json(page([conversation({ counterpart: { id: client.id, displayName: 'Júlia Vieira', photoThumbnailUrl: photo } })])),
+      ),
+    );
+    const { container } = renderApp('/estudio/atendimentos/e1');
+    expect(await screen.findByText('Júlia Vieira', { selector: '.counterpart strong' })).toBeInTheDocument();
+    await waitFor(() => expect(container.querySelector('.counterpart .avatar img')).toHaveAttribute('src', photo));
   });
 
   it('artista apresenta proposta com validação de valor', async () => {

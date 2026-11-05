@@ -16,7 +16,10 @@ public sealed class IdentityTests(PostgresFixture postgres) : IClassFixture<Post
     {
         await using var database = postgres.CreateOwnerContext();
         await database.Database.MigrateAsync();
-        Assert.Equal(2, (await database.Database.GetAppliedMigrationsAsync()).Count());
+        // Todas as migrações do assembly aplicadas, inclusive ProfilePhotos (T10.18); repetir não aplica nada.
+        Assert.Equal(database.Database.GetMigrations(), await database.Database.GetAppliedMigrationsAsync());
+        Assert.Contains(database.Database.GetMigrations(), migration => migration.EndsWith("_ProfilePhotos", StringComparison.Ordinal));
+        await database.Database.MigrateAsync();
         Assert.Empty(await database.Database.GetPendingMigrationsAsync());
     }
 
