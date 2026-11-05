@@ -44,10 +44,15 @@ export interface Artwork {
   referencePrice: number | null;
 }
 
+  /** Variante de detalhe (1600 px) ou URL externa legada. */
 export type ArtworkKind = 'tattoos' | 'flashes';
 
 export interface Suggestion {
   category: string;
+  /** Variante de card (480 px); igual a imageUrl em obras legadas. Opcional para respostas anteriores. */
+  thumbnailUrl?: string;
+  /** Obra publicada por URL antes do upload (decisão 0018): a imagem deve ser substituída. */
+  externalImage?: boolean;
   value: string;
   relevance: number;
 }
@@ -63,7 +68,6 @@ export interface ArtistInput {
 
 export interface ArtworkInput {
   title: string;
-  imageUrl: string;
   alternativeText: string;
   style: string;
   referencePrice: number | null;
@@ -73,6 +77,8 @@ export interface ArtworkInput {
 export type EngagementState = 'Negotiating' | 'Agreed' | 'Closing' | 'Closed';
 export type ProposalState = 'Pending' | 'Superseded' | 'Accepted';
 
+  /** Arquivo da imagem; obrigatório na criação e opcional na edição (mantém a atual). */
+  image: File | null;
 export interface FlashSnapshot {
   id: Uuid;
   title: string;

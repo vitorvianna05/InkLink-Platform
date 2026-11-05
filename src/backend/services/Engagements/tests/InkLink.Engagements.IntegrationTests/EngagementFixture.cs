@@ -35,6 +35,28 @@ public sealed class EngagementFixture : IAsyncLifetime
     public string OwnerConnection { get; private set; } = string.Empty;
     public string AppConnection { get; private set; } = string.Empty;
     public string CatalogDatabaseName => new NpgsqlConnectionStringBuilder(catalogConnection).Database!;
+
+    /// <summary>
+    /// Obra legada por URL externa gravada direto no banco do Catálogo (decisão 0018: mantida até a troca).
+    /// As escritas por URL foram retiradas da API; estes testes tratam do snapshot de Atendimentos, não do envio.
+    /// </summary>
+    public async Task<Guid> SeedLegacyArtworkAsync(Guid artistId, bool flash, string title, string imageUrl, string alternativeText, string style, decimal? referencePrice = null)
+    {
+        var id = Guid.CreateVersion7();
+        await using var connection = new NpgsqlConnection(catalogConnection);
+        await connection.OpenAsync();
+        await using var command = new NpgsqlCommand("INSERT INTO catalog.artworks (\"Id\", \"ArtistId\", \"Kind\", \"Title\", \"ImageUrl\", \"AlternativeText\", \"Style\", \"ReferencePrice\") VALUES (@id, @artist, @kind, @title, @url, @alt, @style, @price)", connection);
+        command.Parameters.AddWithValue("id", id);
+        command.Parameters.AddWithValue("artist", artistId);
+        command.Parameters.AddWithValue("kind", flash ? 1 : 0);
+        command.Parameters.AddWithValue("title", title);
+        command.Parameters.AddWithValue("url", imageUrl);
+        command.Parameters.AddWithValue("alt", alternativeText);
+        command.Parameters.AddWithValue("style", style);
+        command.Parameters.AddWithValue("price", (object?)referencePrice ?? DBNull.Value);
+        await command.ExecuteNonQueryAsync();
+        return id;
+    }
     private readonly string localServiceSecret = Guid.NewGuid().ToString("N");
     public string ServiceSecret => RealProvider?.EngagementsSecret ?? localServiceSecret;
     public SecurityFixture? RealProvider { get; private set; }

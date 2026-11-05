@@ -22,6 +22,8 @@
     <Compile Include="../../../Identity/tests/InkLink.Identity.IntegrationTests/RecordedLogs.cs" Link="Support/RecordedLogs.cs" />
     <Content Include="../../../../identity-provider/inklink-realm.json" Link="inklink-realm.json" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="../../../../identity-provider/themes/inklink/**/*" LinkBase="themes/inklink" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../../../../scripts/object-storage-identities.json" Link="object-storage-identities.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../../../../scripts/configure-object-storage.sh" Link="configure-object-storage.sh" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup><Using Include="Xunit" /></ItemGroup>
 </Project>

@@ -49,6 +49,11 @@
         "resolved": "3.1.5",
         "contentHash": "tKi7dSTwP4m5m9eXPM2Ime4Kn7xNf4x4zT9sdLO/G4hZVnQCRiMTWoSZqI/pYTVeI27oPPqHBKYI/DjJ9GsYgA=="
       },
+      "AWSSDK.Core": {
+        "type": "Transitive",
+        "resolved": "4.0.102.9",
+        "contentHash": "VWGkR0QXDTmThusATC6I9IX06YtYeQNF+1/v6vBbfzIC+MaAuNjYn0aSTIyX+abciZvFhuSSi0d6/pC93wROCw=="
+      },
       "BouncyCastle.Cryptography": {
         "type": "Transitive",
         "resolved": "2.7.0",
@@ -523,6 +528,16 @@
         "resolved": "1.4.2",
         "contentHash": "yjj+3zgz8zgXpiiC3ZdF/iyTBbz2fFvMxZFEBPUcwZjIvXOf37Ylm+K58hqMfIBt5JgU/Z2uoUS67JmTLe973A=="
       },
+      "SkiaSharp.NativeAssets.macOS": {
+        "type": "Transitive",
+        "resolved": "4.153.1",
+        "contentHash": "YTojWeWIhnpF7uC8vpMxB5wRONKkDB2t3r/nNPA3DL2pgj9fqMXRevA/rIanYazWnco4jo1ufgp3HkXuh1Tz8A=="
+      },
+      "SkiaSharp.NativeAssets.Win32": {
+        "type": "Transitive",
+        "resolved": "4.153.1",
+        "contentHash": "Yqg6rChTVh0BUE8QQxtOA3uUBnihfgID4yex/AvDa0+os2bVcBjmI3Qj9tnOB+R1hd/Jry1Gwl8qw5JI9HZG8Q=="
+      },
       "SSH.NET": {
         "type": "Transitive",
         "resolved": "2026.0.0",
@@ -646,11 +661,15 @@
         "type": "Project",
         "dependencies": {
           "InkLink.Catalog.Application": "[1.0.0, )",
+          "InkLink.Imaging": "[1.0.0, )",
+          "InkLink.ObjectStorage": "[1.0.0, )",
           "Microsoft.EntityFrameworkCore": "[10.0.14, )",
           "Microsoft.EntityFrameworkCore.Relational": "[10.0.14, )",
           "Microsoft.Extensions.Diagnostics.HealthChecks": "[10.0.14, )",
+          "Microsoft.Extensions.Hosting.Abstractions": "[10.0.14, )",
           "Microsoft.Extensions.Options.ConfigurationExtensions": "[10.0.14, )",
-          "Npgsql.EntityFrameworkCore.PostgreSQL": "[10.0.3, )"
+          "Npgsql.EntityFrameworkCore.PostgreSQL": "[10.0.3, )",
+          "RabbitMQ.Client": "[6.8.1, )"
         }
       },
       "inklink.engagements.api": {
@@ -717,11 +736,15 @@
         "type": "Project",
         "dependencies": {
           "InkLink.Identity.Application": "[1.0.0, )",
+          "InkLink.Imaging": "[1.0.0, )",
+          "InkLink.ObjectStorage": "[1.0.0, )",
           "Microsoft.EntityFrameworkCore": "[10.0.14, )",
           "Microsoft.EntityFrameworkCore.Relational": "[10.0.14, )",
           "Microsoft.Extensions.Diagnostics.HealthChecks": "[10.0.14, )",
+          "Microsoft.Extensions.Hosting.Abstractions": "[10.0.14, )",
           "Microsoft.Extensions.Options.ConfigurationExtensions": "[10.0.14, )",
-          "Npgsql.EntityFrameworkCore.PostgreSQL": "[10.0.3, )"
+          "Npgsql.EntityFrameworkCore.PostgreSQL": "[10.0.3, )",
+          "RabbitMQ.Client": "[6.8.1, )"
         }
       },
       "inklink.identity.integrationtests": {
@@ -737,8 +760,33 @@
           "xunit": "[2.9.3, )"
         }
       },
+      "inklink.imaging": {
+        "type": "Project",
+        "dependencies": {
+          "SkiaSharp": "[4.153.1, )",
+          "SkiaSharp.NativeAssets.Linux.NoDependencies": "[4.153.1, )"
+        }
+      },
+      "inklink.objectstorage": {
+        "type": "Project",
+        "dependencies": {
+          "AWSSDK.S3": "[4.0.104.2, )",
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "[10.0.14, )",
+          "Microsoft.Extensions.Diagnostics.HealthChecks": "[10.0.14, )",
+          "Microsoft.Extensions.Options.ConfigurationExtensions": "[10.0.14, )"
+        }
+      },
       "inklink.observability": {
         "type": "Project"
+      },
+      "AWSSDK.S3": {
+        "type": "CentralTransitive",
+        "requested": "[4.0.104.2, )",
+        "resolved": "4.0.104.2",
+        "contentHash": "ImZ1pO9SWh+RAN8hmN5OnonyTvq+/q4dXLxTxjtsZ60c06dnCCy+MX3sc4F3Q8c9J1bg8WoU+VkrrVIpXLviww==",
+        "dependencies": {
+          "AWSSDK.Core": "[4.0.102.9, 5.0.0)"
+        }
       },
       "Microsoft.AspNetCore.Authentication.JwtBearer": {
         "type": "CentralTransitive",
@@ -861,6 +909,22 @@
         "requested": "[6.8.1, )",
         "resolved": "6.8.1",
         "contentHash": "jNsmGgmCNw2S/NzskeN2ijtGywtH4Sk/G6jWUTD5sY9SrC27Xz6BsLIiB8hdsfjeyWCa4j4GvCIGkpE8wrjU1Q=="
+      },
+      "SkiaSharp": {
+        "type": "CentralTransitive",
+        "requested": "[4.153.1, )",
+        "resolved": "4.153.1",
+        "contentHash": "TghYLOUaP3q6rTjQw7U9uQaaXh8lEs9rfA1U7/VtmyAptVDtj/SmjtcWzFWmcC/VMWxe3QgbV9uyvqDL7ySFtQ==",
+        "dependencies": {
+          "SkiaSharp.NativeAssets.Win32": "4.153.1",
+          "SkiaSharp.NativeAssets.macOS": "4.153.1"
+        }
+      },
+      "SkiaSharp.NativeAssets.Linux.NoDependencies": {
+        "type": "CentralTransitive",
+        "requested": "[4.153.1, )",
+        "resolved": "4.153.1",
+        "contentHash": "NrnPjcxjcRau4GMOY0BTpUdMey+MnmLU3jC5AuExEFHPS2NkX1tdkXW0n/c5nQMMHBTAMpHnt7qEOpXs2FNfIQ=="
       },
       "Swashbuckle.AspNetCore.SwaggerUI": {
         "type": "CentralTransitive",

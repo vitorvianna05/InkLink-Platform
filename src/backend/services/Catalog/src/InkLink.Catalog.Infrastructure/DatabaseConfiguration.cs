@@ -1,9 +1,11 @@
 using InkLink.Catalog.Infrastructure.Persistence;
 using InkLink.Catalog.Infrastructure.Queries;
+using InkLink.ObjectStorage;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Options;
 using Npgsql;
@@ -47,9 +49,35 @@ public static class DependencyInjection
             provider.GetRequiredService<IOptions<CatalogDatabaseOptions>>().Value.ConnectionString));
         services.AddScoped<Application.Queries.ICatalogQueries, EfCatalogQueries>();
         services.AddScoped<Application.Queries.IEngagementContextReader, EfEngagementContextReader>();
+        services.TryAddSingleton(TimeProvider.System);
         services.AddScoped<Application.Publishing.IArtistStore, EfArtistStore>();
         services.AddScoped<Application.Favorites.IFavoriteStore, EfFavoriteStore>();
         services.AddHealthChecks().AddCheck<CatalogReadinessCheck>("catalog-database", tags: ["ready"]);
+        return services;
+    }
+
+    /// <summary>
+    /// Armazenamento e processamento de imagens das obras (decisão 0018); usado somente pela API. Em Testing sem
+    /// a seção ObjectStorage (hosts do Catálogo nos testes de outros serviços), leituras seguem e envios retornam 503.
+    /// </summary>
+    public static IServiceCollection AddCatalogMedia(this IServiceCollection services, IConfiguration configuration, bool localEnvironment, bool testing)
+    {
+        services.TryAddSingleton(TimeProvider.System);
+        services.AddScoped<Media.ArtistPhotoLookup>();
+        services.AddScoped<Application.Profiles.IArtistPhotoProjection, Media.EfArtistPhotoProjection>();
+        var storage = configuration.GetSection("ObjectStorage");
+        if (testing && string.IsNullOrWhiteSpace(storage["ServiceUrl"]))
+        {
+            services.AddSingleton(new Media.ArtworkImageUrls(null));
+            services.AddScoped<Application.Publishing.IArtworkImages, Media.DisabledArtworkImages>();
+            return services;
+        }
+        services.AddObjectStorage(storage, localEnvironment);
+        services.AddSingleton<Media.ArtworkImageUrls>();
+        services.AddScoped<Application.Publishing.IArtworkImages, Media.ArtworkImages>();
+        services.AddSingleton<Media.ObjectCleanupWorker>();
+        services.AddHostedService(provider => provider.GetRequiredService<Media.ObjectCleanupWorker>());
+        services.AddHealthChecks().AddObjectStorageCheck();
         return services;
     }
 

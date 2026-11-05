@@ -1,5 +1,5 @@
 import { ArrowUpRight, Pencil, Plus, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { useEngagements } from '@/features/engagements/api';
 import { parseAmount } from '@/features/engagements/ProposalSection';
@@ -114,14 +114,37 @@ const kindLabels: Record<ArtworkKind, { title: string; singular: string }> = {
   flashes: { title: 'Flashes', singular: 'flash' },
 };
 
+// Decisão 0018: JPEG, PNG ou WebP até 10 MB. O backend confere o conteúdo real do arquivo.
+const acceptedImages = ['image/jpeg', 'image/png', 'image/webp'];
+const maxImageBytes = 10 * 1024 * 1024;
+
 function ArtworkDialog({ kind, artwork, open, onClose }: { kind: ArtworkKind; artwork: Artwork | null; open: boolean; onClose: () => void }) {
   const save = useSaveArtwork(kind);
   const [title, setTitle] = useState(artwork?.title ?? '');
-  const [imageUrl, setImageUrl] = useState(artwork?.imageUrl ?? '');
+  const [image, setImage] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
   const [alt, setAlt] = useState(artwork?.alternativeText ?? '');
   const [style, setStyle] = useState(artwork?.style ?? '');
   const [price, setPrice] = useState(artwork?.referencePrice != null ? String(artwork.referencePrice).replace('.', ',') : '');
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => () => {
+    if (preview) URL.revokeObjectURL(preview);
+  }, [preview]);
+
+  const chooseImage = (file: File | null) => {
+    setError(null);
+    if (preview) URL.revokeObjectURL(preview);
+    setPreview(null);
+    setImage(null);
+    if (!file) return;
+    if (!acceptedImages.includes(file.type)) return setError('Use uma imagem JPEG, PNG ou WebP.');
+    if (file.size > maxImageBytes) return setError('A imagem deve ter no máximo 10 MB.');
+    setImage(file);
+    setPreview(URL.createObjectURL(file));
+  };
+
+  const current = artwork ? (artwork.thumbnailUrl ?? artwork.imageUrl) : null;
 
   return (
     <Dialog open={open} onClose={onClose} title={artwork ? `Editar ${kindLabels[kind].singular}` : `Nova ${kindLabels[kind].singular}`} eyebrow="PORTFÓLIO">
@@ -132,11 +155,11 @@ function ArtworkDialog({ kind, artwork, open, onClose }: { kind: ArtworkKind; ar
           event.preventDefault();
           setError(null);
           if (!title.trim() || !alt.trim() || !style.trim()) return setError('Preencha título, estilo e texto alternativo.');
-          if (!/^https:\/\//i.test(imageUrl.trim())) return setError('Use um endereço público HTTPS para a imagem.');
+          if (!artwork && !image) return setError('Escolha a imagem da obra.');
           const referencePrice = price.trim() ? parseAmount(price) : null;
           if (price.trim() && referencePrice === null) return setError('Valor de referência inválido.');
           save.mutate(
-            { id: artwork?.id, input: { title: title.trim(), imageUrl: imageUrl.trim(), alternativeText: alt.trim(), style: style.trim(), referencePrice } },
+            { id: artwork?.id, input: { title: title.trim(), alternativeText: alt.trim(), style: style.trim(), referencePrice, image } },
             { onSuccess: onClose },
           );
         }}
@@ -145,11 +168,25 @@ function ArtworkDialog({ kind, artwork, open, onClose }: { kind: ArtworkKind; ar
           <span>Título</span>
           <input value={title} onChange={(e) => setTitle(e.target.value)} />
         </label>
-        <label className="field">
-          <span>Endereço HTTPS da imagem</span>
-          <input value={imageUrl} type="url" onChange={(e) => setImageUrl(e.target.value)} placeholder="https://…" />
-          <small className="field-hint">Ainda não há upload: informe uma referência pública.</small>
-        </label>
+        <div className="field">
+          <label htmlFor={`artwork-image-${kind}`}>Imagem</label>
+          {(preview ?? current) && (
+            <img className="artwork-preview" src={preview ?? current!} alt={preview ? 'Prévia da nova imagem' : 'Imagem atual'} />
+          )}
+          <input
+            id={`artwork-image-${kind}`}
+            type="file"
+            accept={acceptedImages.join(',')}
+            onChange={(e) => chooseImage(e.target.files?.[0] ?? null)}
+          />
+          <small className="field-hint">
+            {artwork
+              ? artwork.externalImage
+                ? 'Esta obra usa uma imagem externa antiga. Envie um arquivo para substituí-la.'
+                : 'Envie um arquivo apenas para trocar a imagem atual.'
+              : 'JPEG, PNG ou WebP até 10 MB, com pelo menos 600 px no menor lado.'}
+          </small>
+        </div>
         <label className="field">
           <span>Texto alternativo</span>
           <input value={alt} onChange={(e) => setAlt(e.target.value)} />
@@ -170,7 +207,7 @@ function ArtworkDialog({ kind, artwork, open, onClose }: { kind: ArtworkKind; ar
           </p>
         )}
         <button type="submit" className="button red full" disabled={save.isPending}>
-          {save.isPending ? 'Salvando…' : 'Salvar'}
+          {save.isPending ? 'Enviando…' : 'Salvar'}
         </button>
       </form>
     </Dialog>
@@ -200,9 +237,10 @@ function ArtworkManager({ artistId, kind }: { artistId: string; kind: ArtworkKin
         <div className="work-grid">
           {items.map((work) => (
             <figure key={work.id}>
-              <img src={work.imageUrl} alt={work.alternativeText} loading="lazy" />
+              <img src={work.thumbnailUrl ?? work.imageUrl} alt={work.alternativeText} loading="lazy" />
               <figcaption>
                 <strong>{work.title}</strong>
+                {work.externalImage && <span className="status amber">Imagem externa: envie um arquivo</span>}
                 <span>
                   {work.style}
                   {work.referencePrice !== null && ` · ${money(work.referencePrice)}`}

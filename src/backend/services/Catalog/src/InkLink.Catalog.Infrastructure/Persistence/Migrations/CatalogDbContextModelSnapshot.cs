@@ -101,8 +101,11 @@ namespace InkLink.Catalog.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("ArtistId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("ImageKey")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.Property<string>("ImageUrl")
-                        .IsRequired()
                         .HasMaxLength(2048)
                         .HasColumnType("character varying(2048)");
 
@@ -129,6 +132,8 @@ namespace InkLink.Catalog.Infrastructure.Persistence.Migrations
 
                     b.ToTable("artworks", "catalog", t =>
                         {
+                            t.HasCheckConstraint("ck_artwork_image", "(\"ImageKey\" IS NULL) <> (\"ImageUrl\" IS NULL)");
+
                             t.HasCheckConstraint("ck_artwork_price", "\"ReferencePrice\" IS NULL OR \"ReferencePrice\" >= 0");
                         });
                 });
@@ -146,6 +151,53 @@ namespace InkLink.Catalog.Infrastructure.Persistence.Migrations
                     b.HasIndex("ArtistId");
 
                     b.ToTable("favorites", "catalog");
+                });
+
+            modelBuilder.Entity("InkLink.Catalog.Infrastructure.Media.ArtistPhoto", b =>
+                {
+                    b.Property<Guid>("OwnerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("PhotoUrl")
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)");
+
+                    b.Property<int>("Revision")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ThumbnailUrl")
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)");
+
+                    b.HasKey("OwnerId");
+
+                    b.ToTable("artist_photos", "catalog");
+                });
+
+            modelBuilder.Entity("InkLink.Catalog.Infrastructure.Persistence.ObjectCleanup", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Attempts")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("DueAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DueAt");
+
+                    b.HasIndex("Key")
+                        .IsUnique();
+
+                    b.ToTable("object_cleanups", "catalog");
                 });
 
             modelBuilder.Entity("InkLink.Catalog.Infrastructure.Persistence.SearchTerm", b =>

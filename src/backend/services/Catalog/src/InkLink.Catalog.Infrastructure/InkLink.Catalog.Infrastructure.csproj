@@ -1,6 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <ProjectReference Include="../InkLink.Catalog.Application/InkLink.Catalog.Application.csproj" />
+    <ProjectReference Include="../../../../building-blocks/InkLink.ObjectStorage/InkLink.ObjectStorage.csproj" />
+    <ProjectReference Include="../../../../building-blocks/InkLink.Imaging/InkLink.Imaging.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
@@ -9,5 +11,7 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design"><PrivateAssets>all</PrivateAssets></PackageReference>
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
     <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
+    <PackageReference Include="RabbitMQ.Client" />
   </ItemGroup>
 </Project>

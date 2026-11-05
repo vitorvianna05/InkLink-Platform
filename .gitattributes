@@ -1,4 +1,6 @@
 .githooks/* text eol=lf
 .gitmessage text eol=lf
 *.sh text eol=lf
+*.png binary
+*.webp binary
 *.woff2 binary

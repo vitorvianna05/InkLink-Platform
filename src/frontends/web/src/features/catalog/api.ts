@@ -121,10 +121,18 @@ export function usePublishArtist() {
 export function useSaveArtwork(kind: ArtworkKind) {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, input }: { id?: string; input: ArtworkInput }) =>
-      id
-        ? request(`/api/v1/artists/me/${kind}/${id}`, { method: 'PUT', body: input })
-        : request(`/api/v1/artists/me/${kind}`, { method: 'POST', body: input }),
+    mutationFn: ({ id, input }: { id?: string; input: ArtworkInput }) => {
+      // Decisão 0018: a imagem é enviada como arquivo, por multipart, na API v2.
+      const form = new FormData();
+      form.set('title', input.title);
+      form.set('alternativeText', input.alternativeText);
+      form.set('style', input.style);
+      if (input.referencePrice !== null) form.set('referencePrice', input.referencePrice.toFixed(2));
+      if (input.image) form.set('image', input.image, input.image.name);
+      return id
+        ? request(`/api/v2/artists/me/${kind}/${id}`, { method: 'PUT', body: form })
+        : request(`/api/v2/artists/me/${kind}`, { method: 'POST', body: form });
+    },
     onSettled: () => client.invalidateQueries({ queryKey: ['catalog', 'artist'] }),
   });
 }
@@ -132,7 +140,7 @@ export function useSaveArtwork(kind: ArtworkKind) {
 export function useDeleteArtwork(kind: ArtworkKind) {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => request(`/api/v1/artists/me/${kind}/${id}`, { method: 'DELETE' }),
+    mutationFn: (id: string) => request(`/api/v2/artists/me/${kind}/${id}`, { method: 'DELETE' }),
     onSettled: () => client.invalidateQueries({ queryKey: ['catalog', 'artist'] }),
   });
 }

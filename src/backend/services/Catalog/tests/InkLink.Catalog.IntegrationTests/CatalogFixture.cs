@@ -1,5 +1,7 @@
 using System.Net.Http.Json;
 using System.Text.Json.Nodes;
+using DotNet.Testcontainers.Builders;
+using DotNet.Testcontainers.Containers;
 using InkLink.Catalog.Infrastructure;
 using InkLink.Catalog.Infrastructure.Persistence;
 using InkLink.Identity.Application;
@@ -16,13 +18,32 @@ public sealed class CatalogFixture : IAsyncLifetime
 {
     public SecurityFixture Security { get; } = new();
     private readonly PostgreSqlContainer postgres = new PostgreSqlBuilder("postgres:17.7-alpine").Build();
+    /// <summary>SeaweedFS real com as identidades e o script de buckets versionados (decisão 0018).</summary>
+    public string StorageSecret { get; } = Convert.ToHexString(System.Security.Cryptography.RandomNumberGenerator.GetBytes(24));
+    private IContainer storage = null!;
+    public Uri StorageEndpoint => new($"http://127.0.0.1:{storage.GetMappedPublicPort(8333)}/");
     internal SecurityIdentityHost Identity { get; private set; } = null!;
     public Dictionary<string, string> Tokens { get; } = [];
 
     public async Task InitializeAsync()
     {
+        // O worker de limpeza é acionado explicitamente pelos testes.
+        InkLink.Catalog.Infrastructure.Media.ObjectCleanupWorker.Interval = TimeSpan.FromHours(1);
         await Security.InitializeAsync();
         await postgres.StartAsync();
+        var identities = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "object-storage-identities.json"))
+            .Replace("${OBJECT_STORAGE_CATALOG_SECRET}", StorageSecret, StringComparison.Ordinal)
+            .Replace("${OBJECT_STORAGE_IDENTITY_SECRET}", StorageSecret + "i", StringComparison.Ordinal);
+        storage = new ContainerBuilder("chrislusf/seaweedfs:4.48")
+            .WithCommand("server", "-dir=/data", "-ip=127.0.0.1", "-ip.bind=0.0.0.0", "-s3", "-s3.port=8333", "-s3.config=/etc/inklink/object-storage.json")
+            .WithResourceMapping(System.Text.Encoding.UTF8.GetBytes(identities), "/etc/inklink/object-storage.json")
+            .WithResourceMapping(System.Text.Encoding.UTF8.GetBytes(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "configure-object-storage.sh")).Replace("\r\n", "\n", StringComparison.Ordinal)), "/opt/inklink/configure-object-storage.sh")
+            .WithPortBinding(8333, true)
+            .WithWaitStrategy(Wait.ForUnixContainer().UntilHttpRequestIsSucceeded(request => request.ForPort(8333).ForPath("/healthz")))
+            .Build();
+        await storage.StartAsync();
+        var buckets = await storage.ExecAsync(["sh", "/opt/inklink/configure-object-storage.sh"]);
+        Assert.Equal(0, buckets.ExitCode);
         await using (var admin = new NpgsqlConnection(postgres.GetConnectionString()))
         {
             await admin.OpenAsync();
@@ -87,6 +108,7 @@ public sealed class CatalogFixture : IAsyncLifetime
     {
         Identity?.Dispose();
         await postgres.DisposeAsync();
+        if (storage is not null) await storage.DisposeAsync();
         await Security.DisposeAsync();
     }
 }
@@ -124,5 +146,56 @@ public sealed class CatalogScenario : IDisposable
         return id;
     }
 
+    /// <summary>Envia uma obra por multipart (v2); com id, atualiza a obra existente.</summary>
+    public Task<HttpResponseMessage> UploadArtworkAsync(string segment, string title, byte[]? image, Guid? id = null, string? price = null, (string Name, string Value)? extra = null)
+    {
+        var form = new MultipartFormDataContent
+        {
+            { new StringContent(title), "title" },
+            { new StringContent("Descrição de " + title), "alternativeText" },
+            { new StringContent("Blackwork"), "style" },
+        };
+        if (price is not null) form.Add(new StringContent(price), "referencePrice");
+        if (extra is { } field) form.Add(new StringContent(field.Value), field.Name);
+        if (image is not null)
+        {
+            var file = new ByteArrayContent(image);
+            file.Headers.ContentType = new("image/png");
+            form.Add(file, "image", "obra.png");
+        }
+        var route = $"/api/v2/artists/me/{segment}" + (id is null ? string.Empty : "/" + id);
+        return id is null ? Http.PostAsync(route, form) : Http.PutAsync(route, form);
+    }
+
+    /// <summary>Lê o objeto diretamente no SeaweedFS, como o proxy /media faria.</summary>
+    public async Task<HttpResponseMessage> StorageGetAsync(string publicUrl)
+    {
+        var path = new Uri(publicUrl).AbsolutePath["/media/".Length..];
+        using var http = new HttpClient();
+        return await http.GetAsync(new Uri(Fixture.StorageEndpoint, path));
+    }
+
+    public async Task<int> CleanupCountAsync()
+    {
+        await using var connection = new NpgsqlConnection(OwnerConnection);
+        await connection.OpenAsync();
+        await using var command = new NpgsqlCommand("SELECT count(*) FROM catalog.object_cleanups", connection);
+        return Convert.ToInt32(await command.ExecuteScalarAsync(), System.Globalization.CultureInfo.InvariantCulture);
+    }
+
+    public Task<int> RunCleanupAsync() => Host.Services.GetRequiredService<InkLink.Catalog.Infrastructure.Media.ObjectCleanupWorker>().RunOnceAsync(default);
+
     public void Dispose() { Proxied.Dispose(); Gateway.Dispose(); Http.Dispose(); Host.Dispose(); }
+}
+
+internal static class TestImages
+{
+    public static byte[] Png(int width, int height)
+    {
+        using var bitmap = new SkiaSharp.SKBitmap(width, height);
+        using (var canvas = new SkiaSharp.SKCanvas(bitmap)) canvas.Clear(new SkiaSharp.SKColor(200, 40, 50));
+        using var image = SkiaSharp.SKImage.FromBitmap(bitmap);
+        using var data = image.Encode(SkiaSharp.SKEncodedImageFormat.Png, 100);
+        return data.ToArray();
+    }
 }

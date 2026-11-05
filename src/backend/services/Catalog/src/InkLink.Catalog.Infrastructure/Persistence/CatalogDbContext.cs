@@ -7,6 +7,8 @@ public sealed class CatalogDbContext(DbContextOptions<CatalogDbContext> options)
 {
     public DbSet<Artist> Artists => Set<Artist>();
     public DbSet<Artwork> Artworks => Set<Artwork>();
+    public DbSet<ObjectCleanup> ObjectCleanups => Set<ObjectCleanup>();
+    public DbSet<Media.ArtistPhoto> ArtistPhotos => Set<Media.ArtistPhoto>();
     public DbSet<Favorite> Favorites => Set<Favorite>();
     internal DbSet<SearchTerm> SearchTerms => Set<SearchTerm>();
 
@@ -34,16 +36,40 @@ public sealed class CatalogDbContext(DbContextOptions<CatalogDbContext> options)
         });
         model.Entity<Artwork>(entity =>
         {
-            entity.ToTable("artworks", table => table.HasCheckConstraint("ck_artwork_price", "\"ReferencePrice\" IS NULL OR \"ReferencePrice\" >= 0"));
+            entity.ToTable("artworks", table =>
+            {
+                table.HasCheckConstraint("ck_artwork_price", "\"ReferencePrice\" IS NULL OR \"ReferencePrice\" >= 0");
+                // Imagem enviada (ImageKey) ou URL externa legada, nunca as duas nem nenhuma (decisão 0018).
+                table.HasCheckConstraint("ck_artwork_image", "(\"ImageKey\" IS NULL) <> (\"ImageUrl\" IS NULL)");
+            });
             entity.HasKey(artwork => artwork.Id);
             entity.Property(artwork => artwork.Id).ValueGeneratedNever();
             entity.HasOne<Artist>().WithMany().HasForeignKey(artwork => artwork.ArtistId).OnDelete(DeleteBehavior.Cascade);
             entity.HasIndex(artwork => new { artwork.ArtistId, artwork.Kind, artwork.Id });
             entity.Property(artwork => artwork.Title).HasMaxLength(160).IsRequired();
-            entity.Property(artwork => artwork.ImageUrl).HasMaxLength(2048).IsRequired();
+            entity.Property(artwork => artwork.ImageUrl).HasMaxLength(2048);
+            entity.Property(artwork => artwork.ImageKey).HasMaxLength(200);
+            entity.Ignore(artwork => artwork.HasExternalImage);
             entity.Property(artwork => artwork.AlternativeText).HasMaxLength(300).IsRequired();
             entity.Property(artwork => artwork.Style).HasMaxLength(80).IsRequired();
             entity.Property(artwork => artwork.ReferencePrice).HasPrecision(9, 2);
+        });
+        model.Entity<Media.ArtistPhoto>(entity =>
+        {
+            entity.ToTable("artist_photos");
+            entity.HasKey(photo => photo.OwnerId);
+            entity.Property(photo => photo.OwnerId).ValueGeneratedNever();
+            entity.Property(photo => photo.PhotoUrl).HasMaxLength(2048);
+            entity.Property(photo => photo.ThumbnailUrl).HasMaxLength(2048);
+        });
+        model.Entity<ObjectCleanup>(entity =>
+        {
+            entity.ToTable("object_cleanups");
+            entity.HasKey(item => item.Id);
+            entity.Property(item => item.Id).ValueGeneratedNever();
+            entity.Property(item => item.Key).HasMaxLength(512).IsRequired();
+            entity.HasIndex(item => item.Key).IsUnique();
+            entity.HasIndex(item => item.DueAt);
         });
         model.Entity<Favorite>(entity =>
         {
