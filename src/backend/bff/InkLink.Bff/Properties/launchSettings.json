@@ -2,11 +2,11 @@
   "profiles": {
     "InkLink.Bff": {
       "commandName": "Project",
-      "launchBrowser": true,
+      "launchBrowser": false,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
-      "applicationUrl": "https://localhost:52083;http://localhost:52084"
+      "applicationUrl": "https://localhost:5192"
     }
   }
 }
