@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <title>InkLink</title>
+  <rect width="128" height="128" rx="24" fill="#191818"/>
+  <text x="9" y="73" fill="#fff" font-family="Manrope,Arial,sans-serif" font-size="26" font-weight="800" letter-spacing="-1.5" textLength="99" lengthAdjust="spacingAndGlyphs">INK<tspan font-weight="500">LINK</tspan></text>
+  <circle cx="116" cy="70" r="3" fill="#e32932"/>
+</svg>

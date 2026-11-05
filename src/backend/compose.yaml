@@ -165,6 +165,8 @@ services:
       - ../../artifacts/local/inklink-realm.json:/opt/keycloak/data/import/inklink-realm.json:ro
       - ../../artifacts/local/localhost.pem:/opt/keycloak/conf/localhost.pem:ro
       - ../../artifacts/local/localhost.key:/opt/keycloak/conf/localhost.key:ro
+      # Tema de login InkLink (T10.21); start-dev não guarda templates em cache.
+      - ./identity-provider/themes/inklink:/opt/keycloak/themes/inklink:ro
     depends_on:
       keycloak-db:
         condition: service_healthy

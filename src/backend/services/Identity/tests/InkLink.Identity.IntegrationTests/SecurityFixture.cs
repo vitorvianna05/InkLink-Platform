@@ -92,6 +92,8 @@ public sealed class SecurityFixture : IAsyncLifetime
             .WithEnvironment("JAVA_OPTS_KC_HEAP", "-Xms128m -Xmx512m")
             .WithCommand("start-dev", "--import-realm")
             .WithResourceMapping(Encoding.UTF8.GetBytes(realm.ToJsonString()), "/opt/keycloak/data/import/inklink-realm.json")
+            // Tema de login InkLink (T10.21): o mesmo diretório versionado montado nos ambientes local e P09.
+            .WithResourceMapping(new DirectoryInfo(Path.Combine(AppContext.BaseDirectory, "themes", "inklink")), "/opt/keycloak/themes/inklink")
             .WithWaitStrategy(Wait.ForUnixContainer().UntilMessageIsLogged("Listening on:"))
             .Build();
         await keycloak.StartAsync();

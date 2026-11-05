@@ -1,0 +1,165 @@
+/* Tema de login InkLink (T10.21): mesma identidade da página /entrar do website.
+   Sem recursos externos: Manrope e DM Sans (variáveis, subconjunto latino, SIL OFL 1.1) são versionadas em
+   ../fonts com as licenças; a fonte do sistema fica como alternativa. */
+@font-face {
+  font-family: 'Manrope';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 800;
+  src: url(../fonts/manrope-latin-wght-normal.woff2) format('woff2-variations'), url(../fonts/manrope-latin-wght-normal.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'DM Sans';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 1000;
+  src: url(../fonts/dm-sans-latin-wght-normal.woff2) format('woff2-variations'), url(../fonts/dm-sans-latin-wght-normal.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+:root {
+  --ink: #232222;
+  --ink-strong: #191818;
+  --paper: #f6f5f3;
+  --surface: #ffffff;
+  --red: #e32932;
+  --red-strong: #c41f27;
+  --muted: #6f6b68;
+  --line: #e8e5e1;
+  --radius: 18px;
+  --font-body: 'DM Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Manrope', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color-scheme: light;
+}
+
+.inklink-body {
+  --pf-v5-global--primary-color--100: var(--red);
+  --pf-v5-global--primary-color--200: var(--red-strong);
+  --pf-v5-global--link--Color: var(--red-strong);
+  --pf-v5-global--active-color--100: var(--red);
+  --keycloak-card-top-color: transparent;
+  --pf-v5-global--link--Color--hover: var(--red);
+  --pf-v5-global--FontFamily--text: var(--font-body);
+  --pf-v5-global--FontFamily--heading: var(--font-display);
+  --pf-v5-global--Color--100: var(--ink);
+  --pf-v5-global--Color--200: var(--muted);
+  --pf-v5-c-button--m-primary--BackgroundColor: var(--red);
+  --pf-v5-c-button--m-primary--hover--BackgroundColor: var(--red-strong);
+  --pf-v5-c-button--m-primary--focus--BackgroundColor: var(--red-strong);
+  --pf-v5-c-button--m-primary--active--BackgroundColor: var(--red-strong);
+  margin: 0;
+  min-width: 320px;
+  font-family: var(--font-body);
+  color: var(--ink);
+}
+
+html, body#keycloak-bg.inklink-body { background: var(--paper); background-image: none; }
+
+.inklink-login {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+/* Painel de marca */
+.inklink-brand {
+  position: relative;
+  overflow: hidden;
+  background: var(--ink-strong);
+  color: #fff;
+  padding: 40px clamp(24px, 5vw, 72px);
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+}
+.inklink-logo {
+  position: relative;
+  z-index: 1;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 22px;
+  letter-spacing: -0.04em;
+  display: inline-flex;
+  align-items: baseline;
+}
+.inklink-logo span { font-weight: 500; }
+.inklink-logo i { width: 6px; height: 6px; border-radius: 50%; background: var(--red); margin-left: 3px; display: inline-block; }
+.inklink-brand-copy { position: relative; z-index: 1; margin-top: auto; max-width: 520px; }
+.inklink-eyebrow {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 80%);
+  margin-bottom: 8px;
+}
+.inklink-brand-title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(34px, 4.2vw, 60px);
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+  margin: 0 0 28px;
+}
+.inklink-brand-title em { font-style: normal; color: var(--red); }
+.inklink-highlights { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; color: rgb(255 255 255 / 80%); line-height: 1.45; }
+.inklink-highlights li { position: relative; padding-left: 22px; }
+.inklink-highlights li::before { content: ''; position: absolute; left: 0; top: 0.55em; width: 8px; height: 8px; border-radius: 50%; background: var(--red); }
+.inklink-art { position: absolute; inset: 0; pointer-events: none; }
+.inklink-art .ring { position: absolute; border-radius: 50%; border: 1px solid rgb(255 255 255 / 10%); right: -140px; top: -120px; width: 520px; height: 520px; }
+.inklink-art .ring-2 { width: 380px; height: 380px; right: -70px; top: -50px; border-color: rgb(227 41 50 / 45%); }
+.inklink-art .ring-3 { width: 240px; height: 240px; right: 0; top: 20px; border-style: dashed; }
+.inklink-art .drop { position: absolute; width: 14px; height: 14px; border-radius: 50%; background: var(--red); right: 186px; top: 246px; box-shadow: 0 0 0 10px rgb(227 41 50 / 15%); }
+
+/* Painel do formulário: o cartão do Keycloak recebe o estilo do website. */
+.inklink-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 48px clamp(16px, 5vw, 72px);
+}
+.inklink-panel .pf-v5-c-login { min-height: 0; width: 100%; padding: 0; background: none; display: block; }
+.inklink-panel .pf-v5-c-login__container { display: block; width: min(440px, 100%); max-width: none; margin: 0 auto; padding: 0; }
+.inklink-panel .pf-v5-c-login__main {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 18px 40px rgb(25 24 24 / 8%);
+  padding: clamp(24px, 4vw, 40px);
+  margin: 0;
+}
+.inklink-panel .pf-v5-c-login__main-header { padding: 0 0 16px; border-top: 0; }
+.inklink-panel .pf-v5-c-login__main-body,
+.inklink-panel .pf-v5-c-login__main-footer { padding-left: 0; padding-right: 0; }
+.inklink-panel .pf-v5-c-title, .inklink-panel #kc-page-title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(26px, 3vw, 32px);
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  color: var(--ink);
+}
+.inklink-panel .pf-v5-c-form-control { border-radius: 10px; }
+.inklink-panel .pf-v5-c-button.pf-m-primary {
+  border-radius: 999px;
+  min-height: 46px;
+  font-weight: 600;
+  background-color: var(--red);
+}
+.inklink-panel .pf-v5-c-button.pf-m-primary:hover,
+.inklink-panel .pf-v5-c-button.pf-m-primary:focus { background-color: var(--red-strong); }
+.inklink-panel :focus-visible { outline: 3px solid var(--red); outline-offset: 2px; }
+.inklink-footnote { color: var(--muted); font-size: 13px; }
+
+@media (max-width: 860px) {
+  .inklink-login { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr; }
+  .inklink-brand { padding: 24px 16px 28px; gap: 20px; }
+  .inklink-brand-title { font-size: clamp(26px, 6vw, 36px); margin-bottom: 0; }
+  .inklink-highlights, .inklink-art .ring-3, .inklink-art .drop { display: none; }
+  .inklink-art .ring { width: 300px; height: 300px; }
+  .inklink-art .ring-2 { width: 220px; height: 220px; }
+  .inklink-panel { justify-content: flex-start; padding: 28px 16px 40px; }
+}

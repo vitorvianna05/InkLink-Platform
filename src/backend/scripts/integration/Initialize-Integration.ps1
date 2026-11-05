@@ -58,6 +58,7 @@ Invoke-IntegrationCompose @('exec','-T','object-storage','sh','/opt/inklink/conf
 $ready=$false
 for($i=0;$i -lt 60;$i++){try{$null=Invoke-RestMethod 'https://localhost:5289/realms/inklink/.well-known/openid-configuration' -TimeoutSec 3;$ready=$true;break}catch{Start-Sleep -Seconds 1}}
 if(!$ready){throw 'Integration Keycloak did not become ready over trusted HTTPS.'}
+& "$IntegrationRepo/src/backend/scripts/Sync-KeycloakRealm.ps1" -BaseUri 'https://localhost:5289' -AdminPassword $secrets.KEYCLOAK_ADMIN_PASSWORD
 foreach($service in 'Identity','Catalog','Engagements','Messaging','Scheduling','Finance','Bff'){
     $project=if($service -eq 'Bff'){Get-IntegrationProject Bff}else{"$IntegrationRepo/src/backend/services/$service/src/InkLink.$service.Infrastructure/InkLink.$service.Infrastructure.csproj"}
     $ports=@{Identity=55329;Catalog=55331;Engagements=55332;Messaging=55333;Scheduling=55334;Finance=55335;Bff=55330};$lower=$service.ToLowerInvariant()

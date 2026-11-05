@@ -7,6 +7,7 @@
     <ProjectReference Include="../../../../gateway/InkLink.Gateway/InkLink.Gateway.csproj" />
     <ProjectReference Include="../../../../bff/InkLink.Bff/InkLink.Bff.csproj" />
     <Content Include="../../../../identity-provider/inklink-realm.json" Link="inklink-realm.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../../../../identity-provider/themes/inklink/**/*" LinkBase="themes/inklink" CopyToOutputDirectory="PreserveNewest" />
     <PackageReference Include="Testcontainers" />
     <ProjectReference Include="../../src/InkLink.Identity.Api/InkLink.Identity.Api.csproj" />
   </ItemGroup>

@@ -21,6 +21,7 @@
     <Compile Include="../../../Identity/tests/InkLink.Identity.IntegrationTests/PostgresFixture.cs" Link="Support/PostgresFixture.cs" />
     <Compile Include="../../../Identity/tests/InkLink.Identity.IntegrationTests/RecordedLogs.cs" Link="Support/RecordedLogs.cs" />
     <Content Include="../../../../identity-provider/inklink-realm.json" Link="inklink-realm.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../../../../identity-provider/themes/inklink/**/*" LinkBase="themes/inklink" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup><Using Include="Xunit" /></ItemGroup>
 </Project>
