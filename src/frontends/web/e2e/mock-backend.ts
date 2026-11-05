@@ -3,13 +3,16 @@ import type { Page, Route } from '@playwright/test';
 // Respostas sintéticas para checagens visuais/teclado no navegador. Não são fonte de dados
 // do produto e não substituem o roteiro com o backend real.
 
-const client = { id: '00000000-0000-7000-8000-00000000c11e', displayName: 'Júlia Vieira' };
-const artist = { id: '00000000-0000-7000-8000-0000000a7157', displayName: 'Rafael Moura' };
 const image = (seed: string) =>
   `data:image/svg+xml;utf8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500"><rect width="400" height="500" fill="#efe9e4"/><text x="200" y="260" text-anchor="middle" font-family="sans-serif" font-size="28" fill="#85817e">${seed}</text></svg>`)}`;
+// Foto de perfil sintética (T10.18): quadrada, como as variantes de 512/128 px.
+const photo = (seed: string, color: string) =>
+  `data:image/svg+xml;utf8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128"><rect width="128" height="128" fill="${color}"/><text x="64" y="76" text-anchor="middle" font-family="sans-serif" font-size="40" fill="#fff">${seed}</text></svg>`)}`;
+const client = { id: '00000000-0000-7000-8000-00000000c11e', displayName: 'Júlia Vieira', photoUrl: photo('JV', '#7a5c4f'), photoThumbnailUrl: photo('JV', '#7a5c4f') };
+const artist = { id: '00000000-0000-7000-8000-0000000a7157', displayName: 'Rafael Moura', photoUrl: photo('RM', '#232222'), photoThumbnailUrl: photo('RM', '#232222') };
 
 const artists = [
-  { id: 'a1', name: 'Rafael Moura', studio: 'Moura Tattoo Studio', city: 'São Paulo', styles: ['Blackwork', 'Botânico'], startingPrice: 450, biography: 'Traços que contam histórias.' },
+  { id: 'a1', name: 'Rafael Moura', studio: 'Moura Tattoo Studio', city: 'São Paulo', styles: ['Blackwork', 'Botânico'], startingPrice: 450, biography: 'Traços que contam histórias.', photoUrl: artist.photoUrl, photoThumbnailUrl: artist.photoThumbnailUrl },
   { id: 'a2', name: 'Camila Azevedo', studio: 'Ateliê Linha Fina', city: 'São Paulo', styles: ['Fineline'], startingPrice: 350, biography: 'A beleza mora nos detalhes.' },
   { id: 'a3', name: 'Bruno Costa', studio: 'Costa Ink', city: 'Rio de Janeiro', styles: ['Realismo'], startingPrice: 600, biography: 'Luz, sombra e personalidade.' },
 ];
@@ -37,7 +40,7 @@ const conversation = {
   writingBlocked: false,
   createdAt: '2026-11-01T12:00:01Z',
   lastMessage: { id: 'm2', conversationId: 'c1', authorId: artist.id, body: 'Podemos criar uma composição exclusiva.', createdAt: '2026-11-01T12:10:00Z', sequence: 2 },
-  counterpart: { id: artist.id, displayName: 'Rafael Moura' },
+  counterpart: { id: artist.id, displayName: 'Rafael Moura', photoUrl: artist.photoUrl, photoThumbnailUrl: artist.photoThumbnailUrl },
   engagementState: 'Negotiating',
 };
 const messages = [
@@ -49,6 +52,9 @@ const page = (items: unknown[]) => ({ items, nextCursor: null, hasMore: false, t
 
 export async function mockBackend(pageObject: Page, role: 'anonymous' | 'client' | 'artist' = 'client') {
   const profile = role === 'artist' ? artist : client;
+  // Interlocutor conforme a perspectiva, como na Messaging: o artista vê o cliente (com a foto assinada).
+  const counterpart = role === 'artist' ? { id: client.id, displayName: client.displayName, photoUrl: client.photoUrl, photoThumbnailUrl: client.photoThumbnailUrl } : conversation.counterpart;
+  const seen = { ...conversation, counterpart };
   await pageObject.route((url) => /^\/(bff|api)\//.test(url.pathname), async (route: Route) => {
     const url = new URL(route.request().url());
     const path = url.pathname;
@@ -66,15 +72,16 @@ export async function mockBackend(pageObject: Page, role: 'anonymous' | 'client'
     if (artistMatch) {
       if (!artistMatch[3]) return json(artists.find((a) => a.id === artistMatch[1]));
       const kind = artistMatch[3];
-      return json(page([1, 2, 3].map((n) => ({ id: `${kind}${n}`, title: `${kind === 'flashes' ? 'Flash' : 'Trabalho'} ${n}`, imageUrl: image(`${kind} ${n}`), alternativeText: `Ilustração ${n}`, style: 'Blackwork', referencePrice: kind === 'flashes' ? 400 + n * 50 : null }))));
+      // Variantes enviadas (decisão 0018) e uma obra legada por URL externa, que o Estúdio pede para trocar.
+      return json(page([1, 2, 3].map((n) => ({ id: `${kind}${n}`, title: `${kind === 'flashes' ? 'Flash' : 'Trabalho'} ${n}`, imageUrl: image(`${kind} ${n}`), thumbnailUrl: image(`${kind} ${n}`), externalImage: n === 3, alternativeText: `Ilustração ${n}`, style: 'Blackwork', referencePrice: kind === 'flashes' ? 400 + n * 50 : null }))));
     }
     if (path === '/api/v1/favorites') return json(page([artists[1]]));
     if (path === '/api/v2/engagements') return json(page([engagement]));
     if (path === '/api/v2/engagements/e1') return json(engagement);
     if (path === '/api/v2/engagements/e1/proposals') return json(page([proposal]));
     if (path === '/api/v2/engagements/e1/lifecycle') return json({ requiresReservation: false, state: 'Negotiating', operations: [] });
-    if (path === '/api/v1/conversations') return json(page([conversation]));
-    if (path === '/api/v1/conversations/c1') return json(conversation);
+    if (path === '/api/v1/conversations') return json(page([seen]));
+    if (path === '/api/v1/conversations/c1') return json(seen);
     if (path === '/api/v1/conversations/c1/messages') return json(page(url.searchParams.get('cursor') ? [] : messages));
     if (path === '/api/v1/scheduling/calendar') {
       const r = { id: 'r1', operationId: 'o1', engagementId: 'e1', clientId: client.id, artistId: artist.id, start: '2030-01-15T14:00:00-03:00', end: '2030-01-15T17:00:00-03:00', localDate: '2030-01-15', timeZoneId: 'America/Sao_Paulo', clientName: 'Júlia Vieira', artistName: 'Rafael Moura', project: 'Projeto botânico', proposalId: 'p1', referenceAmount: 450, confirmedAt: '2026-11-02T12:00:00Z', state: 'Confirmed', currency: 'BRL' };
