@@ -68,7 +68,7 @@ O OpenAPI de Identity, em /openapi/v1.json durante Development/Testing, declara 
 
 O navegador envia cookies ao BFF. Para PUT e POST, primeiro obtenha requestToken e envie-o em X-CSRF-TOKEN, preservando o cookie antiforgery. O BFF troca qualquer Authorization recebido pelo access token do ticket armazenado no servidor; Gateway remove cookies e headers de identidade não confiáveis antes de encaminhar.
 
-A sessão tem limite fixo de cinco minutos, reduzido à validade do access token se necessário. Sem renovação automática; a expiração retorna 401 e exige novo login. Tickets e material de Data Protection são compartilhados no banco privado e protegidos pelo certificado configurado. Logout invalida o ticket em todas as instâncias do BFF; não depende apenas de apagar o cookie.
+A sessão termina após 30 minutos sem uso ou 8 horas depois do login ([decisão 0019](../decisions/0019-p10-session-renewal.md)). O BFF renova o access token no servidor quando faltam 60 segundos para vencer, com refresh token de uso único, e serializa a renovação por sessão com bloqueio consultivo do PostgreSQL. Refresh token revogado ou expirado encerra a sessão com 401; a expiração exige novo login. Tickets e material de Data Protection são compartilhados no banco privado e protegidos pelo certificado configurado. Logout invalida o ticket em todas as instâncias do BFF; não depende apenas de apagar o cookie.
 
 ## Ativação administrativa de Artist
 

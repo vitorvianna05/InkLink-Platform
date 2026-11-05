@@ -59,7 +59,10 @@ public sealed class BffTests(SecurityFixture fixture)
         var serverTicket = await first.Services.GetRequiredService<ITicketStore>().RetrieveAsync(sessionId);
         var accessToken = serverTicket!.Properties.GetTokenValue("access_token")!;
         Assert.False(string.IsNullOrWhiteSpace(accessToken));
-        Assert.True(serverTicket.Properties.ExpiresUtc <= new DateTimeOffset(new Microsoft.IdentityModel.JsonWebTokens.JsonWebToken(accessToken).ValidTo));
+        // Decisão 0019: validade deslizante de 30 minutos, limite total de 8 horas e refresh token só no servidor.
+        Assert.True(serverTicket.Properties.ExpiresUtc <= DateTimeOffset.UtcNow.AddMinutes(30).AddSeconds(5));
+        Assert.True(DateTimeOffset.Parse(serverTicket.Properties.Items["inklink.absolute"]!, System.Globalization.CultureInfo.InvariantCulture) <= DateTimeOffset.UtcNow.AddHours(8).AddSeconds(5));
+        Assert.False(string.IsNullOrWhiteSpace(serverTicket.Properties.GetTokenValue("refresh_token")));
         await using (var database = await first.Services.GetRequiredService<IDbContextFactory<BffDbContext>>().CreateDbContextAsync())
         {
             var row = await database.Sessions.SingleAsync(row => row.Id == sessionId);
