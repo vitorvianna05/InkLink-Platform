@@ -1,51 +1,5 @@
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import { expect, test, type Page } from '@playwright/test';
-
-const root = fileURLToPath(new URL('../../../../artifacts/integration/', import.meta.url));
-const smoke = JSON.parse(readFileSync(`${root}/smoke.json`, 'utf8')) as {
-  users: Record<'client' | 'artist' | 'other', string>; engagement: string; newConversation: string; oldConversation: string;
-};
-const password = readFileSync(`${root}/.env`, 'utf8').split(/\r?\n/).find((line) => line.startsWith('INTEGRATION_USER_PASSWORD='))?.split('=')[1];
-if (!password) throw new Error('Run the P09 synthetic smoke before the browser integration checks.');
-
-/**
- * Chamada de API feita pelo próprio navegador, na origem do website e com os cookies da sessão.
- * O cliente Node do Playwright não aceita o certificado de desenvolvimento do ASP.NET Core
- * (autoassinado, CA:FALSE) como raiz confiável; o navegador o aceita pela confiança do sistema.
- * TLS continua verificado: nenhuma checagem de certificado é desativada.
- */
-async function api(page: Page, method: string, path: string, options: { csrf?: string; body?: unknown } = {}) {
-  return page.evaluate(async ({ method, path, csrf, body }) => {
-    const headers: Record<string, string> = { Accept: 'application/json' };
-    if (csrf) headers['X-CSRF-TOKEN'] = csrf;
-    if (body !== undefined) headers['Content-Type'] = 'application/json';
-    const response = await fetch(path, { method, headers, credentials: 'same-origin', body: body === undefined ? undefined : JSON.stringify(body) });
-    const text = await response.text();
-    return { status: response.status, json: (text ? JSON.parse(text) : null) as unknown };
-  }, { method, path, csrf: options.csrf, body: options.body });
-}
-
-async function antiforgery(page: Page) {
-  return ((await api(page, 'GET', '/bff/antiforgery')).json as { requestToken: string }).requestToken;
-}
-
-async function login(page: Page, actor: keyof typeof smoke.users) {
-  // Decisão 0017 (revisada): o convite leva a /entrar com o destino; o BFF conclui o OIDC e devolve
-  // o navegador ao website, no destino, já autenticado.
-  await page.goto('/meu-espaco');
-  await page.getByRole('main').getByRole('link', { name: 'Entrar', exact: true }).click();
-  await expect(page).toHaveURL(/\/entrar\?destino=%2Fmeu-espaco$/);
-  await expect(page.locator('input')).toHaveCount(0);
-  await page.getByRole('button', { name: 'Entrar', exact: true }).click();
-  await page.locator('#username').fill(smoke.users[actor]);
-  await page.locator('#password').fill(password!);
-  await page.locator('#kc-login').click();
-  await expect(page).toHaveURL('https://localhost:5173/meu-espaco', { timeout: 60_000 });
-  await page.getByRole('button', { name: 'Abrir menu da conta' }).click();
-  await expect(page.getByRole('button', { name: 'Sair da conta' })).toBeVisible();
-  await page.keyboard.press('Escape');
-}
+import { expect, test } from '@playwright/test';
+import { antiforgery, api, login, smoke } from './support';
 
 test('catálogo público e sugestões reais pelo proxy HTTPS', async ({ page }) => {
   await page.goto('/explorar');
