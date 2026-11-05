@@ -68,3 +68,18 @@ Moderação de conteúdo, recorte manual na interface, vídeos, múltiplas fotos
 - Novos componentes de infraestrutura: SeaweedFS no Compose, buckets públicos e privados, credenciais geradas em arquivos ignorados e configuração do R2 para produção.
 - Identity passa a publicar evento por Outbox e a assinar endereços. Catalog ganha uma projeção da foto do artista.
 - A seção 6.4 de architecture.md e a decisão 0008 foram atualizadas para refletir esta decisão.
+
+## Implementação (T10.16–T10.18)
+
+Registrada na execução das tarefas, sem mudar as escolhas aprovadas:
+
+- **Contratos.**
+  - Obras são criadas e alteradas em `POST`/`PUT /api/v2/artists/me/{tattoos|flashes}` (multipart com `title`, `alternativeText`, `style`, `referencePrice` e `image`); `DELETE` existe em v1 e v2.
+  - As escritas v1 por URL foram retiradas na mesma entrega. Não havia consumidor além do website, migrado junto, e os aplicativos móveis ainda não existem; por isso não houve período de coexistência. Como em Atendimentos v1, as rotas retiradas respondem 410 `catalog.artwork_url_writes_retired`, com o caminho de migração, e ficam fora do OpenAPI.
+  - As leituras v1 continuam compatíveis e ganham `thumbnailUrl` e `externalImage`.
+  - Foto de perfil: `PUT`/`DELETE /api/v1/profiles/me/photo`. `photoUrl` e `photoThumbnailUrl` aparecem, opcionais, no perfil, no interlocutor das conversas e nos cards e perfis do Catálogo. No endpoint interno de perfis, só com `include=photo`: os chamadores que precisam apenas do nome (Scheduling) não recebem endereços assinados.
+- **Órfãos.** A varredura de 24 horas foi substituída por reservas: antes do envio, cada objeto ganha uma linha de limpeza com prazo de 1 hora, e a gravação da obra ou da foto apaga essas linhas na mesma transação. Se a gravação falhar, o worker remove os objetos quando o prazo vence. Não é preciso listar o bucket, e as credenciais dos serviços continuam sem permissão de listagem.
+- **Visibilidade da foto.** É definida no envio, pela função da conta. Uma foto enviada antes da ativação como artista continua privada até a próxima troca; o website orienta reenviar a foto.
+- **Evento.** `identity.profile-photo-changed.v1` leva `profileId`, `revision`, `photoUrl` e `photoThumbnailUrl` (nulos na remoção). Ele vai pela exchange `inklink.identity.events.v1` para a fila `inklink.catalog.profile-photos.v1`, com fila de inválidos, e usuários de broker exclusivos para publicar e consumir. O Catálogo só aplica revisões mais novas que a projetada, o que descarta repetições e eventos fora de ordem sem tabela de inbox. O consumidor fica na Api e aciona o caso de uso `ProjectArtistPhoto`, como os consumidores de P05/P06: falha transitória volta pela exchange `inklink.catalog.profile-photos.retry.v1` com contador, e a décima tentativa segue para a fila de inválidos. Publicação e consumo têm rastreamento W3C e métricas (`InkLink.Identity.Events`, `InkLink.Catalog.ProfilePhotos`).
+- **Conversas e atendimentos.** Para o artista, o interlocutor cliente vem com a foto assinada, depois da validação da participação. Para o cliente, a foto pública do artista é opcional: se a Identity estiver indisponível, a conversa continua sem foto. As páginas e listas de atendimento do website usam o mesmo interlocutor da conversa; Atendimentos não guarda fotos.
+- **Bibliotecas.** O processamento usa o building block `InkLink.Imaging` (SkiaSharp 4.153.1, licença MIT). Ele confere a assinatura do arquivo, limita a 40 milhões de pixels, aplica a orientação EXIF e regrava em WebP com qualidade 82.

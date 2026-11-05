@@ -190,7 +190,7 @@ Na política inicial de P06, aprovada na [decisão 0011](decisions/0011-p06-sche
 
 O artista deve acessar os atendimentos de seus clientes pelo dashboard e consultar seu perfil público.
 
-**Critérios de aceite:** o resumo identifica cliente, projeto e situação do atendimento. Cada ação abre o histórico correspondente. O acesso ao perfil público apresenta a identidade, os trabalhos e os flashes do artista conectado. A alimentação mínima de P03 permite ao próprio usuário com Artist publicar e editar seu perfil, trabalhos e flashes por API autenticada, com referências públicas de imagem HTTPS e texto alternativo; a publicação é imediata. A [decisão 0008](decisions/0008-p03-catalog-and-search.md) detalha campos, autorização e limites. Painel de gestão, upload e moderação serão refinados em incrementos próprios; conteúdo fixo do protótipo não substitui esses dados.
+**Critérios de aceite:** o resumo identifica cliente, projeto e situação do atendimento. Cada ação abre o histórico correspondente. O acesso ao perfil público apresenta a identidade, os trabalhos e os flashes do artista conectado. A alimentação mínima de P03 permite ao próprio usuário com Artist publicar e editar seu perfil, trabalhos e flashes por API autenticada, com texto alternativo; a publicação é imediata. A [decisão 0008](decisions/0008-p03-catalog-and-search.md) detalha campos, autorização e limites. Em P10, as imagens passam a ser enviadas como arquivo pelo Portfólio do Estúdio, e cada conta ganha uma foto de perfil, conforme a [decisão 0018](decisions/0018-p10-images.md). Moderação será refinada em incremento próprio; conteúdo fixo do protótipo não substitui esses dados.
 
 ### RF21 — Preservar dados entre acessos
 

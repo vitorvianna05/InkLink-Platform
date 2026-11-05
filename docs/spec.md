@@ -93,7 +93,7 @@ O perfil apresenta nome, estúdio, localização, biografia, estilos e preço in
 
 Interesse em um flash inicia um pedido para seu artista e preserva a referência escolhida. Preço de referência não representa aceite, reserva ou pagamento.
 
-Na política de P03, o próprio Artist publica e edita seu perfil, trabalhos e flashes por API autenticada, com publicação imediata. Persistem referências públicas HTTPS de imagens e texto alternativo. Não há upload de binários, processamento de imagens, moderação ou painel completo nesta entrega.
+Na política de P03, o próprio Artist publica e edita seu perfil, trabalhos e flashes por API autenticada, com publicação imediata. Desde P10 ([decisão 0018](decisions/0018-p10-images.md)), a imagem da obra é enviada como arquivo em `/api/v2/artists/me/{tattoos,flashes}` e regravada em WebP no servidor; as escritas v1 por URL respondem 410 com o caminho de migração, e obras antigas por URL continuam exibidas até a troca. Cada conta tem uma foto de perfil, mantida pela Identity: a do artista é pública e projetada no Catálogo por evento; a do cliente é privada e só chega, por endereço assinado de curta duração, a artistas com atendimento com ele. Moderação e painel completo continuam fora do recorte.
 
 **Aceite:** outro artista não altera a publicação; dados privados não aparecem como catálogo; o conteúdo pertence ao artista selecionado. Exclusividade e reutilização de flashes continuam abertas a refinamento.
 
@@ -248,7 +248,7 @@ Segredos não são versionados nem enviados no frontend. Ambientes e dados de de
 
 ### 6.4 HTTP e compatibilidade
 
-APIs utilizam JSON/camelCase, recursos em inglês e IDs internos UUIDv7 gerados no backend. Versionamento inicial é /api/v1, com Engagements em v2 por mudança incompatível documentada.
+APIs utilizam JSON/camelCase, recursos em inglês e IDs internos UUIDv7 gerados no backend. Versionamento inicial é /api/v1, com Engagements em v2 e as escritas de obras do Catálogo em v2 (multipart, decisão 0018), ambas por mudança incompatível documentada; as rotas retiradas respondem 410 com orientação de migração.
 
 Listagens usam cursor com ordem estável, padrão 20 e máximo 100, salvo contrato específico. Cursor respeita contexto/critérios e não concede acesso.
 
@@ -321,7 +321,7 @@ P09 consolida regressão integrada, recuperação, ambiente e implantação inde
 | P07 / T07.01–T07.06 | Encerramento e novo atendimento | RF09–RF15, RF18–RF19, RF21 | Concluído; [evidências P07](verification/p07.md). |
 | P08 / T08.01–T08.06 | Finance e dashboard | RF16–RF17, RF20–RF21 | Concluído no backend; [evidências P08](verification/p08.md). |
 | P09 / T09.01–T09.06 | Consolidação/aceite backend | RF01–RF21 no backend; RNF01, RNF04–RNF08 | Concluído no recorte local; [evidências P09](verification/p09.md). |
-| P10 / T10.01–T10.21 | Website React | RF01–RF21; RNF01–RNF08 | Implementado; quatro cenários com backend real aprovados. T10.10/M6 parcialmente pendentes, conforme verificação P10; menu do usuário e página de login (T10.12–T10.14, decisão 0017) concluídos; imagens por upload, foto de perfil, renovação de sessão e tema do Keycloak (T10.15–T10.21) pendentes. |
+| P10 / T10.01–T10.21 | Website React | RF01–RF21; RNF01–RNF08 | Implementado; quatro cenários com backend real aprovados. T10.10/M6 parcialmente pendentes, conforme verificação P10; menu do usuário e página de login (T10.12–T10.14, decisão 0017) concluídos; imagens por upload, foto de perfil, renovação de sessão e tema do Keycloak (T10.15–T10.21, decisões 0018 e 0019) concluídos. |
 | P11 / T11.01–T11.05 | Base React Native | Capacidades do primeiro incremento móvel | Pendente. |
 | P12 / T12.01–T12.04 | iOS | Recorte móvel aprovado | Pendente; depende de P11. |
 | P13 / T13.01–T13.04 | Android | Recorte móvel aprovado | Pendente; depende de P11, não de P12. |
@@ -335,7 +335,7 @@ Permanecem para refinamento explícito:
 - Evolução do ciclo P07: cancelamento/reagendamento e novas políticas além da decisão 0013.
 - Evolução financeira além da decisão 0014: correções de sessões, estornos parciais e eventual projeção mediante necessidade.
 - Evolução operacional após P09: nuvem/produção, coleta e alertas, carga e novas versões de contrato, sem reabrir os resultados técnicos locais já verificados.
-- P10: concluir homologação de fluxos, expiração temporal e publicação web. Ferramentas, rotas, cache e transporte pelo BFF estão na decisão 0016; a página de login usa o fluxo do BFF conforme a decisão 0017.
+- P10: concluir a homologação de T10.10 (ciclo completo pelo website e publicação). Ferramentas, rotas, cache e transporte pelo BFF estão na decisão 0016; a página de login usa o fluxo do BFF conforme a decisão 0017; imagens e renovação de sessão, nas decisões 0018 e 0019.
 - P11–P13: Expo ou configuração nativa, compartilhamento de código, recorte funcional, testes e distribuição móvel.
 - Upload, tratamento e armazenamento de mídia, moderação e exclusividade/reutilização de flashes.
 - Cancelamento, reagendamento e passagem por meia-noite fora do recorte P06.
