@@ -64,10 +64,11 @@ PLAYWRIGHT_CHROMIUM_PATH=<chromium opcional> npm run e2e
 `npm run build` gera `dist/`. Requisitos do ambiente:
 
 1. Servir `dist/` na mesma origem HTTPS que responde `/bff`, `/api` e os retornos OIDC, por proxy reverso à frente do BFF (o BFF atual não hospeda arquivos estáticos).
-2. Fallback de SPA: qualquer caminho que não seja `/bff`, `/api`, `/signin-oidc`, `/signout-callback-oidc` ou arquivo existente responde `index.html`. Sem isso, recarregar `/mensagens/<id>` resulta em 404.
-3. `index.html` sem cache; `assets/*` com cache longo (nomes com hash).
+2. Fallback de SPA: qualquer caminho que não seja `/bff`, `/api`, `/media`, `/signin-oidc`, `/signout-callback-oidc` ou `/assets` responde `index.html`. Sem isso, recarregar `/mensagens/<id>` resulta em 404. Em `/assets`, arquivo ausente responde 404.
+3. `index.html` e rotas da SPA sem cache; arquivos existentes de `assets/*` com cache longo (nomes com hash).
+4. `/media` encaminhado ao armazenamento sem `Cookie`, `Authorization` e `X-Forwarded-Host` (este último invalida os endereços assinados).
 
-`npm run preview` reproduz esse arranjo localmente com o mesmo proxy, inclusive callbacks OIDC. No ambiente P09, utilizar `Start-WebIntegration.ps1 -Preview` após o build.
+A configuração de referência é `deploy/Caddyfile`. `scripts/Start-WebPublication.ps1` faz o build e a serve pelo Caddy no ambiente P09, e `scripts/Test-WebPublication.ps1` verifica as regras acima no build publicado. O roteiro `e2e-real` pode ser repetido contra o mesmo endereço. `npm run preview` (ou `Start-WebIntegration.ps1 -Preview` na P09) reproduz o proxy, mas não substitui a homologação pelo Caddy.
 
 ## Limitações conhecidas
 
