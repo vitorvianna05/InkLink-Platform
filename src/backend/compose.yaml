@@ -187,6 +187,17 @@ services:
       interval: 2s
       timeout: 3s
       retries: 30
+  mailpit:
+    # E-mail e SMS simulados do cadastro (decisão 0020): SMTP em 5185 e caixa de entrada em http://127.0.0.1:5184.
+    image: axllent/mailpit:v1.27.11
+    ports:
+      - "127.0.0.1:5185:1025"
+      - "127.0.0.1:5184:8025"
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
 volumes:
   scheduling-data:
   finance-data:

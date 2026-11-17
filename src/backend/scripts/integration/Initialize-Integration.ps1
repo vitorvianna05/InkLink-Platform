@@ -3,7 +3,7 @@ New-Item -ItemType Directory -Force -Path $IntegrationRoot|Out-Null
 $sourceCompose=Join-Path $IntegrationRepo 'src/backend/compose.yaml'
 $realmText=Get-Content "$IntegrationRepo/src/backend/identity-provider/inklink-realm.json" -Raw
 $composeText=Get-Content $sourceCompose -Raw
-$keys=@([regex]::Matches($composeText+' '+$realmText,'\$\{([A-Z_]+)')|ForEach-Object {$_.Groups[1].Value})+@('BFF_CERT_PASSWORD','INTEGRATION_USER_PASSWORD','OBJECT_STORAGE_CATALOG_SECRET','OBJECT_STORAGE_IDENTITY_SECRET')
+$keys=@([regex]::Matches($composeText+' '+$realmText,'\$\{([A-Z_]+)')|ForEach-Object {$_.Groups[1].Value})+@('BFF_CERT_PASSWORD','INTEGRATION_USER_PASSWORD','OBJECT_STORAGE_CATALOG_SECRET','OBJECT_STORAGE_IDENTITY_SECRET','REGISTRATION_CODE_SECRET')
 $envPath="$IntegrationRoot/.env"
 if(!(Test-Path -LiteralPath $envPath)){[IO.File]::WriteAllText($envPath,'')}
 $existing=Get-Content -LiteralPath $envPath
