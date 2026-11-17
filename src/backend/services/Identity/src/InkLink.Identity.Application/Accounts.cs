@@ -2,7 +2,7 @@ using InkLink.Identity.Domain;
 
 namespace InkLink.Identity.Application;
 
-public sealed record AccountIdentity(Guid ProfileId, bool IsArtist);
+public sealed record AccountIdentity(Guid ProfileId, bool IsArtist, bool RegistrationPending = false);
 
 public interface IAccountStore
 {

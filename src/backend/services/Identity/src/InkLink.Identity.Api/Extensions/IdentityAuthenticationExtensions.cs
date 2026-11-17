@@ -10,6 +10,7 @@ internal static class IdentityAuthenticationExtensions
         services.AddInkLinkAccessTokens(configuration, environment);
         services.AddScoped<CallerContext>();
         services.AddScoped<ICurrentUser>(provider => provider.GetRequiredService<CallerContext>());
+        services.AddScoped<InkLink.Identity.Application.Registration.ICurrentContact>(provider => provider.GetRequiredService<CallerContext>());
         return services;
     }
 

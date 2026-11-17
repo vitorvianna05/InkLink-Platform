@@ -9,7 +9,8 @@ public interface IProfileReader
 }
 /// <summary>Perfil com a foto (512 px) e a miniatura (128 px); endereços assinados para foto privada.</summary>
 public sealed record ProfileResponse(Guid Id, string DisplayName, string? PhotoUrl = null, string? PhotoThumbnailUrl = null);
-public enum ProfileStatus { Found, Unauthenticated, NotFound }
+/// <summary>PendingRegistration: conta do cadastro ainda sem confirmação (decisão 0020); as APIs privadas a recusam.</summary>
+public enum ProfileStatus { Found, Unauthenticated, NotFound, PendingRegistration }
 public sealed record ProfileResult(ProfileStatus Status, ProfileResponse? Profile = null);
 
 public sealed class GetMyProfile(ICurrentUser currentUser, IProfileReader profiles, IProfilePhotos photos)
@@ -20,6 +21,7 @@ public sealed class GetMyProfile(ICurrentUser currentUser, IProfileReader profil
             return new(ProfileStatus.Unauthenticated);
         var profile = await profiles.FindByIdAsync(id, cancellationToken);
         if (profile is null) return new(ProfileStatus.NotFound);
+        if (profile.RegistrationPending) return new(ProfileStatus.PendingRegistration);
         var photo = await photos.ResolveAsync(profile.PhotoKey, profile.PhotoPublic, cancellationToken);
         return new(ProfileStatus.Found, new(profile.Id, profile.DisplayName, photo?.Url, photo?.ThumbnailUrl));
     }

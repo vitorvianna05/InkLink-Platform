@@ -71,11 +71,12 @@ public sealed class SecurityFixture : IAsyncLifetime
         wrongAudience["clientId"] = "inklink-test-other-audience";
         wrongAudience["protocolMappers"]![0]!["config"]!["included.custom.audience"] = "other-api";
         clients.Add(wrongAudience);
-        realm["users"] = new JsonArray("alice", "bob", "unprovisioned", "carol").Select(name => (JsonNode?)new JsonObject
+        // "pending" e "pending2" representam contas criadas pela página de cadastro (email_verified falso, decisão 0020).
+        realm["users"] = new JsonArray("alice", "bob", "unprovisioned", "carol", "pending", "pending2").Select(name => (JsonNode?)new JsonObject
         {
             ["username"] = name!.GetValue<string>(),
             ["enabled"] = true,
-            ["emailVerified"] = true,
+            ["emailVerified"] = !name.GetValue<string>().StartsWith("pending", StringComparison.Ordinal),
             ["email"] = name.GetValue<string>() + "@example.test",
             ["firstName"] = name.GetValue<string>(),
             ["lastName"] = "Test",

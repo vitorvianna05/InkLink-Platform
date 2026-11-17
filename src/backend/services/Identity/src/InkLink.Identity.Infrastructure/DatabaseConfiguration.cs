@@ -66,6 +66,36 @@ public static class DependencyInjection
         return services;
     }
 
+    /// <summary>
+    /// Cadastro pelo próprio usuário (decisão 0020): códigos de confirmação, envio por SMTP e simulador de SMS local.
+    /// O segredo dos códigos é obrigatório fora de Testing, onde um segredo aleatório por processo é aceito.
+    /// </summary>
+    public static IServiceCollection AddIdentityRegistration(this IServiceCollection services, IConfiguration configuration, bool localEnvironment, bool testing)
+    {
+        services.TryAddSingleton(TimeProvider.System);
+        var registration = configuration.GetSection(Registration.RegistrationOptions.Section).Get<Registration.RegistrationOptions>() ?? new();
+        var contact = configuration.GetSection(Registration.ContactOptions.Section).Get<Registration.ContactOptions>() ?? new();
+        byte[] secret;
+        if (string.IsNullOrWhiteSpace(registration.CodeSecret))
+        {
+            if (!testing) throw new InvalidOperationException("Registration:CodeSecret is required. Configure environment variables or user secrets.");
+            secret = System.Security.Cryptography.RandomNumberGenerator.GetBytes(32);
+        }
+        else
+        {
+            if (registration.CodeSecret.Length < 32) throw new InvalidOperationException("Registration:CodeSecret must have at least 32 characters.");
+            secret = System.Text.Encoding.UTF8.GetBytes(registration.CodeSecret);
+        }
+        if (string.IsNullOrWhiteSpace(registration.TermsVersion)) throw new InvalidOperationException("Registration:TermsVersion is required.");
+        services.AddSingleton(new Application.Registration.RegistrationSettings(registration.TermsVersion));
+        services.AddSingleton<Application.Registration.ICodeHasher>(new Registration.HmacCodeHasher(secret));
+        services.AddSingleton(contact);
+        services.AddSingleton<Application.Registration.IContactMessenger>(provider => new Registration.SmtpContactMessenger(
+            contact, localEnvironment, provider.GetRequiredService<Microsoft.Extensions.Logging.ILogger<Registration.SmtpContactMessenger>>()));
+        services.AddScoped<Application.Registration.IRegistrationStore, Registration.EfRegistrationStore>();
+        return services;
+    }
+
     public static IServiceCollection AddIdentityInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddSingleton<IValidateOptions<IdentityDatabaseOptions>, DatabaseOptionsValidator>();
@@ -74,6 +104,7 @@ public static class DependencyInjection
             provider.GetRequiredService<IOptions<IdentityDatabaseOptions>>().Value.ConnectionString));
         services.AddScoped<Application.IProfileReader, EfProfileReader>();
         services.AddScoped<Application.IAccountStore, EfAccountStore>();
+        services.AddScoped<Application.Registration.IArtistRequestReader, Registration.EfArtistRequestReader>();
         services.AddHealthChecks().AddCheck<IdentityReadinessCheck>("identity-database", tags: ["ready"]);
         return services;
     }

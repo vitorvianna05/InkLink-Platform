@@ -6,6 +6,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Logging.AddIdentityLogging();
 builder.Services.AddIdentityInfrastructure(builder.Configuration);
 builder.Services.AddIdentityMedia(builder.Configuration, builder.Environment.IsDevelopment() || builder.Environment.IsEnvironment("Testing"), builder.Environment.IsEnvironment("Testing"));
+builder.Services.AddIdentityRegistration(builder.Configuration, builder.Environment.IsDevelopment() || builder.Environment.IsEnvironment("Testing"), builder.Environment.IsEnvironment("Testing"));
 builder.Services.AddIdentityUseCases();
 builder.Services.AddIdentityAuthentication(builder.Configuration, builder.Environment);
 builder.Services.AddIdentityHttpContracts();
@@ -18,6 +19,7 @@ app.UseIdentityAuthentication();
 app.MapIdentityHealth();
 app.MapIdentityDocumentation();
 app.MapProfileEndpoints();
+app.MapRegistrationEndpoints();
 app.Run();
 
 public partial class IdentityProgram;

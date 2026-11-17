@@ -51,16 +51,38 @@ namespace InkLink.Identity.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<DateTimeOffset?>("ArtistRequestedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("artist_requested_at");
+
+                    b.Property<string>("ConfirmedEmail")
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)")
+                        .HasColumnName("confirmed_email");
+
                     b.Property<string>("DisplayName")
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("display_name");
+
+                    b.Property<DateTimeOffset?>("EmailConfirmedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("email_confirmed_at");
 
                     b.Property<bool>("IsArtist")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
                         .HasDefaultValue(false)
                         .HasColumnName("is_artist");
+
+                    b.Property<DateTimeOffset?>("PhoneConfirmedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("phone_confirmed_at");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("phone_number");
 
                     b.Property<string>("PhotoKey")
                         .HasMaxLength(200)
@@ -79,11 +101,85 @@ namespace InkLink.Identity.Infrastructure.Migrations
                         .HasDefaultValue(0)
                         .HasColumnName("photo_revision");
 
+                    b.Property<bool>("RegistrationPending")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("registration_pending");
+
+                    b.Property<DateTimeOffset?>("TermsAcceptedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("terms_accepted_at");
+
+                    b.Property<string>("TermsVersion")
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)")
+                        .HasColumnName("terms_version");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("PhoneNumber")
+                        .IsUnique()
+                        .HasDatabaseName("ix_profiles_confirmed_phone")
+                        .HasFilter("phone_confirmed_at IS NOT NULL");
 
                     b.ToTable("profiles", "identity", t =>
                         {
                             t.HasCheckConstraint("ck_profiles_display_name", "length(btrim(display_name)) > 0");
+                        });
+                });
+
+            modelBuilder.Entity("InkLink.Identity.Domain.VerificationCode", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<int>("Attempts")
+                        .HasColumnType("integer")
+                        .HasColumnName("attempts");
+
+                    b.Property<string>("Channel")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("channel");
+
+                    b.Property<DateTimeOffset?>("ClosedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("closed_at");
+
+                    b.Property<string>("CodeHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("code_hash");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<Guid>("ProfileId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("profile_id");
+
+                    b.Property<string>("Target")
+                        .IsRequired()
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)")
+                        .HasColumnName("target");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProfileId", "Channel", "CreatedAt");
+
+                    b.ToTable("verification_codes", "identity", t =>
+                        {
+                            t.HasCheckConstraint("ck_verification_codes_attempts", "attempts >= 0");
                         });
                 });
 
@@ -161,6 +257,15 @@ namespace InkLink.Identity.Infrastructure.Migrations
                     b.HasOne("InkLink.Identity.Domain.Profile", null)
                         .WithOne()
                         .HasForeignKey("InkLink.Identity.Domain.ExternalAccount", "ProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("InkLink.Identity.Domain.VerificationCode", b =>
+                {
+                    b.HasOne("InkLink.Identity.Domain.Profile", null)
+                        .WithMany()
+                        .HasForeignKey("ProfileId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
