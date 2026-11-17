@@ -52,7 +52,7 @@ function Verify-PreservedData {param($Data)
     $null=Invoke-Api other Get ('/api/v1/finance/entries/'+$Data.receipt) -Expected @(403)
 }
 New-Item -ItemType Directory -Force -Path "$IntegrationRoot/contracts"|Out-Null
-$prefixes=@{identity=@('/api/v1/profiles');catalog=@('/api/v1/artists','/api/v1/favorites','/api/v2/artists');engagements=@('/api/v2/engagements');messaging=@('/api/v1/conversations');scheduling=@('/api/v1/scheduling');finance=@('/api/v1/finance')}
+$prefixes=@{identity=@('/api/v1/profiles','/api/v1/registration');catalog=@('/api/v1/artists','/api/v1/favorites','/api/v2/artists');engagements=@('/api/v2/engagements');messaging=@('/api/v1/conversations');scheduling=@('/api/v1/scheduling');finance=@('/api/v1/finance')}
 foreach($service in $prefixes.Keys){
     $doc=Invoke-RestMethod "https://localhost:5291/swagger/documents/$service.json" -TimeoutSec 15
     Check ($doc.servers[0].url -eq '/') "$service OpenAPI uses Gateway origin"

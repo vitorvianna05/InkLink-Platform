@@ -22,7 +22,7 @@ internal static class GatewayDocumentationExtensions
                 throw new InvalidOperationException("Invalid documentation backend address.");
             documents.Add(new(name, new Uri(uri.ToString().TrimEnd('/') + "/"), prefixes));
         }
-        Add("identity", "Gateway:IdentityAddress", "/api/v1/profiles");
+        Add("identity", "Gateway:IdentityAddress", "/api/v1/profiles", "/api/v1/registration");
         Add("catalog", "Gateway:CatalogAddress", "/api/v1/artists", "/api/v1/favorites", "/api/v2/artists");
         Add("engagements", "Gateway:EngagementsAddress", "/api/v2/engagements");
         Add("messaging", "Gateway:MessagingAddress", "/api/v1/conversations");
