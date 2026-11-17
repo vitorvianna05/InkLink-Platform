@@ -3,6 +3,7 @@ import { Link } from 'react-router';
 import { ArtistGrid } from '@/features/catalog/ArtistCardView';
 import { useFavorites } from '@/features/catalog/api';
 import { useConversations } from '@/features/messaging/api';
+import { ArtistRequestCard } from '@/features/registration/ArtistRequestCard';
 import { useCalendar } from '@/features/scheduling/api';
 import { RequireSession } from '@/features/session/guards';
 import type { Session } from '@/features/session/session';
@@ -137,6 +138,7 @@ function Content({ session }: { session: Session }) {
       <Requests />
       <UpcomingReservations />
       <Favorites />
+      {!session.isArtist && <ArtistRequestCard />}
     </>
   );
 }

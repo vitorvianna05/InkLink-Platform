@@ -1,7 +1,7 @@
-import { AlertTriangle, ArrowLeft, CalendarCheck, Loader2, LogIn, MessagesSquare, Search, ShieldCheck } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, CalendarCheck, Loader2, LogIn, MessagesSquare, Search, ShieldCheck, UserPlus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, Navigate, useSearchParams } from 'react-router';
-import { safeDestination } from './destination';
+import { confirmationPath, safeDestination } from './destination';
 import { useSession } from './session';
 
 const highlights = [
@@ -19,13 +19,13 @@ export function LoginPage() {
   const [params] = useSearchParams();
   const destination = safeDestination(params.get('destino'));
   const failed = params.get('erro') === 'login';
-  const { status, signIn, retry } = useSession();
-  const [redirecting, setRedirecting] = useState(false);
+  const { status, session, signIn, register, retry } = useSession();
+  const [redirecting, setRedirecting] = useState<'login' | 'register' | null>(null);
 
   // Voltar do provedor pelo histórico pode restaurar esta página do cache com o botão ainda bloqueado.
   useEffect(() => {
     const reset = (event: PageTransitionEvent) => {
-      if (event.persisted) setRedirecting(false);
+      if (event.persisted) setRedirecting(null);
     };
     window.addEventListener('pageshow', reset);
     return () => window.removeEventListener('pageshow', reset);
@@ -39,11 +39,16 @@ export function LoginPage() {
     };
   }, []);
 
-  if (status === 'authenticated') return <Navigate to={destination} replace />;
+  if (status === 'authenticated') return <Navigate to={session?.pending ? confirmationPath(destination) : destination} replace />;
 
   const start = () => {
-    setRedirecting(true);
+    setRedirecting('login');
     signIn(destination);
+  };
+  // Cadastro na página do provedor (decisão 0020); a senha nunca é digitada no website.
+  const create = () => {
+    setRedirecting('register');
+    register(destination);
   };
 
   return (
@@ -106,19 +111,26 @@ export function LoginPage() {
                   <span>Não foi possível concluir o login. Tente novamente.</span>
                 </div>
               )}
-              <button type="button" className="button red full login-action" onClick={start} disabled={redirecting}>
-                {redirecting ? <Loader2 className="spin" size={18} aria-hidden="true" /> : <LogIn size={18} aria-hidden="true" />}
-                {redirecting ? 'Redirecionando…' : 'Entrar'}
+              <button type="button" className="button red full login-action" onClick={start} disabled={redirecting !== null}>
+                {redirecting === 'login' ? <Loader2 className="spin" size={18} aria-hidden="true" /> : <LogIn size={18} aria-hidden="true" />}
+                {redirecting === 'login' ? 'Redirecionando…' : 'Entrar'}
               </button>
+              <div className="login-register">
+                <span>Ainda não tem conta?</span>
+                <button type="button" className="button outline full" onClick={create} disabled={redirecting !== null}>
+                  {redirecting === 'register' ? <Loader2 className="spin" size={18} aria-hidden="true" /> : <UserPlus size={18} aria-hidden="true" />}
+                  {redirecting === 'register' ? 'Redirecionando…' : 'Criar conta'}
+                </button>
+              </div>
               <p className="login-status" role="status" aria-live="polite">
-                {redirecting ? 'Abrindo a página segura de login do InkLink.' : ''}
+                {redirecting === 'login' ? 'Abrindo a página segura de login do InkLink.' : redirecting === 'register' ? 'Abrindo a página segura de cadastro do InkLink.' : ''}
               </p>
             </>
           )}
 
           <p className="login-security">
             <ShieldCheck size={18} aria-hidden="true" />
-            <span>Você será levado à página segura do provedor de identidade do InkLink e voltará para cá já conectado. Nenhuma senha é digitada nesta página.</span>
+            <span>Login e cadastro acontecem na página segura do provedor de identidade do InkLink, e você volta para cá já conectado. Nenhuma senha é digitada nesta página.</span>
           </p>
 
           <Link className="login-back" to="/">

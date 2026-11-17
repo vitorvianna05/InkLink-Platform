@@ -50,7 +50,7 @@ const messages = [
 
 const page = (items: unknown[]) => ({ items, nextCursor: null, hasMore: false, total: items.length, resumeCursor: 'r' });
 
-export async function mockBackend(pageObject: Page, role: 'anonymous' | 'client' | 'artist' = 'client') {
+export async function mockBackend(pageObject: Page, role: 'anonymous' | 'client' | 'artist' | 'pending' = 'client') {
   const profile = role === 'artist' ? artist : client;
   // Interlocutor conforme a perspectiva, como na Messaging: o artista vê o cliente (com a foto assinada).
   const counterpart = role === 'artist' ? { id: client.id, displayName: client.displayName, photoUrl: client.photoUrl, photoThumbnailUrl: client.photoThumbnailUrl } : conversation.counterpart;
@@ -61,7 +61,13 @@ export async function mockBackend(pageObject: Page, role: 'anonymous' | 'client'
     const json = (body: unknown, status = 200) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
     if (path === '/bff/session') return role === 'anonymous' ? json({ status: 401, code: 'session.required' }, 401) : json({ authenticated: true, name: profile.displayName });
     if (path === '/bff/antiforgery') return json({ requestToken: 't' });
-    if (path === '/api/v1/profiles/me') return json(profile);
+    // Conta do cadastro ainda pendente (decisão 0020): as APIs privadas a recusam até a confirmação.
+    if (path === '/api/v1/profiles/me') return role === 'pending' ? json({ status: 403, code: 'account.confirmation_required' }, 403) : json(profile);
+    if (path === '/api/v1/registration') {
+      return role === 'pending'
+        ? json({ state: 'Pending', email: 'nova.pessoa@example.test', emailConfirmed: true, phoneNumber: null, phoneConfirmed: false, termsVersion: '2026-11-provisorio', termsAccepted: false, artistRequest: 'None', emailResendAt: null, phoneResendAt: null })
+        : json({ state: 'Active', email: 'conta@example.test', emailConfirmed: true, phoneNumber: '+5511987654321', phoneConfirmed: true, termsVersion: '2026-11-provisorio', termsAccepted: true, artistRequest: role === 'artist' ? 'Approved' : 'None', emailResendAt: null, phoneResendAt: null });
+    }
     if (path === '/api/v1/scheduling/artist-context') return role === 'artist' ? json({ artistId: artist.id, timeZoneId: 'America/Sao_Paulo', observedAt: new Date().toISOString() }) : json({ status: 403, code: 'authorization.denied' }, 403);
     if (path === '/api/v1/artists' || path === '/api/v1/artists/search') return json(page(artists));
     if (path === '/api/v1/artists/suggestions') {

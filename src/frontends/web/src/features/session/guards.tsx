@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
-import { Link, useLocation } from 'react-router';
+import { Link, Navigate, useLocation } from 'react-router';
 import { Dialog } from '@/shared/ui/Dialog';
 import { EmptyState, ErrorState, Loading, SignInPrompt } from '@/shared/ui/States';
-import { loginPath } from './destination';
+import { confirmationPath, loginPath } from './destination';
 import { useSession, type Session } from './session';
 
 /** Renderiza o conteúdo apenas com sessão válida; visitantes recebem o convite para entrar. */
@@ -12,6 +12,8 @@ export function RequireSession({ message, children }: { message: string; childre
   if (status === 'loading') return <Loading label="Verificando sua sessão…" />;
   if (status === 'error') return <ErrorState error={null} onRetry={retry} />;
   if (!session) return <SignInPrompt message={message} href={loginPath(location)} />;
+  // Conta pendente (decisão 0020): as áreas privadas levam à confirmação do cadastro, que devolve a este endereço.
+  if (session.pending) return <Navigate to={confirmationPath(`${location.pathname}${location.search}${location.hash}`)} replace />;
   return <>{children(session)}</>;
 }
 
@@ -24,7 +26,7 @@ export function RequireArtist({ children }: { children: (session: Session) => Re
           children(session)
         ) : (
           <EmptyState title="Esta área é exclusiva para artistas.">
-            <p>Sua conta ainda não possui a função de artista. A ativação é feita pela operação do InkLink.</p>
+            <p>Sua conta ainda não possui a função de artista. Solicite em Meu espaço; a ativação acontece depois da aprovação da equipe do InkLink.</p>
             <Link className="button outline" to="/meu-espaco">
               Ir para Meu espaço
             </Link>

@@ -112,7 +112,7 @@ export function UserMenu({ links, inStudio }: { links: NavItem[]; inStudio: bool
                 <Avatar name={account.profile.displayName} photoUrl={account.profile.photoThumbnailUrl} />
                 <div>
                   <strong>{account.profile.displayName}</strong>
-                  <small>{account.isArtist ? 'Artista' : 'Cliente'}</small>
+                  <small>{account.pending ? 'Cadastro pendente' : account.isArtist ? 'Artista' : 'Cliente'}</small>
                 </div>
               </div>
             ) : (
@@ -135,6 +135,13 @@ export function UserMenu({ links, inStudio }: { links: NavItem[]; inStudio: bool
             ))}
           </div>
 
+          {account?.pending && (
+            <div className="user-menu-section user-menu-links">
+              <Link className="button red full" to="/cadastro/confirmar">
+                Concluir cadastro
+              </Link>
+            </div>
+          )}
           {account && (
             <>
               {shortcuts.length > 0 && (
@@ -148,17 +155,19 @@ export function UserMenu({ links, inStudio }: { links: NavItem[]; inStudio: bool
                 </div>
               )}
               <div className="user-menu-section">
-                <button
-                  type="button"
-                  className="user-menu-signout"
-                  onClick={() => {
-                    setOpen(false);
-                    setPhotoOpen(true);
-                  }}
-                >
-                  <Camera size={18} aria-hidden="true" />
-                  Foto de perfil
-                </button>
+                {!account.pending && (
+                  <button
+                    type="button"
+                    className="user-menu-signout"
+                    onClick={() => {
+                      setOpen(false);
+                      setPhotoOpen(true);
+                    }}
+                  >
+                    <Camera size={18} aria-hidden="true" />
+                    Foto de perfil
+                  </button>
+                )}
                 <button type="button" className="user-menu-signout" onClick={() => void handleSignOut()}>
                   <LogOut size={18} aria-hidden="true" />
                   Sair da conta

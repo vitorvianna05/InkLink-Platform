@@ -308,6 +308,25 @@ td.amount { text-align: right; font-variant-numeric: tabular-nums; }
 .login-card > p.muted { margin: 0; }
 .login-action { margin-top: 8px; }
 .login-status { margin: 0; min-height: 1.55em; font-size: 14px; color: var(--muted); }
+/* Cadastro (T10.24, decisão 0020): a mesma página dividida do login, com as etapas de confirmação. */
+.login-register { display: grid; gap: 8px; margin-top: 4px; font-size: 14px; color: var(--muted); }
+.registration-card { gap: 18px; }
+.registration-step { display: grid; gap: 10px; padding: 16px; border: 1px solid var(--line); border-radius: var(--radius-small); background: var(--surface); }
+.registration-step.done { background: #f3f8f4; border-color: #cfe5d6; }
+.registration-step h2 { display: flex; align-items: center; gap: 10px; font-size: 17px; }
+.registration-step-number { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--ink-strong); color: #fff; font-size: 13px; flex: none; }
+.registration-step.done .registration-step-number { background: var(--green); }
+.registration-code, .registration-phone { display: grid; gap: 8px; }
+.registration-code .row, .registration-phone .row { flex-wrap: wrap; align-items: center; }
+.registration-code input, .registration-phone input { min-height: 46px; border-radius: var(--radius-small); border: 1px solid var(--line); background: var(--surface); padding: 10px 14px; }
+.registration-code input[aria-invalid='true'] { border-color: var(--red); }
+.registration-code label, .registration-phone label { font-weight: 600; font-size: 14px; }
+.registration-code-input { width: 12ch; font-size: 22px; letter-spacing: 0.25em; font-variant-numeric: tabular-nums; text-align: center; }
+.registration-phone input { flex: 1 1 200px; min-width: 0; }
+.registration-terms { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 10px; }
+.registration-terms input { margin-top: 4px; flex: none; }
+.form-card.artist-request { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; margin-top: 28px; }
+.terms-page ul { display: grid; gap: 8px; padding-left: 20px; }
 .login-status:empty { display: none; }
 .login-notice { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 12px 14px; border-radius: var(--radius-small); background: #fdf0f0; border: 1px solid #f3c4c7; color: var(--red-strong); font-size: 14px; }
 .login-notice svg { flex: none; }

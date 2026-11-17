@@ -39,6 +39,8 @@ describe('sessão e áreas por função', () => {
       http.get('/api/v2/engagements', () => problem(401, 'session.required')),
       http.get('/api/v1/scheduling/calendar', () => HttpResponse.json(page([]))),
       http.get('/api/v1/favorites', () => HttpResponse.json(page([]))),
+      http.get('/api/v1/conversations', () => HttpResponse.json(page([]))),
+      http.get('/api/v1/registration', () => problem(401, 'session.required')),
     );
     renderApp('/meu-espaco');
     expect(await screen.findByRole('heading', { name: 'Sua sessão expirou' })).toBeInTheDocument();

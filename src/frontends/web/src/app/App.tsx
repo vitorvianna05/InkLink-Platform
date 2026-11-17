@@ -11,6 +11,8 @@ import { FinancePage } from '@/features/finance/FinancePage';
 import { StudioDashboardPage } from '@/features/finance/StudioDashboardPage';
 import { ConversationPage } from '@/features/messaging/ConversationPage';
 import { ConversationsPage } from '@/features/messaging/ConversationsPage';
+import { RegistrationPage } from '@/features/registration/RegistrationPage';
+import { TermsPage } from '@/features/registration/TermsPage';
 import { AgendaPage } from '@/features/scheduling/AgendaPage';
 import { LoginPage } from '@/features/session/LoginPage';
 import { SessionProvider } from '@/features/session/session';
@@ -47,9 +49,11 @@ export function AppRoutes() {
   return (
     <Routes>
       <Route path="entrar" element={<LoginPage />} />
+      <Route path="cadastro/confirmar" element={<RegistrationPage />} />
       <Route element={<Layout />}>
         <Route index element={<DiscoverPage />} />
         <Route path="explorar" element={<ExplorePage />} />
+        <Route path="termos" element={<TermsPage />} />
         <Route path="artistas/:artistId" element={<ArtistPage />} />
         <Route path="meu-espaco" element={<MySpacePage />} />
         <Route path="atendimentos/:engagementId" element={<EngagementPage perspective="client" />} />

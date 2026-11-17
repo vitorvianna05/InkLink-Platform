@@ -3,7 +3,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import type { ArtistCalendarContext, Profile } from '@/shared/api/contracts';
 import { ApiError, getJson, onSessionExpired, resetCsrfToken } from '@/shared/api/http';
 import { browser } from '@/shared/lib/browser';
-import { safeDestination } from './destination';
+import { confirmationPath, safeDestination } from './destination';
 
 export interface Session {
   name: string | null;
@@ -11,6 +11,8 @@ export interface Session {
   /** Função Artist confirmada pelo backend (não há troca de personagens). */
   isArtist: boolean;
   artistTimeZone: string | null;
+  /** Conta do cadastro ainda sem confirmação de e-mail, celular e termos (decisão 0020). */
+  pending: boolean;
 }
 
 type Status = 'loading' | 'anonymous' | 'authenticated' | 'error';
@@ -24,6 +26,8 @@ interface SessionContextValue {
   popupBlocked: boolean;
   /** Login por redirecionamento de página inteira; volta ao destino (padrão: endereço atual) autenticado. */
   signIn: (destination?: string) => void;
+  /** Cadastro na página do provedor (prompt=create); volta à confirmação do cadastro com o destino. */
+  register: (destination?: string) => void;
   reauthenticate: () => void;
   signOut: () => Promise<void>;
   dismissExpired: () => void;
@@ -44,7 +48,16 @@ async function loadSession(): Promise<Session | null> {
   const bff = await readBffSession();
   if (!bff?.authenticated) return null;
   // O primeiro GET do perfil vincula a identidade federada e provisiona a função Client.
-  const profile = await getJson<Profile>('/api/v1/profiles/me');
+  let profile: Profile;
+  try {
+    profile = await getJson<Profile>('/api/v1/profiles/me');
+  } catch (error) {
+    // Conta criada pelo cadastro e ainda não confirmada: as áreas privadas levam à confirmação (decisão 0020).
+    if (error instanceof ApiError && error.status === 403 && error.code === 'account.confirmation_required') {
+      return { name: bff.name, profile: { id: '', displayName: bff.name ?? 'Nova conta' }, isArtist: false, artistTimeZone: null, pending: true };
+    }
+    throw error;
+  }
   let isArtist = false;
   let artistTimeZone: string | null = null;
   try {
@@ -54,7 +67,7 @@ async function loadSession(): Promise<Session | null> {
   } catch (error) {
     if (!(error instanceof ApiError) || error.status !== 403) throw error;
   }
-  return { name: bff.name, profile, isArtist, artistTimeZone };
+  return { name: bff.name, profile, isArtist, artistTimeZone, pending: false };
 }
 
 const POLL_MS = 1500;
@@ -95,6 +108,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     // Decisão 0017 (revisada): o BFF conclui o OIDC e devolve o navegador ao website no destino validado.
     const target = safeDestination(destination ?? `${window.location.pathname}${window.location.search}${window.location.hash}`);
     browser.assign(`/bff/login?returnUrl=${encodeURIComponent(target)}`);
+  }, []);
+
+  const register = useCallback((destination?: string) => {
+    const target = safeDestination(destination ?? `${window.location.pathname}${window.location.search}${window.location.hash}`);
+    browser.assign(`/bff/register?returnUrl=${encodeURIComponent(confirmationPath(target))}`);
   }, []);
 
   const reauthenticate = useCallback(() => {
@@ -172,12 +190,13 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       signingIn,
       popupBlocked,
       signIn,
+      register,
       reauthenticate,
       signOut,
       dismissExpired: () => setExpired(false),
       retry: () => void query.refetch(),
     };
-  }, [query, authenticated, expired, signingIn, popupBlocked, signIn, reauthenticate, signOut]);
+  }, [query, authenticated, expired, signingIn, popupBlocked, signIn, register, reauthenticate, signOut]);
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
 }

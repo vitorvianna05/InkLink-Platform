@@ -3,7 +3,7 @@ import { mockBackend } from './mock-backend';
 
 const widths = [360, 768, 1280];
 
-const clientPages = ['/', '/explorar?buscar=1', '/artistas/a1', '/meu-espaco', '/mensagens', '/mensagens/c1', '/atendimentos/e1'];
+const clientPages = ['/', '/explorar?buscar=1', '/artistas/a1', '/meu-espaco', '/mensagens', '/mensagens/c1', '/atendimentos/e1', '/termos'];
 const artistPages = ['/estudio', '/estudio/agenda?dia=2030-01-15', '/estudio/mensagens', '/estudio/financeiro', '/estudio/portfolio', '/estudio/atendimentos/e1'];
 
 async function expectNoHorizontalOverflow(page: Page) {
@@ -132,6 +132,7 @@ for (const width of widths) {
     await page.goto('/entrar?destino=%2Fmeu-espaco');
     await expect(page.getByRole('heading', { level: 1, name: 'Bem-vindo ao InkLink.' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Entrar', exact: true })).toBeEnabled();
+    await expect(page.getByRole('button', { name: 'Criar conta' })).toBeEnabled();
     await expect(page.locator('input')).toHaveCount(0);
     await expectNoHorizontalOverflow(page);
     const brand = await page.locator('.login-brand').boundingBox();
@@ -143,6 +144,24 @@ for (const width of widths) {
       expect(panel!.y).toBeGreaterThanOrEqual(brand!.y + brand!.height - 1);
     }
     await page.screenshot({ path: `test-results/screens/${width}_entrar.png`, fullPage: true });
+  });
+
+  test(`confirmação do cadastro ${width}px sem sobreposição e operável por teclado`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await mockBackend(page, 'pending');
+    // Conta pendente que tenta abrir Meu espaço é levada à confirmação (decisão 0020).
+    await page.goto('/meu-espaco');
+    await expect(page).toHaveURL(/\/cadastro\/confirmar\?destino=%2Fmeu-espaco$/);
+    await expect(page.getByRole('heading', { level: 1, name: 'Confirme seu cadastro.' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /E-mail \(concluído\)/ })).toBeVisible();
+    const terms = page.getByRole('checkbox', { name: /Termos de uso/ });
+    await terms.focus();
+    await page.keyboard.press('Space');
+    await expect(terms).toBeChecked();
+    await expect(page.getByRole('button', { name: 'Aceitar termos' })).toBeEnabled();
+    await expect(page.getByLabel('Celular com DDD')).toBeVisible();
+    await expectNoHorizontalOverflow(page);
+    await page.screenshot({ path: `test-results/screens/${width}_cadastro-confirmar.png`, fullPage: true });
   });
 
   test(`menu da conta ${width}px abre informações do usuário`, async ({ page }) => {
