@@ -79,6 +79,12 @@ internal static class BffAuthenticationExtensions
                 }
                 return ApiErrors.WriteAsync(context.HttpContext, 401, "login.failed");
             };
+            options.Events.OnRedirectToIdentityProvider = context =>
+            {
+                if (context.Properties.Items.TryGetValue(BffSessionEndpointExtensions.PromptItem, out var prompt) && prompt == "create")
+                    context.ProtocolMessage.Prompt = "create";
+                return Task.CompletedTask;
+            };
             options.Events.OnRedirectToIdentityProviderForSignOut = context =>
             {
                 context.ProtocolMessage.IdTokenHint = context.Properties.GetParameter<string>("id_token_hint");

@@ -8,6 +8,7 @@ internal static class BffSessionEndpointExtensions
 {
     /// <summary>Marca o login iniciado pelo website, para que falhas do provedor também voltem a ele.</summary>
     internal const string WebReturnItem = "inklink.web-return";
+    internal const string PromptItem = "inklink.prompt";
 
     public static IEndpointRouteBuilder MapBffSessionEndpoints(this IEndpointRouteBuilder app, BffSettings settings)
     {
@@ -21,6 +22,17 @@ internal static class BffSessionEndpointExtensions
                 return ApiErrors.WriteAsync(context, 400, "login.return_url_invalid");
             var properties = new AuthenticationProperties { RedirectUri = BffReturnUrl.Resolve(settings, returnUrl) };
             properties.Items[WebReturnItem] = returnUrl;
+            return context.ChallengeAsync("oidc", properties);
+        });
+        // Cadastro (decisão 0020): o mesmo Code + PKCE do login com prompt=create, que abre a página de cadastro do
+        // Keycloak. A senha é digitada só no provedor; ao concluir, o navegador volta ao destino local.
+        app.MapGet("/bff/register", (HttpContext context, string? returnUrl) =>
+        {
+            if (returnUrl is null || !BffReturnUrl.IsLocal(returnUrl))
+                return ApiErrors.WriteAsync(context, 400, "login.return_url_invalid");
+            var properties = new AuthenticationProperties { RedirectUri = BffReturnUrl.Resolve(settings, returnUrl) };
+            properties.Items[WebReturnItem] = returnUrl;
+            properties.Items[PromptItem] = "create";
             return context.ChallengeAsync("oidc", properties);
         });
         app.MapGet("/bff/session", (HttpContext context) => Results.Ok(new { authenticated = true, name = context.User.Identity?.Name }))

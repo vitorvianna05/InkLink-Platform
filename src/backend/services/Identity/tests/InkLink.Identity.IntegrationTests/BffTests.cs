@@ -143,6 +143,33 @@ public sealed class BffTests(SecurityFixture fixture)
     }
 
     [Fact]
+    public async Task Register_opens_the_keycloak_registration_form_with_the_inklink_theme()
+    {
+        using var identity = new SecurityIdentityHost(fixture);
+        using var gateway = new SecurityGatewayHost(fixture, identity.Server.CreateHandler());
+        using var bff = new SecurityBffHost(fixture, gateway.Server.CreateHandler());
+        using var browser = new TestBrowser(bff);
+        // Cadastro (decisão 0020): mesmo Code + PKCE do login, com prompt=create e destino local obrigatório.
+        Assert.Equal(HttpStatusCode.BadRequest, (await browser.GetAsync("/bff/register?returnUrl=https%3A%2F%2Fevil.example")).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await browser.GetAsync("/bff/register")).StatusCode);
+        var challenge = await browser.GetAsync("/bff/register?returnUrl=%2Fcadastro%2Fconfirmar");
+        Assert.Equal(HttpStatusCode.Redirect, challenge.StatusCode);
+        // Com PAR, prompt e PKCE vão na requisição enviada ao provedor; o efeito é a página de cadastro abaixo.
+        Assert.Contains("request_uri=", challenge.Headers.Location!.Query);
+        using var provider = new HttpClient(fixture.CreateProviderHandler(browser.Cookies));
+        var page = await provider.GetAsync(challenge.Headers.Location);
+        for (var redirect = 0; redirect < 10 && page.StatusCode == HttpStatusCode.Redirect; redirect++)
+            page = await provider.GetAsync(new Uri(page.RequestMessage!.RequestUri!, page.Headers.Location!));
+        var html = await page.Content.ReadAsStringAsync();
+        Assert.Equal(HttpStatusCode.OK, page.StatusCode);
+        Assert.Contains("class=\"inklink-login\"", html);
+        Assert.Contains("id=\"kc-register-form\"", html);
+        foreach (var field in new[] { "email", "password", "password-confirm", "firstName", "lastName" })
+            Assert.Contains($"name=\"{field}\"", html);
+        Assert.DoesNotContain("name=\"username\"", html); // e-mail como nome de usuário
+    }
+
+    [Fact]
     public async Task Login_without_return_url_keeps_the_session_endpoint_as_destination()
     {
         using var identity = new SecurityIdentityHost(fixture);
