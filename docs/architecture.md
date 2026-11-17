@@ -14,7 +14,7 @@ Este arquivo e os demais documentos de SDD são mutáveis. Registram as decisõe
 
 | Tema | Diretriz adotada |
 | --- | --- |
-| Frontends | Três canais previstos: website em React para web, app iOS em React Native e app Android em React Native, organizados por funcionalidades e com áreas de cliente e artista. |
+| Frontends | Três canais previstos: website em React para web, app iOS em React Native e app Android em React Native, organizados por funcionalidades; o website inclui áreas de cliente, artista e administração. |
 | Backend | Microsserviços em .NET 10, com limites definidos por domínio. |
 | Modelagem | DDD para delimitar contextos e modelar regras complexas; cadastros simples não exigem modelagem artificialmente complexa. |
 | Organização interna | Clean Architecture com dependências voltadas ao domínio e organização por casos de uso. |
@@ -77,7 +77,8 @@ O Gateway concentra a entrada das APIs e o roteamento. A implementação inicial
 
 Responsável pela identidade interna do usuário, funções e dados privados básicos de perfil. A autenticação será delegada ao Keycloak conforme a [decisão 0003](decisions/0003-authentication.md). Identity mantém os perfis e vínculos próprios da aplicação, sem armazenar as credenciais administradas pelo provedor.
 
-- Mantém identificadores de usuários e vínculos com funções de cliente e artista.
+- Mantém identificadores de usuários e vínculos com as funções internas Client, Artist e Admin.
+- Client é atribuída no primeiro acesso; Artist e Admin são adicionais e concedidas por operação administrativa controlada. Admin é concedida pela ferramenta Identity.Admin, não por role de realm Keycloak ou interface pública.
 - Disponibiliza os contratos necessários para identificação e perfis.
 - Não concentra a autorização de todos os objetos de negócio: cada serviço verifica acesso aos próprios recursos.
 - Não é responsável pelo portfólio, pelas propostas ou pelas mensagens.
@@ -88,13 +89,15 @@ A identidade da conta pertence a este contexto. A apresentação pública do art
 
 Responsável pela descoberta dos artistas e sua apresentação pública.
 
-- Mantém perfil público do artista, estúdio, localização, estilos, preço de referência, portfólio e flashes.
+- Mantém perfis públicos de artistas, entidades públicas Studio e associações muitos-para-muitos entre Studio e Artist, localização, estilos, preço de referência, portfólio e flashes.
 - Mantém favoritos associados ao identificador do cliente.
 - Oferece pesquisa, sugestões aproximadas e filtros.
 - É responsável por atualizar e reconstruir um eventual índice de pesquisa.
 - Não decide disponibilidade de horários, aceite de propostas ou autorização de envio de mensagens.
 
 Um mecanismo de busca é um detalhe de infraestrutura deste contexto. Em P03, Catalog utiliza PostgreSQL com pg_trgm, projeção transacional de termos e reconstrução administrativa a partir dos perfis oficiais. A alimentação por API autenticada do próprio Artist, a integração delegada com Identity, os contratos de mídia, os filtros, os cursores e os favoritos estão detalhados na [decisão 0008](decisions/0008-p03-catalog-and-search.md). Não há referência de código ou acesso ao banco de Identity. Elasticsearch não é obrigatório nesta versão.
+
+Studio e suas associações pertencem ao Catálogo, sem banco ou entidade compartilhados com Identity. A apresentação pública do artista expõe uma lista de IDs e nomes de estúdios. Escritas administrativas no Catálogo exigem Admin confirmado por Identity; a interface não substitui a autorização do serviço. A busca deriva os termos de estúdio das associações vigentes.
 
 ### 4.3 Atendimentos
 
@@ -108,7 +111,7 @@ Responsável pelo ciclo de negócio da relação de serviço entre cliente e art
 
 O aceite é específico da proposta e do atendimento. Não há estado global compartilhado entre negociações.
 
-P04 implementa Engagements com persistência privada, snapshots obtidos pelo contrato técnico de Catalog, pedidos idempotentes, histórico de versões e aceite da proposta vigente. Casos de uso em Application coordenam as transições de Domain; Infrastructure oferece transação e bloqueio local da linha do atendimento para serializar apresentação e aceite. A [decisão 0009](decisions/0009-p04-engagements.md) e os [contratos de integração](contracts/p04-integrations.md) delimitam a negociação inicial. A primeira publicação confiável foi acrescentada em P05, com Outbox transacional; não há reserva ou recebimento automático.
+P04 implementa Engagements com persistência privada, snapshots obtidos pelo contrato técnico de Catalog, pedidos idempotentes, histórico de versões e aceite da proposta vigente. Casos de uso em Application coordenam as transições de Domain; Infrastructure oferece transação e bloqueio local da linha do atendimento para serializar apresentação e aceite. A [decisão 0009](decisions/0009-p04-engagements.md) e os [contratos de integração](contracts/p04-integrations.md) delimitam a negociação inicial. A primeira publicação confiável foi acrescentada em P05, com Outbox transacional; não há reserva ou recebimento automático. Pela [decisão 0021](decisions/0021-studios.md), novos pedidos também preservam snapshot da lista de associações Studio no momento da criação; históricos existentes não são reescritos e Studio não representa local de atendimento.
 
 ### 4.4 Agenda
 
@@ -524,6 +527,6 @@ Identity filtra logs de infraestrutura com potencial de incluir consultas/creden
 
 ## Integração web P10
 
-O website React usa o BFF em mesma origem por proxy HTTPS do Vite no ambiente local. A configuração do proxy recebe o certificado confiável do BFF, sem desabilitar a validação TLS. Tokens permanecem no servidor, cookies HttpOnly/Secure e antiforgery protegem escritas. Retornos OIDC são encaminhados tanto no servidor de desenvolvimento como no preview. O script de execução isola configurações no processo e não altera os hosts do produto.
+O website React usa o BFF em mesma origem por proxy HTTPS do Vite no ambiente local. A área Admin do website usa a função da sessão obtida pela Identity para controlar navegação, mas as operações continuam autorizadas no backend. Tokens permanecem no BFF; escritas passam pelo fluxo de antiforgery existente. A configuração do proxy recebe o certificado confiável do BFF, sem desabilitar a validação TLS. Tokens permanecem no servidor, cookies HttpOnly/Secure e antiforgery protegem escritas. Retornos OIDC são encaminhados tanto no servidor de desenvolvimento como no preview. O script de execução isola configurações no processo e não altera os hosts do produto.
 
 O adaptador de Agenda converte a representação dos inputs HH:mm para o contrato HTTP TimeOnly HH:mm:ss; Domain continua responsável por disponibilidade e conflitos. O cliente HTTP propaga expiração também quando o 401 ocorre na aquisição do antiforgery. Uma atualização em segundo plano que falha mantém na tela os dados já carregados (e os formulários abertos) e mostra um aviso de que podem estar desatualizados, com ação para atualizar; a sessão expirada usa o aviso próprio de novo login. Controles dependentes de sessão aguardam a identidade antes de habilitar ações. [Operação e diagnóstico](development/web-integration.md) e [evidências/limites](verification/p10.md) registram a integração com serviços reais e a publicação homologada localmente pelo Caddy, que encerra T10.10 e M6. Os diálogos devolvem o foco ao controle de origem mesmo quando a página os desmonta abertos.
