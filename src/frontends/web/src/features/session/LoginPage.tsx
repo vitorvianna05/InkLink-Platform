@@ -126,7 +126,6 @@ export function LoginPage() {
             Voltar para Descobrir
           </Link>
         </div>
-        <small className="login-footnote">Nenhuma cobrança é feita pela plataforma.</small>
       </main>
     </div>
   );

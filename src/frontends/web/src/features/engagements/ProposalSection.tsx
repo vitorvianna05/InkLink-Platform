@@ -97,7 +97,7 @@ export function ProposalSection({ engagement, perspective }: { engagement: Engag
           <p>{current.description}</p>
           <span className="price">{money(current.amount)}</span>
           <span className={current.state === 'Accepted' ? 'status green' : 'status'}>{proposalStateLabel(current.state)}</span>
-          <small className="muted">O aceite não realiza cobrança nem reserva horário. A data é combinada na conversa e confirmada pelo artista na agenda.</small>
+          <small className="muted">O aceite não reserva horário. A data é combinada na conversa e confirmada pelo artista na agenda.</small>
         </>
       ) : (
         <p className="muted">{perspective === 'client' ? 'O artista ainda não apresentou uma proposta.' : 'Apresente uma proposta para este pedido.'}</p>
@@ -152,7 +152,7 @@ export function ProposalSection({ engagement, perspective }: { engagement: Engag
             <p>
               Você está aceitando a proposta de <strong>{engagement.catalog.name}</strong> no valor de <strong>{money(current.amount)}</strong>.
             </p>
-            <p className="muted">Nenhuma cobrança é feita. Depois do aceite, combine a data da sessão pela conversa.</p>
+            <p className="muted">Depois do aceite, combine a data da sessão pela conversa; o horário só fica reservado quando o artista confirmar na agenda.</p>
             <button
               type="button"
               className="button red full"

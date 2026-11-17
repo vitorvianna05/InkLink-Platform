@@ -152,7 +152,6 @@ html, body#keycloak-bg.inklink-body { background: var(--paper); background-image
 .inklink-panel .pf-v5-c-button.pf-m-primary:hover,
 .inklink-panel .pf-v5-c-button.pf-m-primary:focus { background-color: var(--red-strong); }
 .inklink-panel :focus-visible { outline: 3px solid var(--red); outline-offset: 2px; }
-.inklink-footnote { color: var(--muted); font-size: 13px; }
 
 @media (max-width: 860px) {
   .inklink-login { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr; }

@@ -297,7 +297,7 @@
     </main>
   </div>
 </div>
-<small class="inklink-footnote">${msg("inklinkFootnote")}</small>
+
 </div>
 </div>
 </body>

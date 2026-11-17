@@ -316,7 +316,6 @@ td.amount { text-align: right; font-variant-numeric: tabular-nums; }
 .login-security svg { flex: none; color: var(--green); }
 .login-back { display: inline-flex; align-items: center; gap: 6px; justify-self: start; font-weight: 600; text-decoration: none; color: var(--ink); }
 .login-back:hover { color: var(--red-strong); }
-.login-footnote { color: var(--muted); }
 @media (max-width: 860px) {
   .login-page { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr; }
   .login-brand { padding: 24px var(--gutter) 28px; gap: 20px; }

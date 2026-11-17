@@ -52,7 +52,7 @@ function EntryForm({ today }: { today: string }) {
       }}
     >
       <h3>Novo lançamento</h3>
-      <p className="muted">Registro gerencial manual. Não processa pagamentos nem cobranças.</p>
+      <p className="muted">Registro gerencial manual dos seus recebimentos e custos.</p>
       <div className="form-grid">
         <label className="field">
           <span>Tipo</span>

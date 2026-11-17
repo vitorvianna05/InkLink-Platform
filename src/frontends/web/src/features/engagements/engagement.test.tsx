@@ -33,7 +33,7 @@ describe('negociação', () => {
     renderApp('/atendimentos/e1');
     await userEvent.click(await screen.findByRole('button', { name: 'Aceitar proposta' }));
     const dialog = screen.getByRole('dialog', { name: 'Confirmar o aceite?' });
-    expect(within(dialog).getByText(/Nenhuma cobrança é feita/)).toBeInTheDocument();
+    expect(within(dialog).getByText(/o horário só fica reservado quando o artista confirmar/)).toBeInTheDocument();
     expect(accepted).toBe(0);
     await userEvent.click(within(dialog).getByRole('button', { name: 'Confirmar aceite' }));
     expect(await screen.findAllByText('Proposta aceita')).not.toHaveLength(0);

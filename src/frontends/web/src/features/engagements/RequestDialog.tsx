@@ -63,7 +63,7 @@ export function RequestDialog({ open, onClose, artistId, artistName, flash }: Pr
   return (
     <Dialog open={open} onClose={close} title="Conta sua ideia." eyebrow="O PRIMEIRO TRAÇO">
       <p>
-        Envie sua inspiração para <strong>{artistName}</strong>. O envio abre a negociação; não há cobrança, aceite ou reserva de horário.
+        Envie sua inspiração para <strong>{artistName}</strong>. O envio abre a negociação; ainda não há aceite nem reserva de horário.
       </p>
       {flash && (
         <p className="notice">

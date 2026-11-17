@@ -70,7 +70,6 @@ export function Layout() {
           <i aria-hidden="true" />
         </span>
         <span>Conectando histórias. Marcando a pele.</span>
-        <small>Nenhuma cobrança é feita pela plataforma.</small>
       </footer>
       <SessionNotices />
     </>
