@@ -437,7 +437,7 @@ A conclusão de uma etapa não significa a conclusão automática das etapas dep
 
 ## 8. Próxima ação
 
-P00–P09 e o incremento GW estão concluídos nos recortes documentados. M1–M5 atingidos no backend; a [verificação P09](verification/p09.md) consolida o aceite técnico local, seus resultados e limitações. P10 foi concluída e M6 atingido no recorte local, conforme a [verificação P10](verification/p10.md). Aplicativos móveis (P11–P13) e operação de produção permanecem pendentes.
+P00–P09 e o incremento GW estão concluídos nos recortes documentados. M1–M5 atingidos no backend; a [verificação P09](verification/p09.md) consolida o aceite técnico local, seus resultados e limitações. P10 foi concluída e M6 atingido no recorte local, conforme a [verificação P10](verification/p10.md). A decisão 0021 aprovou P14, gestão de estúdios, como incremento futuro cuja prioridade relativa a P11–P13 ainda não foi definida. Aplicativos móveis (P11–P13) e operação de produção permanecem pendentes.
 
 GetMyProfile possui transporte autenticado, atualização controlada de nome, vínculo externo/interno e funções locais. Keycloak, Gateway e BFF estão integrados e verificados em P02. Os próximos fluxos continuam priorizando backend, com autorização própria em cada serviço.
 
