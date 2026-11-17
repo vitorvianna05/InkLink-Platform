@@ -1,7 +1,11 @@
 {
   "realm": "inklink",
   "enabled": true,
-  "registrationAllowed": false,
+  "registrationAllowed": true,
+  "registrationEmailAsUsername": true,
+  "duplicateEmailsAllowed": false,
+  "verifyEmail": false,
+  "bruteForceProtected": true,
   "resetPasswordAllowed": false,
   "accessTokenLifespan": 300,
   "ssoSessionIdleTimeout": 1800,
@@ -10,7 +14,9 @@
   "refreshTokenMaxReuse": 0,
   "loginTheme": "inklink",
   "internationalizationEnabled": true,
-  "supportedLocales": ["pt-BR"],
+  "supportedLocales": [
+    "pt-BR"
+  ],
   "defaultLocale": "pt-BR",
   "clientScopes": [
     {
@@ -105,6 +111,39 @@
       "attributes": {
         "include.in.token.scope": "true"
       }
+    },
+    {
+      "name": "inklink.contact",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "false"
+      },
+      "protocolMappers": [
+        {
+          "name": "email",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-property-mapper",
+          "config": {
+            "user.attribute": "email",
+            "claim.name": "email",
+            "jsonType.label": "String",
+            "access.token.claim": "true",
+            "id.token.claim": "true"
+          }
+        },
+        {
+          "name": "email verified",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-property-mapper",
+          "config": {
+            "user.attribute": "emailVerified",
+            "claim.name": "email_verified",
+            "jsonType.label": "boolean",
+            "access.token.claim": "true",
+            "id.token.claim": "true"
+          }
+        }
+      ]
     }
   ],
   "clients": [
@@ -149,7 +188,8 @@
       ],
       "defaultClientScopes": [
         "basic",
-        "profile"
+        "profile",
+        "inklink.contact"
       ]
     },
     {
@@ -192,7 +232,8 @@
       ],
       "defaultClientScopes": [
         "basic",
-        "profile"
+        "profile",
+        "inklink.contact"
       ]
     },
     {
@@ -235,7 +276,8 @@
       ],
       "defaultClientScopes": [
         "basic",
-        "profile"
+        "profile",
+        "inklink.contact"
       ]
     },
     {
@@ -443,7 +485,8 @@
       ],
       "defaultClientScopes": [
         "basic",
-        "profile"
+        "profile",
+        "inklink.contact"
       ],
       "webOrigins": [
         "http://127.0.0.1:5191",
