@@ -20,7 +20,8 @@ O `requirements.md` e os demais documentos Markdown utilizados em SDD são mutá
 Nesta versão, o contrato descreve os conceitos, dados essenciais e comportamentos da aplicação. A organização inicial, a persistência em PostgreSQL com EF Core/Npgsql 10, a autenticação com Keycloak e BFF web e as convenções de API já foram aprovadas em P00 e estão registradas em [architecture.md](architecture.md) e nas decisões correspondentes. Endpoints específicos, modelos de dados e detalhes de configuração serão refinados nas etapas de implementação, respeitando essa base. As rotas técnicas e os identificadores do protótipo não precisam ser reproduzidos.
 
 - **Cliente:** usuário que pesquisa artistas, salva favoritos, solicita orçamento, acompanha propostas, conversa e agenda serviços.
-- **Artista:** tatuador com identidade própria, estúdio, localização, biografia, estilos, portfólio e preço inicial de referência, que atende clientes e gerencia sua atividade.
+- **Artista:** tatuador com identidade própria, vínculo a um ou mais estúdios, localização, biografia, estilos, portfólio e preço inicial de referência, que atende clientes e gerencia sua atividade.
+- **Administrador (Admin):** usuário com função interna de administração, autorizado a gerir estúdios e associações com artistas. A função é concedida por operação protegida da Identity; não é autoselecionável.
 - **Tatuagem realizada:** trabalho do portfólio apresentado como exemplo de execução do artista.
 - **Flash:** desenho criado pelo tatuador que pode motivar uma solicitação de orçamento. Regras de exclusividade e reutilização poderão ser detalhadas posteriormente.
 - **Solicitação de orçamento:** pedido dirigido a um artista, com descrição da ideia, região do corpo e tamanho aproximado da tatuagem. Pode ter origem em um flash.
@@ -42,19 +43,20 @@ Páginas e áreas de referência:
 | Mensagens do cliente | Listagem das conversas com artistas. |
 | Conversa individual | Histórico e informações do atendimento selecionado. |
 | Dashboard do artista | Indicadores, clientes, calendário e acesso ao portfólio. |
+| Administração de estúdios | Gestão dos estúdios e associações de artistas por usuário autorizado com Admin. |
 | Mensagens do artista | Listagem das conversas com clientes. |
 
 As telas e os fluxos do protótipo orientam a experiência dessas áreas. A implementação de rotas, componentes e contratos será própria da nova aplicação.
 
 ## 3. Requisitos funcionais
 
-### RF01 — Disponibilizar áreas de cliente e artista
+### RF01 — Disponibilizar áreas de cliente, artista e administração
 
-A aplicação deve oferecer experiências próprias para cliente e artista, com navegação e ações adequadas à função do usuário.
+A aplicação deve oferecer experiências próprias para cliente, artista e administração, com navegação e ações adequadas às funções internas da conta.
 
-**Critérios de aceite:** o cliente acessa descoberta, exploração, seus pedidos, favoritos e conversas. O artista acessa dashboard, seus clientes, conversas, agenda e portfólio. A identificação do usuário e a autoria das ações permanecem coerentes com a área utilizada. O acesso a uma área não concede acesso aos dados particulares de outros usuários.
+**Critérios de aceite:** o cliente acessa descoberta, exploração, seus pedidos, favoritos e conversas. O artista acessa dashboard, seus clientes, conversas, agenda e portfólio. O usuário com Admin acessa a administração de estúdios. A identificação e a autoria permanecem coerentes com a conta; uma função não concede acesso a dados privados sem autorização. O website não permite escolher ou conceder funções.
 
-O botão temporário de troca entre personagens do protótipo não é um requisito do produto. Na política inicial de P02, contas são criadas administrativamente no Keycloak, recebem Client no primeiro acesso e podem receber Artist por operação administrativa, mantendo as duas funções, conforme a [decisão 0007](decisions/0007-p02-identity-and-sessions.md). A base de autenticação já está definida na [decisão 0003](decisions/0003-authentication.md): Keycloak, OIDC/OAuth 2.0, PKCE, access tokens JWT e BFF web; sua configuração operacional será refinada antes da implementação correspondente.
+O botão temporário de troca entre personagens do protótipo não é um requisito do produto. Contas recebem Client no primeiro acesso e Artist por operação administrativa, podendo acumular funções. Admin é outra função interna concedida somente pela ferramenta operacional InkLink.Identity.Admin, conforme a [decisão 0021](decisions/0021-studios.md); Keycloak continua responsável pela autenticação. A base segue a [decisão 0003](decisions/0003-authentication.md), com OIDC/OAuth 2.0, PKCE, access tokens JWT e BFF web.
 
 ### RF02 — Apresentar a página Descobrir
 
@@ -86,7 +88,7 @@ A exploração deve combinar o termo livre com estilo de tatuagem, cidade e limi
 
 O cliente deve consultar a identidade do artista e exemplos de seu trabalho antes de solicitar atendimento.
 
-**Critérios de aceite:** o perfil apresenta nome, estúdio, localização, biografia, estilos e preço inicial de referência. As abas “Tatuagens realizadas” e “Flashes” apresentam conteúdos distintos. A aba de conversa aparece quando existe histórico entre o cliente e o artista, inclusive encerrado, para consulta. Abrir e sair do perfil preserva o contexto da navegação anterior. Os dados apresentados pertencem ao artista selecionado.
+**Critérios de aceite:** o perfil apresenta nome, todos os estúdios associados, localização do artista, biografia, estilos e preço inicial de referência. As abas “Tatuagens realizadas” e “Flashes” apresentam conteúdos distintos. A aba de conversa aparece quando existe histórico entre o cliente e o artista, inclusive encerrado, para consulta. Abrir e sair do perfil preserva o contexto da navegação anterior. Os dados apresentados pertencem ao artista selecionado.
 
 ### RF07 — Consultar flashes e iniciar interesse
 
@@ -197,6 +199,12 @@ O artista deve acessar os atendimentos de seus clientes pelo dashboard e consult
 A aplicação deve preservar pedidos, propostas, mensagens, favoritos, reservas e estados dos atendimentos de forma durável e vinculada aos respectivos usuários.
 
 **Critérios de aceite:** recarregar ou reabrir a aplicação não apaga registros nem duplica operações já concluídas. Encerramentos e confirmações permanecem consistentes nas duas perspectivas. Os dados ficam disponíveis ao usuário autorizado em seus acessos posteriores e não dependem exclusivamente do armazenamento de um único navegador. Dados fictícios usados em desenvolvimento ou testes não são tratados como registros reais de produção.
+
+### RF24 — Administrar estúdios e associações com artistas
+
+A aplicação deve permitir que usuários com a função interna Admin gerenciem entidades públicas de estúdio e seus vínculos com perfis de artistas.
+
+**Critérios de aceite:** o painel web lista, cria e renomeia estúdios e permite associar/desassociar perfis públicos de artistas autorizados. O nome de cada estúdio associado aparece no perfil público do artista e pode ser usado nas sugestões de busca. Usuários Client ou Artist sem Admin não alteram estúdios nem vínculos, ainda que acessem diretamente uma rota; o backend verifica a função em cada operação de escrita. A função Admin é adicional, não substitui Client/Artist, e só é concedida por operação administrativa da Identity. O artista pode ter vários estúdios e cada estúdio pode ter vários artistas. O vínculo não escolhe local de atendimento: pedidos e reservas continuam ligados ao artista. Estúdios sem artistas associados não aparecem em perfis nem sugestões. A primeira entrega não expõe exclusão permanente ou página pública independente de estúdio.
 
 ## 4. Requisitos não funcionais
 
