@@ -308,7 +308,7 @@ Os itens abaixo não alteram o aceite M6 nem autorizam implementação antes das
 
 | ID / tarefa | Dependências | Entregável | Aceite e acompanhamento |
 | --- | --- | --- | --- |
-| T10.27 — [ ] Definir monetização e avaliar Stripe | T08.06, T10.26 | Decisão de produto sobre cobrança da plataforma e avaliação do Stripe, separada do ledger gerencial do Finance. | Modelo, eventos, responsabilidades e contratos são aprovados antes de implementar pagamento. [Issue #5](https://github.com/vitorvianna05/InkLink-Platform/issues/5). |
+| T10.27 — [ ] Definir monetização e avaliar Stripe | T08.06 | Decisão de produto sobre cobrança da plataforma e avaliação do Stripe, separada do ledger gerencial do Finance. | Modelo, eventos, responsabilidades e contratos são aprovados antes de implementar pagamento. [Issue #5](https://github.com/vitorvianna05/InkLink-Platform/issues/5). |
 | T10.28 — [ ] Definir login federado Google/Meta via Keycloak e BFF | T02.04, T10.14, T10.22 | Decisão sobre provedores, política de vinculação de contas e configuração federada. | Preserva PKCE, BFF e Identity como origem de roles; implementação só após aprovação. [Issue #8](https://github.com/vitorvianna05/InkLink-Platform/issues/8). |
 | T10.29 — [ ] Planejar publicação de produção de banco, backend/BFF e website | T09.06, T10.10 | Plano de ambientes, implantação, migrações, segurança, observabilidade e recuperação em produção. | Plano aprovado antes de qualquer publicação pública. [Issue #6](https://github.com/vitorvianna05/InkLink-Platform/issues/6). |
 
