@@ -54,10 +54,17 @@ Crie uma conta no console administrativo do realm inklink, com senha definida pe
 
 | Rota | Acesso e resultados principais |
 | --- | --- |
-| GET /api/v1/profiles/me | Access token de usuário aprovado: 200 com id, displayName e roles. 401 sem token válido; 403 para chamador técnico/não autorizado. |
+| GET /api/v1/profiles/me | Access token de usuário aprovado: 200 com id, displayName e roles. 401 sem token válido; 403 para chamador técnico/não autorizado; 403 `account.confirmation_required` enquanto o cadastro próprio está pendente. |
 | PUT /api/v1/profiles/me | Apenas displayName. 204 ao atualizar; 400 para nome vazio, JSON inválido ou campos extras; 401/403 conforme autenticação. |
 | GET /api/v1/internal/profiles/{id} | Somente cliente técnico autorizado com identity.profile.read. 200 com id/displayName, 404 se inexistente, 401/403 se não autorizado. Com `include=photo`, inclui `photoUrl`/`photoThumbnailUrl` (assinados e de curta duração quando a foto é privada); hoje só Messaging pede a foto, depois de validar a participação. |
 | GET /bff/login | Inicia OIDC por código, PKCE S256, state/nonce e PAR quando anunciado pelo provedor. Sem `returnUrl`, retorna para /bff/session. Com `returnUrl` (caminho local), retorna ao website nesse caminho, prefixado por `Bff:WebOrigin` quando configurado; valor inválido responde 400 `login.return_url_invalid`. Falha do provedor nesse fluxo volta a `/entrar?erro=login`. |
+| GET /api/v1/registration | Situação do cadastro da conta: termos, e-mail, celular, pedido de Artist e horários de reenvio. Disponível também para a conta pendente. |
+| PUT /api/v1/registration/terms | `{ version }` igual à versão vigente; 200 com a situação, 409 `registration.terms_outdated` se divergente. |
+| PUT /api/v1/registration/phone | `{ phoneNumber }` normalizado para E.164 (+55 por padrão); trocar o número exige nova confirmação. 400 `registration.phone_invalid`. |
+| POST /api/v1/registration/codes | `{ channel: email\|phone }`: 202 e código de 8 dígitos enviado ao contato. 429 com Retry-After para reenvio antes de 60 s ou mais de 5 envios por hora; 503 `registration.channel_unavailable` se o canal falhar. |
+| POST /api/v1/registration/codes/verify | `{ channel, code }`: 200 confirma o contato; 400 `code_invalid`/`code_expired`/`code_attempts_exceeded`. Conclui o cadastro quando termos, e-mail e celular estão confirmados. |
+| POST /api/v1/registration/artist-request | Conta ativa solicita a função Artist; 200 com `artistRequest=Pending`. A concessão é administrativa. |
+| GET /bff/register | Igual a /bff/login, com `prompt=create` (na requisição PAR) para abrir o cadastro do Keycloak; `returnUrl` local obrigatório. |
 | GET /bff/session | 200 com authenticated e name da identidade federada; 401 sem sessão válida. Perfil e funções atuais são consultados em Identity. Não devolve tokens. |
 | GET /bff/antiforgery | Sessão válida: devolve requestToken e cookie antiforgery. |
 | POST /bff/logout | Sessão e X-CSRF-TOKEN válidos: remove ticket durável e redireciona ao logout OIDC. Sem CSRF: 400. |
@@ -69,6 +76,22 @@ O OpenAPI de Identity, em /openapi/v1.json durante Development/Testing, declara 
 O navegador envia cookies ao BFF. Para PUT e POST, primeiro obtenha requestToken e envie-o em X-CSRF-TOKEN, preservando o cookie antiforgery. O BFF troca qualquer Authorization recebido pelo access token do ticket armazenado no servidor; Gateway remove cookies e headers de identidade não confiáveis antes de encaminhar.
 
 A sessão termina após 30 minutos sem uso ou 8 horas depois do login ([decisão 0019](../decisions/0019-p10-session-renewal.md)). O BFF renova o access token no servidor quando faltam 60 segundos para vencer, com refresh token de uso único, e serializa a renovação por sessão com bloqueio consultivo do PostgreSQL. Refresh token revogado ou expirado encerra a sessão com 401; a expiração exige novo login. Tickets e material de Data Protection são compartilhados no banco privado e protegidos pelo certificado configurado. Logout invalida o ticket em todas as instâncias do BFF; não depende apenas de apagar o cookie.
+
+## Cadastro pelo próprio usuário
+
+Modelo aprovado na [decisão 0020](../decisions/0020-p10-registration.md). O website chama /bff/register, que abre a página de cadastro do Keycloak com o tema InkLink (e-mail como usuário, senha, nome e sobrenome); nenhuma senha passa pelo website. No retorno, o token traz `email_verified=false` pelo scope `inklink.contact` e Identity cria o perfil **pendente** com a função Client. Enquanto pendente, /api/v1/profiles/me responde 403 `account.confirmation_required` e, como todos os serviços resolvem a conta por essa rota, as APIs privadas ficam bloqueadas; só /api/v1/registration fica disponível. Contas criadas pelo console administrativo, sem a reivindicação, seguem ativas.
+
+O cadastro conclui quando a versão vigente dos termos (`Registration:TermsVersion`) é aceita e e-mail e celular são confirmados por código, em qualquer ordem. Códigos: 8 dígitos aleatórios, guardados como HMAC-SHA256 com `Registration:CodeSecret`, uso único, válidos por 10 minutos, 5 tentativas, 60 s entre envios e 5 envios por hora por canal. Um celular confirmado não pode ser confirmado por outra conta. Logs não registram código nem destino.
+
+Em desenvolvimento, o Compose sobe o Mailpit: SMTP em 127.0.0.1:5185 e caixa de entrada em http://127.0.0.1:5184. Com `Contact:SmsProvider=Simulator` (só Development/Testing), o SMS é entregue ao Mailpit como mensagem para `<dígitos E.164>@sms.inklink.test`. Na P09, as portas são 5285 (SMTP) e 5284 (caixa). Initialize-Local grava o segredo dos códigos e o endereço SMTP nos User Secrets de Identity.
+
+A função Artist continua administrativa: a conta ativa pede a função em Meu espaço, e o operador lista os pedidos e concede com o mesmo utilitário da seção seguinte:
+
+~~~powershell
+dotnet run --project src/backend/services/Identity/tools/InkLink.Identity.Admin --configuration Release --no-build -- list-artist-requests
+~~~
+
+A listagem traz perfil, nome, data do pedido, issuer e subject, que são os argumentos de `grant-artist`.
 
 ## Ativação administrativa de Artist
 
@@ -83,7 +106,7 @@ O processo retorna 0 em sucesso, 2 para argumentos inválidos, 3 se a conta aind
 ## Configuração em outros ambientes
 
 - Identity e Gateway: Authentication__Authority, Authentication__Audience e arrays Authentication__UserClients__0... / Authentication__TechnicalClients__0... . AllowHttpMetadata deve permanecer false em produção.
-- Identity: IdentityDatabase__ConnectionString com a credencial de execução.
+- Identity: IdentityDatabase__ConnectionString com a credencial de execução; Registration__CodeSecret (32+ caracteres, do cofre) e Registration__TermsVersion; Contact__SmtpHost, SmtpPort, SmtpSsl, SmtpUsername, SmtpPassword e From do provedor de e-mail. Fora de Development/Testing não há simulador de SMS: o envio por celular responde 503 até haver provedor aprovado.
 - Gateway: Gateway__IdentityAddress com URL HTTPS do serviço.
 - BFF: Bff__Authority, ClientId, ClientSecret, GatewayAddress, ConnectionString, CertificatePath, CertificatePassword; no ambiente, use o separador duplo de .NET, como Bff__ClientId. Certificado deve estar válido e conter chave privada; a mesma aplicação, banco e material de proteção são compartilhados pelas instâncias.
 - Kestrel do BFF e infraestrutura de entrada: configurar HTTPS com certificado apropriado ao ambiente. A chave de proteção de sessão não substitui o certificado TLS do servidor.

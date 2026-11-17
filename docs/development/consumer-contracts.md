@@ -6,14 +6,14 @@ Fonte oficial de schemas e resultados: OpenAPI de cada serviço. Em desenvolvime
 
 | Serviço | Rotas públicas | Consumidores e pré-condições |
 | --- | --- | --- |
-| Identity | /api/v1/profiles/me, /api/v1/profiles/me/photo | Usuário aprovado; GET vincula identidade federada e função Client. Artist só por operação administrativa. Foto por multipart (`image`, JPEG/PNG/WebP até 5 MB); `photoUrl`/`photoThumbnailUrl` são assinados com validade curta quando a foto é privada ([decisão 0018](../decisions/0018-p10-images.md)). |
+| Identity | /api/v1/profiles/me, /api/v1/profiles/me/photo, /api/v1/registration (terms, phone, codes, codes/verify, artist-request) | Usuário aprovado; GET vincula identidade federada e função Client. Conta do cadastro próprio fica pendente até aceitar os termos e confirmar e-mail e celular por código de 8 dígitos: /profiles/me responde 403 `account.confirmation_required` e só /registration atende ([decisão 0020](../decisions/0020-p10-registration.md)). Artist só por operação administrativa, depois do pedido em /registration/artist-request. Foto por multipart (`image`, JPEG/PNG/WebP até 5 MB); `photoUrl`/`photoThumbnailUrl` são assinados com validade curta quando a foto é privada ([decisão 0018](../decisions/0018-p10-images.md)). |
 | Catalog | /api/v1/artists, search, suggestions, perfil, tattoos, flashes; /api/v2/artists/me/{tattoos,flashes} | Leitura pública; /artists/me exige Artist. Obras são criadas e alteradas por multipart na v2 (`image` até 10 MB); as escritas v1 por URL foram retiradas e respondem 410 `catalog.artwork_url_writes_retired`, com o caminho da v2. Leituras trazem `thumbnailUrl`, `externalImage` e a foto pública do artista. Favoritos próprios em /api/v1/favorites. |
 | Engagements | /api/v2/engagements, proposals, acceptance, closure, lifecycle, lifecycle/retry | Participantes; cliente solicita/aceita, artista propõe. v2 é o contrato vigente do ciclo; v1 foi descontinuada e retorna 410 Gone. |
 | Messaging | /api/v1/conversations, messages, artist-summary | Participante para histórico/envio; Artist para resumo. Bloqueio é autoridade local, não permissão inferida no consumidor. |
 | Scheduling | /api/v1/scheduling/availability, reservations, operations, completion, artist-context, artist-summary | Disponibilidade/reserva/conclusão pelo artista; leituras privadas autorizadas por contexto. Proposta aceita não reserva automaticamente. |
 | Finance | /api/v1/finance/entries, reversal, dashboard | Artist proprietário; recebimento exige atendimento próprio; não é processamento de pagamentos. |
 
-As rotas exatas, inclusive parâmetros intermediários, são apresentadas no OpenAPI. Endpoints /internal não são APIs dos canais e ficam fora do Gateway. BFF usa /bff/login, /bff/session, /bff/antiforgery e /bff/logout: tokens permanecem no servidor e escritas exigem X-CSRF-TOKEN. Mobile usa access token via Gateway, Code/PKCE e armazenamento seguro da plataforma.
+As rotas exatas, inclusive parâmetros intermediários, são apresentadas no OpenAPI. Endpoints /internal não são APIs dos canais e ficam fora do Gateway. BFF usa /bff/login, /bff/register, /bff/session, /bff/antiforgery e /bff/logout: tokens permanecem no servidor e escritas exigem X-CSRF-TOKEN. Mobile usa access token via Gateway, Code/PKCE e armazenamento seguro da plataforma.
 
 ## Repetição, paginação e erros
 

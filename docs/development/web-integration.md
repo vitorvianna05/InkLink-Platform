@@ -71,12 +71,13 @@ Pop-Location
 
 playwright.integration.config.ts é separado das checagens visuais simuladas; não utiliza page.route/MSW nem ignora erros TLS. As verificações diretas de API são feitas por fetch no próprio navegador, na origem do website e com os cookies da sessão: o cliente Node do Playwright não aceita o certificado de desenvolvimento do ASP.NET Core (autoassinado, CA:FALSE) como raiz, mesmo com NODE_EXTRA_CA_CERTS. Lê as contas e senha dos artefatos ignorados da P09, sem copiá-las para código, parâmetros de linha de comando ou relatórios. Traces, vídeo e screenshots estão desabilitados para não persistir o tráfego de autenticação. Não versionar artefatos de execução ou estado de sessão.
 
-O roteiro tem três arquivos em `e2e-real/`, com auxiliares comuns em `support.ts`:
+O roteiro tem quatro arquivos em `e2e-real/`, com auxiliares comuns em `support.ts`:
 - **`backend.spec.ts`:** catálogo e sugestões; login por `/entrar` e pela tela de credenciais com o tema InkLink; favorito com recarga; envio e persistência de mensagem; histórico bloqueado; pedido originado em flash; dashboard e agenda do artista; saída pelo menu; negação de acesso a terceiro.
 - **`lifecycle.spec.ts`:** ciclo completo pelo website, com duas contas: pedido, proposta, aceite, reserva confirmada e conflito, encerramento recusado por sessão futura, conclusão da sessão depois do término real, lançamento de recebimento e encerramento definitivo. Também cobre a sessão perdida durante um formulário: aviso, novo login em janela própria e reenvio sem duplicar a mensagem.
 - **`media.spec.ts`:** obra enviada pelo Portfólio e servida em `/media`; foto do cliente privada e assinada, vista pelo artista na conversa e recusada sem assinatura; foto do artista projetada no perfil público pelo evento da Identity.
+- **`registration.spec.ts`:** cadastro pelo formulário do Keycloak com conta nova a cada execução; 403 das APIs privadas enquanto pendente; aceite dos termos; códigos de e-mail e do SMS simulado lidos na caixa do Mailpit da P09 (http://127.0.0.1:5284); retorno a Meu espaço e pedido da função Artist ([decisão 0020](../decisions/0020-p10-registration.md)).
 
-O roteiro altera somente os dados sintéticos: salva favorito, acrescenta mensagens, cria pedidos, obras e fotos, define disponibilidade do dia e registra reserva, conclusão e lançamento do artista sintético. Não apaga bancos nem reinicia serviços. O ciclo completo espera o término real de uma reserva de um minuto, de 3 a 4 minutos no total, e não deve rodar perto da meia-noite no fuso do artista. Responsividade e teclado continuam na suíte e2e visual.
+O roteiro altera somente os dados sintéticos: salva favorito, acrescenta mensagens, cria pedidos, obras, fotos, contas de cadastro e pedidos de Artist, define disponibilidade do dia e registra reserva, conclusão e lançamento do artista sintético. Não apaga bancos nem reinicia serviços. O ciclo completo espera o término real de uma reserva de um minuto, de 3 a 4 minutos no total, e não deve rodar perto da meia-noite no fuso do artista. Responsividade e teclado continuam na suíte e2e visual.
 
 ## Homologação da publicação
 

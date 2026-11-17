@@ -24,17 +24,18 @@ Nesta versão, o contrato descreve os conceitos, dados essenciais e comportament
 - **Tatuagem realizada:** trabalho do portfólio apresentado como exemplo de execução do artista.
 - **Flash:** desenho criado pelo tatuador que pode motivar uma solicitação de orçamento. Regras de exclusividade e reutilização poderão ser detalhadas posteriormente.
 - **Solicitação de orçamento:** pedido dirigido a um artista, com descrição da ideia, região do corpo e tamanho aproximado da tatuagem. Pode ter origem em um flash.
-- **Proposta:** condições apresentadas pelo artista para um atendimento, incluindo descrição e valor em reais. Seu aceite não representa pagamento nem confirmação automática de horário.
+- **Proposta:** condições apresentadas pelo artista para um atendimento, incluindo descrição e valor em reais. Seu aceite não confirma automaticamente um horário; a relação do aceite com a cobrança depende do modelo de monetização.
 - **Atendimento ou serviço:** contexto de trabalho entre cliente e artista, ao qual se vinculam negociação, conversa e agendamento. Para o controle inicial do chat, os estados de referência são `ATIVO` e `ENCERRADO`.
 - **Conversa:** histórico de mensagens entre os participantes de um atendimento, com autoria e data/hora. Permanece consultável após o encerramento do serviço.
 - **Agendamento ou reserva:** intervalo associado a um cliente, um artista e um atendimento, com data, início, término e situação. Cancelamento e reagendamento poderão ser detalhados em revisões futuras.
-- **Resultado financeiro:** receitas registradas, custos, lucro estimado, margem, ticket médio e quantidade de clientes e sessões, com período de referência explícito. Registro gerencial de recebimento não equivale a processamento de pagamentos pela plataforma.
+- **Resultado financeiro:** receitas registradas, custos, lucro estimado, margem, ticket médio e quantidade de clientes e sessões, com período de referência explícito. Os registros gerenciais lançados pelo artista são distintos de eventuais cobranças processadas pela plataforma.
 - **Moeda e idioma:** reais com formatação brasileira e interface em português do Brasil. A definição operacional de fuso horário será detalhada com o desenho da agenda.
 
 Páginas e áreas de referência:
 
 | Página ou área | Finalidade |
 | --- | --- |
+| Cadastro | Criação de conta e confirmação de e-mail e celular. |
 | Descobrir | Apresentação do produto e artistas em destaque. |
 | Explorar | Pesquisa livre com sugestões e filtros. |
 | Perfil público do artista | Identidade, tatuagens realizadas, flashes e acesso à conversa existente. |
@@ -54,7 +55,7 @@ A aplicação deve oferecer experiências próprias para cliente e artista, com 
 
 **Critérios de aceite:** o cliente acessa descoberta, exploração, seus pedidos, favoritos e conversas. O artista acessa dashboard, seus clientes, conversas, agenda e portfólio. A identificação do usuário e a autoria das ações permanecem coerentes com a área utilizada. O acesso a uma área não concede acesso aos dados particulares de outros usuários.
 
-O botão temporário de troca entre personagens do protótipo não é um requisito do produto. Na política inicial de P02, contas são criadas administrativamente no Keycloak, recebem Client no primeiro acesso e podem receber Artist por operação administrativa, mantendo as duas funções, conforme a [decisão 0007](decisions/0007-p02-identity-and-sessions.md). A base de autenticação já está definida na [decisão 0003](decisions/0003-authentication.md): Keycloak, OIDC/OAuth 2.0, PKCE, access tokens JWT e BFF web; sua configuração operacional será refinada antes da implementação correspondente.
+O botão temporário de troca entre personagens do protótipo não é um requisito do produto. Na política inicial de P02, contas são criadas administrativamente no Keycloak, recebem Client no primeiro acesso e podem receber Artist por operação administrativa, mantendo as duas funções, conforme a [decisão 0007](decisions/0007-p02-identity-and-sessions.md). RF22 e RF23 acrescentam o cadastro pelo próprio usuário, com confirmação de e-mail e celular; Artist continua dependente de aprovação administrativa. A base de autenticação já está definida na [decisão 0003](decisions/0003-authentication.md): Keycloak, OIDC/OAuth 2.0, PKCE, access tokens JWT e BFF web; sua configuração operacional será refinada antes da implementação correspondente.
 
 ### RF02 — Apresentar a página Descobrir
 
@@ -92,7 +93,7 @@ O cliente deve consultar a identidade do artista e exemplos de seu trabalho ante
 
 O cliente deve visualizar desenhos do artista e iniciar uma solicitação de orçamento a partir de um flash.
 
-**Critérios de aceite:** cada flash apresenta imagem, identificação e informações disponibilizadas pelo artista, como estilo e valor de referência. A ação de interesse abre uma solicitação dirigida ao artista correspondente e mantém a identificação do flash escolhido. O preço de referência não equivale ao aceite de uma proposta ou à realização de pagamento.
+**Critérios de aceite:** cada flash apresenta imagem, identificação e informações disponibilizadas pelo artista, como estilo e valor de referência. A ação de interesse abre uma solicitação dirigida ao artista correspondente e mantém a identificação do flash escolhido. O preço de referência não equivale ao aceite de uma proposta nem ao valor final do serviço.
 
 ### RF08 — Gerenciar artistas favoritos
 
@@ -104,7 +105,7 @@ O cliente deve salvar e remover artistas favoritos.
 
 O cliente deve enviar ao artista uma descrição da ideia, a região do corpo e o tamanho aproximado da tatuagem.
 
-**Critérios de aceite:** o formulário identifica o artista e exige descrição não vazia, região do corpo e tamanho aproximado positivo. Dados inválidos não criam pedidos e são identificados ao usuário. Um envio válido cria um pedido consultável em “Meu espaço” e permite acessar a negociação correspondente. O envio não implica aceite de proposta, pagamento ou reserva de horário. Limites detalhados de tamanho e texto serão definidos na especificação do formulário, sem herdar automaticamente os valores do protótipo.
+**Critérios de aceite:** o formulário identifica o artista e exige descrição não vazia, região do corpo e tamanho aproximado positivo. Dados inválidos não criam pedidos e são identificados ao usuário. Um envio válido cria um pedido consultável em “Meu espaço” e permite acessar a negociação correspondente. O envio não implica aceite de proposta nem reserva de horário. Limites detalhados de tamanho e texto serão definidos na especificação do formulário, sem herdar automaticamente os valores do protótipo.
 
 ### RF10 — Apresentar e acompanhar propostas
 
@@ -112,7 +113,7 @@ A política inicial de P04 foi aprovada na [decisão 0009](decisions/0009-p04-en
 
 O artista deve apresentar uma proposta para o atendimento, e o cliente deve consultá-la e registrar seu aceite.
 
-**Critérios de aceite:** a proposta identifica o atendimento, sua descrição e o valor. O cliente consulta o pedido e a proposta do artista correto. O aceite exige confirmação explícita, fica vinculado àquela proposta e não afeta outros atendimentos. O aceite não realiza cobrança nem ocupa um horário automaticamente. As duas partes conseguem consultar a situação da proposta associada ao atendimento.
+**Critérios de aceite:** a proposta identifica o atendimento, sua descrição e o valor. O cliente consulta o pedido e a proposta do artista correto. O aceite exige confirmação explícita, fica vinculado àquela proposta e não afeta outros atendimentos. O aceite não ocupa um horário automaticamente; sua relação com a cobrança será definida no modelo de monetização. As duas partes conseguem consultar a situação da proposta associada ao atendimento.
 
 ### RF11 — Listar conversas em página própria
 
@@ -160,7 +161,7 @@ Os indicadores devem utilizar definições explícitas e separar resultados real
 
 | Indicador | Regra de referência |
 | --- | --- |
-| Receita recebida | Soma dos recebimentos registrados no período para os atendimentos do artista, sem processamento de pagamento no site. |
+| Receita recebida | Soma dos recebimentos registrados pelo artista no período para os seus atendimentos. |
 | Custos | Soma dos custos registrados para o período e contexto considerados. |
 | Lucro estimado | Receita recebida menos custos considerados no período. |
 | Margem estimada | Lucro estimado dividido pela receita recebida, multiplicado por 100. Sem receita, apresentar zero. |
@@ -170,7 +171,7 @@ Os indicadores devem utilizar definições explícitas e separar resultados real
 
 **Critérios de aceite:** uma base controlada verifica os cálculos de cada indicador. Recebimentos de R$ 4.000,00 e custos de R$ 940,00, por exemplo, produzem lucro estimado de R$ 3.060,00 e margem de 76,5%. Reservar ou concluir uma sessão não registra automaticamente seu recebimento. Sessões e recebimentos são considerados segundo suas respectivas datas e regras. Períodos vazios não geram divisões por zero. A interface informa a natureza estimada do lucro e os custos abrangidos.
 
-Os indicadores apoiam a gestão do artista. A política inicial de P08 está na [decisão 0014](decisions/0014-p08-finance.md): lançamentos manuais pelo artista, receitas vinculadas ao atendimento, custos gerais ou vinculados, correção por estorno integral e conclusão explícita de sessões por reserva. Não há pagamentos pela plataforma.
+Os indicadores apoiam a gestão do artista. A política inicial de P08 está na [decisão 0014](decisions/0014-p08-finance.md): lançamentos manuais pelo artista, receitas vinculadas ao atendimento, custos gerais ou vinculados, correção por estorno integral e conclusão explícita de sessões por reserva. Esses registros são gerenciais e distintos da cobrança da plataforma, cujo modelo será definido.
 
 ### RF18 — Consultar calendário e horários reservados
 
@@ -197,6 +198,18 @@ O artista deve acessar os atendimentos de seus clientes pelo dashboard e consult
 A aplicação deve preservar pedidos, propostas, mensagens, favoritos, reservas e estados dos atendimentos de forma durável e vinculada aos respectivos usuários.
 
 **Critérios de aceite:** recarregar ou reabrir a aplicação não apaga registros nem duplica operações já concluídas. Encerramentos e confirmações permanecem consistentes nas duas perspectivas. Os dados ficam disponíveis ao usuário autorizado em seus acessos posteriores e não dependem exclusivamente do armazenamento de um único navegador. Dados fictícios usados em desenvolvimento ou testes não são tratados como registros reais de produção.
+
+### RF22 — Cadastrar conta pelo próprio usuário
+
+O visitante deve poder criar sua conta sem intervenção administrativa.
+
+**Critérios de aceite:** o cadastro pede nome, e-mail, número de celular e senha, além do aceite dos termos vigentes; o celular e o aceite podem ser coletados na etapa de confirmação, antes de a conta ficar ativa. E-mail e celular são únicos entre as contas. A conta criada recebe a função Client. Quem quiser atuar como artista indica isso no cadastro, ou depois, e a função Artist só é ativada após aprovação administrativa, com a situação da solicitação visível ao usuário. A conta permanece pendente até a confirmação do e-mail e do celular (RF23) e, enquanto isso, não acessa as áreas privadas. Dados inválidos não criam contas e são identificados ao usuário; as mensagens da plataforma não revelam se um celular já está cadastrado; a indicação de e-mail já cadastrado pela página de cadastro do provedor é aceita, com proteção contra força bruta (decisão 0020). Credenciais seguem o modelo de autenticação aprovado (decisão 0003): o frontend não guarda senhas nem tokens, e o modelo da tela de cadastro é definido em decisão própria.
+
+### RF23 — Confirmar e-mail e celular por código
+
+A conta deve comprovar o e-mail e o número de celular informados.
+
+**Critérios de aceite:** cada canal recebe um código numérico aleatório de 8 dígitos, gerado por fonte criptograficamente segura. Os códigos são de uso único, válidos só para o canal e a conta a que foram enviados e expiram após prazo definido. O backend guarda apenas o resumo (hash) do código e limita tentativas e reenvios, com intervalo entre envios. Códigos não aparecem em logs, URLs ou respostas de API. Trocar o e-mail ou o celular exige nova confirmação do canal alterado. A interface informa código inválido, expirado e o tempo para reenviar, e aceita colar o código ou preenchê-lo pelo sistema do aparelho.
 
 ## 4. Requisitos não funcionais
 
@@ -250,15 +263,15 @@ A P09 demonstrou execução integrada local com HTTPS e publicação independent
 
 Dados e configurações de desenvolvimento, teste e produção devem permanecer separados.
 
-**Critérios de aceite:** dados fictícios podem ser usados para validar os fluxos em ambientes apropriados sem serem inseridos como atendimentos reais em produção. Credenciais não são incluídas no frontend ou em arquivos versionados. Configurações de ambiente não exigem alteração de regras de negócio. Nenhuma funcionalidade desta fundação efetua cobrança pela plataforma.
+**Critérios de aceite:** dados fictícios podem ser usados para validar os fluxos em ambientes apropriados sem serem inseridos como atendimentos reais em produção. Credenciais não são incluídas no frontend ou em arquivos versionados. Configurações de ambiente não exigem alteração de regras de negócio. Credenciais e configurações de provedores de cobrança, e-mail e SMS seguem a mesma separação por ambiente.
 
 ## 5. Condições de aceite do escopo
 
 A fundação será aceita após revisão deste documento pelo responsável do produto e demonstração dos critérios aplicáveis na nova aplicação, por testes, revisão de código e execução dos fluxos. O protótipo é uma referência de experiência e não uma evidência de implementação desses requisitos no novo projeto.
 
-O roteiro de referência inclui: descobrir um artista; pesquisar com sugestões e filtros; consultar portfólio e flashes; favoritar; solicitar orçamento; apresentar e aceitar uma proposta; abrir conversas pela listagem; enviar mensagens nas perspectivas de cliente e artista; encerrar o serviço; consultar o histórico bloqueado; iniciar novo atendimento por agendamento; consultar indicadores e verificar reservas e conflitos no calendário.
+O roteiro de referência inclui: criar uma conta e confirmar e-mail e celular; descobrir um artista; pesquisar com sugestões e filtros; consultar portfólio e flashes; favoritar; solicitar orçamento; apresentar e aceitar uma proposta; abrir conversas pela listagem; enviar mensagens nas perspectivas de cliente e artista; encerrar o serviço; consultar o histórico bloqueado; iniciar novo atendimento por agendamento; consultar indicadores e verificar reservas e conflitos no calendário.
 
-Esta versão estabelece a fundação do produto: implementação independente em React para web, React Native para iOS e Android e backend .NET 10, descoberta e pesquisa de artistas, portfólio e flashes, negociação, conversas vinculadas ao atendimento e gestão do artista. Pagamentos diretamente no site permanecem fora do escopo por enquanto.
+Esta versão estabelece a fundação do produto: implementação independente em React para web, React Native para iOS e Android e backend .NET 10, descoberta e pesquisa de artistas, portfólio e flashes, negociação, conversas vinculadas ao atendimento e gestão do artista. A plataforma terá cobrança, por taxa sobre a transação ou por assinatura; o modelo, o responsável no backend e o provedor serão definidos em decisão própria antes de qualquer implementação.
 
 A fundação aprovada em P00 está registrada nas [decisões de organização](decisions/0001-organization.md), [persistência](decisions/0002-persistence.md), [autenticação](decisions/0003-authentication.md), [ferramentas](decisions/0004-tooling.md) e [convenções de API](decisions/0005-api-conventions.md). Permanecem para refinamento incremental os modelos de dados, endpoints específicos, versões e configurações operacionais, disponibilidade, infraestrutura de produção e políticas de negócio ainda não definidas. Esses detalhes serão especificados conforme as próximas etapas exigirem, sem reabrir implicitamente as escolhas aprovadas. Uma mudança nessa base exige atualização explícita da decisão correspondente.
 

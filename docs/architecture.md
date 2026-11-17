@@ -23,7 +23,7 @@ Este arquivo e os demais documentos de SDD são mutáveis. Registram as decisõe
 | Comunicação | APIs para operações que exigem resposta imediata e eventos para propagação assíncrona. |
 | Confiabilidade | Transações locais, Outbox, consumidores idempotentes e coordenação explícita quando necessária. |
 | Evolução | Entregas pequenas de fluxos completos, com testes e revisão dos limites de responsabilidade. |
-| Pagamentos | Processamento de pagamentos no site fora do escopo atual. Gestão financeira não equivale a cobrança. |
+| Monetização | Haverá cobrança, por transação ou por assinatura; modelo, contexto responsável e provedor serão definidos em decisão própria. A gestão financeira do artista continua separada da cobrança da plataforma. |
 
 SOLID deve orientar responsabilidades, contratos e dependências:
 
@@ -80,6 +80,7 @@ Responsável pela identidade interna do usuário, funções e dados privados bá
 - Mantém identificadores de usuários e vínculos com funções de cliente e artista.
 - Disponibiliza os contratos necessários para identificação e perfis.
 - Não concentra a autorização de todos os objetos de negócio: cada serviço verifica acesso aos próprios recursos.
+- Mantém o cadastro pelo próprio usuário, a confirmação de e-mail e celular por código e a solicitação de Artist, com a aprovação administrativa (T10.22–T10.23).
 - Não é responsável pelo portfólio, pelas propostas ou pelas mensagens.
 
 A identidade da conta pertence a este contexto. A apresentação pública do artista pertence a Catálogo. Dados duplicados para apresentação devem ser projeções identificadas, com uma origem responsável pela atualização.
@@ -142,7 +143,7 @@ Responsável pelos registros gerenciais e indicadores do artista.
 - Calcula lucro e margem estimados, conforme as regras dos requisitos.
 - Pode manter projeções de sessões concluídas e valores agendados recebidas dos contextos responsáveis.
 - Distingue recebimento, conclusão de sessão e reserva futura.
-- Não executa pagamento, cobrança ou compensação bancária.
+- Não processa a cobrança da plataforma; quando o modelo de monetização for definido, a responsabilidade e os contratos serão registrados em decisão própria.
 
 O dashboard é uma composição de informações, não um novo microsserviço obrigatório. Dados de reservas, conversas e resultados podem ser obtidos por contratos ou projeções específicas. Gestão financeira não se torna proprietária dos dados operacionais dos demais serviços.
 
@@ -466,7 +467,8 @@ Continuam abertas, sem bloquear esta fundação:
 
 - Detalhes de organização que surgirem além da estrutura inicial aprovada na decisão 0001. Nomes técnicos definidos: Identity, Catalog, Engagements, Scheduling, Messaging e Finance.
 - Compartilhamento de código entre web, iOS e Android, estrutura React Native, ferramentas e processos de publicação por canal.
-- Operação de produção do Keycloak/BFF e políticas adicionais de conta. A base, o cadastro administrativo, funções e sessão inicial foram definidos na decisão 0007 e implementados em P02.
+- Operação de produção do Keycloak/BFF e políticas adicionais de conta. A base, o cadastro administrativo, funções e sessão inicial foram definidos na decisão 0007 e implementados em P02. O cadastro pelo próprio usuário, os provedores de e-mail e SMS e a política dos códigos de confirmação serão definidos em T10.22.
+- Modelo de monetização (taxa sobre a transação ou assinatura), contexto responsável, provedor de pagamento e efeitos em proposta, aceite e finanças.
 - Evolução das versões fixadas nos arquivos de dependências e detalhes da restrição de intervalos de Agenda, conforme a base aprovada na decisão 0002.
 - Evolução operacional de RabbitMQ/Outbox definidos na decisão 0010 e coordenação distribuída de encerramento implementada em P07, conforme decisão 0013. O Gateway inicial utiliza YARP, conforme decisão 0007.
 - Contratos específicos de recursos e eventos. As convenções HTTP e de versionamento público já estão aprovadas na decisão 0005.

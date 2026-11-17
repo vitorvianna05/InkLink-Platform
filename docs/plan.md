@@ -18,7 +18,7 @@ Princípios de execução:
 - Introduzir autenticação, autorização, testes e observabilidade junto das funcionalidades que precisam deles.
 - Preservar autonomia dos serviços, sem bancos compartilhados por acesso direto ou bibliotecas com entidades de negócio comuns.
 - Definir ferramentas quando forem necessárias à próxima entrega, sem transformar todas as decisões futuras em bloqueios iniciais.
-- Não incluir processamento de pagamentos no escopo atual.
+- Haverá cobrança, por transação ou por assinatura; o modelo será definido em decisão própria antes de qualquer implementação de cobrança.
 
 ## 2. Marcos e sequência de referência
 
@@ -282,7 +282,7 @@ T09.01 consolidou exemplos e compatibilidade dos contratos atuais; incrementos f
 
 **Objetivo:** oferecer indicadores baseados em registros do artista, mantendo recebimentos distintos de reservas e conclusão de sessão.
 
-- [x] Definir o registro gerencial mínimo de receitas, custos e respectivas datas, sem cobrança pela plataforma.
+- [x] Definir o registro gerencial mínimo de receitas, custos e respectivas datas, distinto da cobrança da plataforma.
 - [x] Definir como uma sessão concluída é registrada e como essa informação se relaciona com o atendimento, sem confundir encerramento de chat com recebimento.
 - [x] Criar Gestão financeira com persistência e migrações próprias.
 - [x] Implementar os registros autorizados necessários aos indicadores, com validação de valores e contexto.
@@ -327,7 +327,7 @@ T09.01 consolidou exemplos e compatibilidade dos contratos atuais; incrementos f
 
 ### P10 — Implementar o website em React
 
-**Prioridade:** após a validação do backend integrado. **Dependências:** M5 / P09. **Situação:** concluída em 05/11/2026; M6 atingido no recorte local. [Evidências](verification/p10.md) e [decisão 0016](decisions/0016-p10-website.md).
+**Prioridade:** após a validação do backend integrado. **Dependências:** M5 / P09. **Situação:** M6 atingido em 05/11/2026 no recorte local; cadastro com confirmação de contato e revisão dos textos de cobrança (T10.22–T10.25) concluídos em 06/11/2026 ([decisão 0020](decisions/0020-p10-registration.md)). [Evidências](verification/p10.md) e [decisão 0016](decisions/0016-p10-website.md).
 
 **Objetivo:** construir a experiência web sobre os serviços reais, usando o protótipo apenas como referência visual e de navegação.
 
@@ -349,11 +349,14 @@ T09.01 consolidou exemplos e compatibilidade dos contratos atuais; incrementos f
 - [x] Renovar a sessão web no BFF, com 30 minutos sem uso e 8 horas no total, revisando a decisão 0007, conforme T10.19–T10.20 ([decisão 0019](decisions/0019-p10-session-renewal.md)).
 - [x] Aplicar o tema InkLink na tela de login do Keycloak, conforme T10.21.
 - [x] Executar testes de integração com o backend e o roteiro completo pelo navegador.
+- [x] Definir o modelo de cadastro e de confirmação de e-mail e celular, com provedores e política dos códigos de 8 dígitos (T10.22).
+- [x] Implementar cadastro, confirmação de contato e solicitação de Artist com aprovação administrativa no backend (T10.23) e no website (T10.24).
+- [x] Retirar das telas as afirmações de que não haverá cobrança, mantendo neutras as frases sobre etapas (T10.25).
 - [x] Documentar e validar a publicação do website no ambiente escolhido: homologação local pelo Caddy (`deploy/Caddyfile`), verificada por `Test-WebPublication.ps1` e pelo roteiro real contra o build publicado.
 
 **Critério de conclusão:** cliente e artista executam os fluxos da entrega pelo website, com dados persistidos no backend. Não são reaproveitados o estado global, os personagens ou o armazenamento do protótipo como mecanismo de aplicação real.
 
-**Rastreabilidade:** RF01–RF21 conforme os fluxos entregues; RNF01–RNF08, especialmente RNF02 e RNF03.
+**Rastreabilidade:** RF01–RF23 conforme os fluxos entregues; RNF01–RNF08, especialmente RNF02 e RNF03.
 
 **Aceite M6:** cliente e artista executam pelo website os fluxos da entrega sobre os seis serviços reais, com dados persistidos: descoberta, pesquisa, perfil, favoritos, pedido, proposta e aceite, conversas, agenda com conflito, encerramento recusado e definitivo, conclusão de sessão, lançamentos, imagens e foto de perfil. Responsividade e teclado verificados em 360, 768 e 1280 px; publicação homologada localmente pelo Caddy, com o roteiro real repetido contra o build publicado (9 de 9 cenários). Domínio, nuvem e operação de produção continuam fora deste aceite.
 
@@ -368,6 +371,7 @@ T09.01 consolidou exemplos e compatibilidade dos contratos atuais; incrementos f
 - [ ] Definir navegação, sessão, armazenamento seguro e configuração por ambiente.
 - [ ] Confirmar os contratos que devem suportar versões anteriores dos aplicativos.
 - [ ] Implementar um primeiro fluxo mínimo de autenticação e consulta real de catálogo nas duas plataformas.
+- [ ] Definir o cadastro e a confirmação de e-mail e celular nos aplicativos a partir da decisão de T10.22, incluindo o preenchimento do código pelo sistema do aparelho.
 - [ ] Preparar testes, ferramentas de compilação e instruções locais adequadas a cada plataforma.
 - [ ] Refinar os fluxos móveis de cliente e artista a partir da experiência validada na web.
 
@@ -377,7 +381,7 @@ T09.01 consolidou exemplos e compatibilidade dos contratos atuais; incrementos f
 
 **Prioridade:** evolução móvel. **Dependências:** P11. **Situação:** pendente.
 
-- [ ] Implementar os fluxos de cliente e artista incluídos na entrega iOS.
+- [ ] Implementar os fluxos de cliente e artista incluídos na entrega iOS, incluindo cadastro e confirmação de e-mail e celular.
 - [ ] Adaptar navegação, formulários, calendário e mensagens à plataforma.
 - [ ] Verificar sessão, permissões, histórico e retomada dos fluxos com o backend.
 - [ ] Verificar acessibilidade e comportamento em dispositivos de referência definidos para a entrega.
@@ -390,7 +394,7 @@ T09.01 consolidou exemplos e compatibilidade dos contratos atuais; incrementos f
 
 **Prioridade:** evolução móvel. **Dependências:** P11. **Situação:** pendente.
 
-- [ ] Implementar os fluxos de cliente e artista incluídos na entrega Android.
+- [ ] Implementar os fluxos de cliente e artista incluídos na entrega Android, incluindo cadastro e confirmação de e-mail e celular.
 - [ ] Adaptar navegação, formulários, calendário e mensagens à plataforma.
 - [ ] Verificar sessão, permissões, histórico e retomada dos fluxos com o backend.
 - [ ] Verificar acessibilidade e comportamento em dispositivos de referência definidos para a entrega.
@@ -437,7 +441,7 @@ A conclusão de uma etapa não significa a conclusão automática das etapas dep
 
 ## 8. Próxima ação
 
-P00–P09 e o incremento GW estão concluídos nos recortes documentados. M1–M5 atingidos no backend; a [verificação P09](verification/p09.md) consolida o aceite técnico local, seus resultados e limitações. P10 foi concluída e M6 atingido no recorte local, conforme a [verificação P10](verification/p10.md). Aplicativos móveis (P11–P13) e operação de produção permanecem pendentes.
+P00–P09 e o incremento GW estão concluídos nos recortes documentados. M1–M5 atingidos no backend; a [verificação P09](verification/p09.md) consolida o aceite técnico local, seus resultados e limitações. P10 atingiu M6 no recorte local, conforme a [verificação P10](verification/p10.md); o cadastro com confirmação de contato e a revisão dos textos de cobrança (T10.22–T10.25) foram concluídos em 06/11/2026; provedor de SMS e texto definitivo dos termos ficam para decisão própria. Aplicativos móveis (P11–P13), modelo de monetização e operação de produção permanecem pendentes.
 
 GetMyProfile possui transporte autenticado, atualização controlada de nome, vínculo externo/interno e funções locais. Keycloak, Gateway e BFF estão integrados e verificados em P02. Os próximos fluxos continuam priorizando backend, com autorização própria em cada serviço.
 

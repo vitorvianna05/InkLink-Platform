@@ -4,7 +4,7 @@
 
 Este documento consolida, por engenharia reversa documental, a especificação funcional e técnica já estabelecida para o InkLink. Sua finalidade principal é reunir comportamentos, responsabilidades, contratos e limites do produto, sem introduzir decisões novas ou substituir os documentos existentes.
 
-**Data de referência:** 05/11/2026. **Recorte:** P00–P06 e incremento GW concluídos; P07 concluída no recorte backend; P08 concluída no recorte backend; P09 concluída no recorte backend local; P10 concluída, com M6 no recorte local; P11–P13 planejados. A consolidação referencia as evidências de cada etapa; os resultados e limites da P09 estão em sua verificação própria.
+**Data de referência:** 06/11/2026. **Recorte:** P00–P06 e incremento GW concluídos; P07 concluída no recorte backend; P08 concluída no recorte backend; P09 concluída no recorte backend local; P10 concluída no recorte local, com M6 atingido e cadastro com confirmação de contato (T10.22–T10.25) entregue; P11–P13 planejados. A consolidação referencia as evidências de cada etapa; os resultados e limites da P09 estão em sua verificação própria.
 
 | Fonte | Responsabilidade |
 | --- | --- |
@@ -26,19 +26,19 @@ O produto é criado do zero no repositório InkLink-Platform, com SDD em docs/ e
 
 O backend utiliza .NET 10. Os canais previstos são website em React/React DOM, aplicativo iOS em React Native e aplicativo Android em React Native. Consomem contratos compatíveis, sem obrigação de lançamento simultâneo ou reaproveitamento de DOM/CSS no mobile. O backend tem prioridade; website e aplicativos seguem suas etapas próprias.
 
-Idioma de referência: português do Brasil. Moeda: reais. Processamento de pagamentos diretamente pela plataforma está fora do escopo atual. Registro gerencial de recebimentos não equivale a cobrança.
+Idioma de referência: português do Brasil. Moeda: reais. A plataforma terá cobrança, por taxa sobre a transação ou por assinatura; o modelo, o responsável no backend e o provedor serão definidos em decisão própria antes de qualquer implementação. Registros gerenciais de recebimento são distintos dessa cobrança.
 
 ## 3. Atores e permissões
 
 | Ator | Capacidades e limites |
 | --- | --- |
-| Visitante | Consulta informações públicas do catálogo, sem acesso a registros privados. |
+| Visitante | Consulta informações públicas do catálogo e pode criar a própria conta (RF22), sem acesso a registros privados. |
 | Cliente / Client | Mantém favoritos, solicita orçamento, acompanha e aceita sua proposta, participa das próprias conversas e consulta suas reservas. |
 | Artista / Artist | Publica seu catálogo, apresenta propostas nos seus atendimentos, conversa com seus clientes, configura disponibilidade e confirma suas reservas. Registra seus lançamentos e conclusões de sessões, consultando indicadores próprios. |
 | Operação administrativa | Cria contas no Keycloak e ativa Artist conforme a política inicial; não pressupõe painel administrativo completo. |
 | Chamador técnico | Usa identidade e escopos específicos para integrações autorizadas, sem herdar automaticamente permissões de usuário. |
 
-Contas são criadas administrativamente no Keycloak. O primeiro acesso provisiona a identidade interna com Client; Artist é ativado administrativamente, permitindo as duas funções na mesma conta. O botão de troca de personagens do protótipo não faz parte da autorização do produto.
+Contas são criadas administrativamente no Keycloak, e T10.22–T10.24 acrescentam o cadastro pelo próprio usuário com confirmação de e-mail e celular (RF22–RF23). O primeiro acesso provisiona a identidade interna com Client; Artist é ativado após aprovação administrativa, permitindo as duas funções na mesma conta. O botão de troca de personagens do protótipo não faz parte da autorização do produto.
 
 Identity vincula a conta interna ao emissor e sujeito do provedor. Cada serviço valida acesso ao próprio recurso. Papel, identificador no corpo da requisição ou passagem pelo Gateway não bastam para conceder acesso.
 
@@ -48,14 +48,14 @@ A perspectiva cliente/artista altera apresentação e consultas permitidas, mas 
 
 | Conceito | Contexto responsável | Informação e invariantes |
 | --- | --- | --- |
-| Conta e perfil privado | Identity | Identidade interna, vínculo com provedor, funções e dados básicos autorizados. Credenciais pertencem ao Keycloak. |
+| Conta e perfil privado | Identity | Identidade interna, vínculo com provedor, funções, dados básicos autorizados, confirmação de e-mail e celular e solicitação de Artist. Credenciais pertencem ao Keycloak. |
 | Perfil público, trabalho e flash | Catalog | Identidade pública, estúdio, localização, estilos, biografia, preço de referência e mídias. Trabalhos realizados e flashes são conteúdos distintos. |
 | Favorito | Catalog | Vínculo persistente entre cliente e artista, isolado por conta. |
 | Pedido e atendimento | Engagements | Participantes, ideia, região, tamanho e contexto histórico da negociação. |
 | Proposta | Engagements | Versão imutável, descrição, valor BRL e situação vinculada ao atendimento. |
 | Conversa e mensagem | Messaging | Participantes, atendimento, autoria, conteúdo, data/hora, sequência e barreira local de escrita. |
 | Calendário, disponibilidade e reserva | Scheduling | Artista, fuso, intervalos, participantes e atendimento; reserva confirmada ocupa tempo sem sobreposição. |
-| Receita, custo e indicadores | Finance | Registros gerenciais e resultados por artista/período, separados de pagamento e reserva. |
+| Receita, custo e indicadores | Finance | Registros gerenciais e resultados por artista/período, separados da reserva e da cobrança da plataforma. |
 
 Relações entre contextos utilizam identificadores e contratos, sem acesso a bancos alheios ou entidades de domínio compartilhadas. Projeções têm origem e atualização identificadas. Snapshots preservam o contexto histórico; não substituem autorização nem prometem disponibilidade futura.
 
@@ -63,9 +63,11 @@ Relações entre contextos utilizam identificadores e contratos, sem acesso a ba
 
 ### 5.1 Identidade e áreas do usuário
 
-**Referências:** RF01, RF21; RNF04, RNF08; T02.01–T02.06.
+**Referências:** RF01, RF21–RF23; RNF04, RNF08; T02.01–T02.06, T10.22–T10.24.
 
 A identidade autenticada é associada à conta interna conforme a política de P02. Consulta e manutenção de perfil limitam-se aos campos autorizados; alterar o payload não permite escolher outra identidade ou obter Artist.
+
+O cadastro pelo próprio usuário cria uma conta pendente com Client. E-mail e celular são confirmados por códigos aleatórios de 8 dígitos, de uso único, com validade, tentativas e reenvios limitados e guardados só como hash; a conta só acessa áreas privadas depois das duas confirmações. A solicitação de Artist aguarda aprovação administrativa. O modelo da tela de cadastro, os provedores de e-mail e SMS e a política dos códigos são definidos em T10.22, revisando as decisões 0003, 0007 e 0017 no que couber.
 
 A experiência futura separa Meu espaço e mensagens do cliente do dashboard, agenda e mensagens do artista. Sessão inválida, expirada ou ausente não autoriza operações privadas.
 
@@ -91,7 +93,7 @@ A busca inicial usa PostgreSQL/pg_trgm na infraestrutura de Catalog, com projeç
 
 O perfil apresenta nome, estúdio, localização, biografia, estilos e preço inicial do artista selecionado. Tatuagens realizadas e flashes ocupam abas distintas. A aba de conversa aparece quando existe histórico autorizado, inclusive encerrado. Abrir e sair do perfil preserva o contexto de navegação.
 
-Interesse em um flash inicia um pedido para seu artista e preserva a referência escolhida. Preço de referência não representa aceite, reserva ou pagamento.
+Interesse em um flash inicia um pedido para seu artista e preserva a referência escolhida. Preço de referência não representa aceite, reserva ou valor final.
 
 Na política de P03, o próprio Artist publica e edita seu perfil, trabalhos e flashes por API autenticada, com publicação imediata. Desde P10 ([decisão 0018](decisions/0018-p10-images.md)), a imagem da obra é enviada como arquivo em `/api/v2/artists/me/{tattoos,flashes}` e regravada em WebP no servidor; as escritas v1 por URL respondem 410 com o caminho de migração, e obras antigas por URL continuam exibidas até a troca. Cada conta tem uma foto de perfil, mantida pela Identity: a do artista é pública e projetada no Catálogo por evento; a do cliente é privada e só chega, por endereço assinado de curta duração, a artistas com atendimento com ele. Moderação e painel completo continuam fora do recorte.
 
@@ -117,7 +119,7 @@ Após aceite, edição e nova proposta não fazem parte deste recorte. Aceitar v
 
 Criação de pedido e apresentação de proposta exigem Idempotency-Key UUID não vazio, por conta e operação. Mesmo conteúdo normalizado recupera o resultado original; conteúdo divergente com a mesma chave retorna conflito. A repetição de pedido é resolvida antes de consultar novamente Catalog. Proposta e aceite concorrentes são serializados em transação local.
 
-**Aceite:** participantes consultam o mesmo contexto e terceiros não o acessam; alteração posterior do catálogo não reescreve o snapshot. Aceite não gera reserva, receita ou cobrança.
+**Aceite:** participantes consultam o mesmo contexto e terceiros não o acessam; alteração posterior do catálogo não reescreve o snapshot. Aceite não gera reserva nem receita; sua relação com a cobrança depende do modelo de monetização.
 
 O contrato vigente utiliza /api/v2/engagements. A v1 sinaliza retirada com 410 e orientação de migração, sem redirecionar escritas. Consultar o [guia de Atendimentos](development/engagements.md) e os [contratos de integração](contracts/p04-integrations.md).
 
@@ -321,7 +323,7 @@ P09 consolida regressão integrada, recuperação, ambiente e implantação inde
 | P07 / T07.01–T07.06 | Encerramento e novo atendimento | RF09–RF15, RF18–RF19, RF21 | Concluído; [evidências P07](verification/p07.md). |
 | P08 / T08.01–T08.06 | Finance e dashboard | RF16–RF17, RF20–RF21 | Concluído no backend; [evidências P08](verification/p08.md). |
 | P09 / T09.01–T09.06 | Consolidação/aceite backend | RF01–RF21 no backend; RNF01, RNF04–RNF08 | Concluído no recorte local; [evidências P09](verification/p09.md). |
-| P10 / T10.01–T10.21 | Website React | RF01–RF21; RNF01–RNF08 | Concluído; M6 atingido no recorte local, com roteiro real completo e publicação homologada pelo Caddy, conforme verificação P10; menu do usuário e página de login (T10.12–T10.14, decisão 0017) concluídos; imagens por upload, foto de perfil, renovação de sessão e tema do Keycloak (T10.15–T10.21, decisões 0018 e 0019) concluídos. |
+| P10 / T10.01–T10.25 | Website React | RF01–RF23; RNF01–RNF08 | Concluído; M6 atingido no recorte local, com roteiro real completo e publicação homologada pelo Caddy, conforme verificação P10; menu do usuário e página de login (T10.12–T10.14, decisão 0017) concluídos; imagens por upload, foto de perfil, renovação de sessão e tema do Keycloak (T10.15–T10.21, decisões 0018 e 0019) concluídos. Cadastro pela página do Keycloak, confirmação de e-mail e celular por código, pedido de Artist e textos de cobrança neutros (T10.22–T10.25, decisão 0020) concluídos. |
 | P11 / T11.01–T11.05 | Base React Native | Capacidades do primeiro incremento móvel | Pendente. |
 | P12 / T12.01–T12.04 | iOS | Recorte móvel aprovado | Pendente; depende de P11. |
 | P13 / T13.01–T13.04 | Android | Recorte móvel aprovado | Pendente; depende de P11, não de P12. |
@@ -336,7 +338,9 @@ Permanecem para refinamento explícito:
 - Evolução financeira além da decisão 0014: correções de sessões, estornos parciais e eventual projeção mediante necessidade.
 - Evolução operacional após P09: nuvem/produção, coleta e alertas, carga e novas versões de contrato, sem reabrir os resultados técnicos locais já verificados.
 - P10: publicação de produção (domínio, nuvem, R2 e operação) fica para a entrega operacional; a homologação local está concluída. Ferramentas, rotas, cache e transporte pelo BFF estão na decisão 0016; a página de login usa o fluxo do BFF conforme a decisão 0017; imagens e renovação de sessão, nas decisões 0018 e 0019.
-- P11–P13: Expo ou configuração nativa, compartilhamento de código, recorte funcional, testes e distribuição móvel.
+- P10: provedor de SMS de produção e texto definitivo dos termos de uso; a decisão 0020 entrega e-mail por SMTP, simulador de SMS só em Development/Testing e termos provisórios versionados.
+- Monetização: cobrança por transação ou por assinatura, responsável no backend, provedor e efeitos nos fluxos de proposta, aceite e finanças, em decisão própria.
+- P11–P13: Expo ou configuração nativa, compartilhamento de código, recorte funcional, testes e distribuição móvel, incluindo cadastro e confirmação de contato.
 - Upload, tratamento e armazenamento de mídia, moderação e exclusividade/reutilização de flashes.
 - Cancelamento, reagendamento e passagem por meia-noite fora do recorte P06.
 - Evolução da apresentação dos históricos, mantendo a separação por atendimento aprovada em P07, e eventual transporte em tempo real.
