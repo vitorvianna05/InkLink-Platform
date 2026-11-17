@@ -89,7 +89,8 @@ A identidade da conta pertence a este contexto. A apresentação pública do art
 
 Responsável pela descoberta dos artistas e sua apresentação pública.
 
-- Mantém perfis públicos de artistas, entidades públicas Studio e associações muitos-para-muitos entre Studio e Artist, localização, estilos, preço de referência, portfólio e flashes.
+- Mantém perfis públicos de artistas, incluindo localização, estilos, preço de referência, portfólio e flashes.
+- Mantém entidades públicas Studio e associações muitos-para-muitos entre Studio e Artist.
 - Mantém favoritos associados ao identificador do cliente.
 - Oferece pesquisa, sugestões aproximadas e filtros.
 - É responsável por atualizar e reconstruir um eventual índice de pesquisa.
@@ -527,6 +528,6 @@ Identity filtra logs de infraestrutura com potencial de incluir consultas/creden
 
 ## Integração web P10
 
-O website React usa o BFF em mesma origem por proxy HTTPS do Vite no ambiente local. A área Admin do website usa a função da sessão obtida pela Identity para controlar navegação, mas as operações continuam autorizadas no backend. Tokens permanecem no BFF; escritas passam pelo fluxo de antiforgery existente. A configuração do proxy recebe o certificado confiável do BFF, sem desabilitar a validação TLS. Tokens permanecem no servidor, cookies HttpOnly/Secure e antiforgery protegem escritas. Retornos OIDC são encaminhados tanto no servidor de desenvolvimento como no preview. O script de execução isola configurações no processo e não altera os hosts do produto.
+O website React usa o BFF em mesma origem por proxy HTTPS do Vite no ambiente local. A configuração do proxy recebe o certificado confiável do BFF, sem desabilitar a validação TLS. Tokens permanecem no servidor, cookies HttpOnly/Secure e antiforgery protegem escritas. A área Admin do website usa a função da sessão obtida pela Identity para controlar navegação, mas as operações continuam autorizadas no backend. Retornos OIDC são encaminhados tanto no servidor de desenvolvimento como no preview. O script de execução isola configurações no processo e não altera os hosts do produto.
 
 O adaptador de Agenda converte a representação dos inputs HH:mm para o contrato HTTP TimeOnly HH:mm:ss; Domain continua responsável por disponibilidade e conflitos. O cliente HTTP propaga expiração também quando o 401 ocorre na aquisição do antiforgery. Uma atualização em segundo plano que falha mantém na tela os dados já carregados (e os formulários abertos) e mostra um aviso de que podem estar desatualizados, com ação para atualizar; a sessão expirada usa o aviso próprio de novo login. Controles dependentes de sessão aguardam a identidade antes de habilitar ações. [Operação e diagnóstico](development/web-integration.md) e [evidências/limites](verification/p10.md) registram a integração com serviços reais e a publicação homologada localmente pelo Caddy, que encerra T10.10 e M6. Os diálogos devolvem o foco ao controle de origem mesmo quando a página os desmonta abertos.
